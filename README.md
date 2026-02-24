@@ -32,30 +32,13 @@ You can quickly cycle your saved presets by clicking on status bar or from the c
 
 You can specify, how formatting elements will be counted:
 
-* Count links display text
-
-	* Off: [label](url) → label and url will be counted
-	* On: only label will be counted
-
-* Ignore wikilinks
-	
-	* Off: words in wikilinks will be counted
-	* On: wikilinks will be ignored
-
-* Count wikilinks display text
-
-	* Off: [[wiki|label]] → wiki and label will be counted
-	* On: only label will be counted
-
-* Count citekeys
-
-	* Off: citekeys will be ignored
-	* On: [@doe2020]  → doe2020 will be counted
-
-* Ignore comments
-
-	* Off: words in comments `%% … %%` and `<!-- … -->` will be counted
-	* On: comments will be ignored
+| Advanced option | Off | On |
+| :--- | :--- | :--- |
+| **Count links display text** | label → label and url will be counted | only label will be counted |
+| **Ignore wikilinks** | words in wikilinks will be counted | wikilinks will be ignored |
+| **Count wikilinks display text** | `[[wiki\|label]]` → wiki and label will be counted | only label will be counted |
+| **Count citekeys** | citekeys will be ignored | `[@doe2020]` → doe2020 will be counted |
+| **Ignore comments** | words in comments `%% … %%` and `<!-- … -->` will be counted | comments will be ignored |
 
 ## Use case
 
