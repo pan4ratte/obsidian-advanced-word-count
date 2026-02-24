@@ -4,9 +4,11 @@ This plugin allows you to create complex word count presets that are displayed i
 
 ## Features
 
-1. Create status bar metrics presets and quickly cycle them by clicking or from the command palette
+### 1. Create status bar metrics presets
 
-2. Currently available counting metrics:
+You can quickly cycle your saved presets by clicking on status bar or from the command palette.
+
+### 2. Track many different counting metrics
 
 * Essentials:
 
@@ -26,39 +28,43 @@ This plugin allows you to create complex word count presets that are displayed i
 	* Wikilinks `[[wiki]]` and `[[wiki|label]]`
 	* Citekeys `[@doe2020]`
 
-3. Fine-tune "Words" and "Characters..." counting methods with advanced settings. You can specify, how formatting elements will be counted:
+### 3. Fine-tune "Words" and "Characters..." counting methods with advanced settings
 
-* Count links display text:
+You can specify, how formatting elements will be counted:
+
+* Count links display text
 
 	* Off: [label](url) → label and url will be counted
 	* On: only label will be counted
 
-* Ignore wikilinks:
+* Ignore wikilinks
 	
 	* Off: words in wikilinks will be counted
 	* On: wikilinks will be ignored
 
-* Count wikilinks display text:
+* Count wikilinks display text
 
 	* Off: [[wiki|label]] → wiki and label will be counted
 	* On: only label will be counted
 
-* Count citekeys:
+* Count citekeys
 
 	* Off: citekeys will be ignored
 	* On: [@doe2020]  → doe2020 will be counted
 
 * Ignore comments
 
-	* Off: words in comments %% … %% and <!-- … --> will be counted
+	* Off: words in comments `%% … %%` and `<!-- … -->` will be counted
 	* On: comments will be ignored
 
 ## Use case
 
-Let's say, you have three different projects, on which you are working simultaneousnessly: two academic papers for different journals with different formatting requirements/limits and you write posts for your Telegram channel.
+Let's say, you have three different projects, on which you are working simultaneously: two academic papers for different journals with different formatting requirements/limits and you write posts for your Telegram channel.
 
 Journals have different page limits and use different fonts: that means that you will need two different presets and for each of them page count will be different. You can set it up with this plugin. For academic purposes you may want to count citekeys, e.g. number of references: you can set it up too.
 
-At the same time, Telegram has a strict character limit and you would like would like to count characters in your posts, but in such a way, that, for example only display text of your links is counted (Telegram does the same). You can set it up with this plugin. Etc, etc...
+At the same time, Telegram has a strict character limit and you may want to count characters in your posts, but in such a way, that, for example, only display text of your links is counted (Telegram does the same). You can set it up with this plugin.
 
-If there was no this plugin, it would be a nightmare to constantly change your preset settings and it would not be possible to adjust counters for academic purposes. Advanced Word Count plugin is a flexible tool, that makes your writing nightmares your sweet dreams :)
+Etc, etc...
+
+Without this plugin it would be a nightmare to constantly change your preset settings and it would not be possible to adjust counters for academic purposes. Advanced Word Count plugin is a flexible tool, that makes your writing nightmares your sweet dreams :)
