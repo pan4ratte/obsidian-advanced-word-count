@@ -3,7 +3,7 @@
   "name": "Advanced Word Count",
   "version": "1.0.0",
   "minAppVersion": "0.15.0",
-  "description": "Allows to create complex word count presets that will display in the status bar. Made with academic use cases in mind.",
+  "description": "Allows you to create complex word count presets that will display in the status bar. Made with academic use cases in mind.",
   "author": "pan4ratte",
   "authorUrl": "https://github.com/pan4ratte/",
   "isDesktopOnly": false
