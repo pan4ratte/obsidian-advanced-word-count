@@ -1,15 +1,15 @@
 {
-  "name": "word-count-pages",
+  "name": "advanced-word-count",
   "version": "1.0.0",
-  "description": "Obsidian word count and page count plugin",
+  "description": "Allows to create complex word count presets that will display in the status bar. Made with academic use cases in mind.",
   "main": "main.js",
   "scripts": {
     "dev": "node esbuild.config.mjs",
     "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production"
   },
   "keywords": [],
-  "author": "",
-  "license": "MIT",
+  "author": "pan4ratte",
+  "license": "AGPL-3.0",
   "devDependencies": {
     "@types/node": "^16.11.6",
     "@typescript-eslint/eslint-plugin": "^8.56.1",

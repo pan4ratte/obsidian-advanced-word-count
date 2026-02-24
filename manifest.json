@@ -1,10 +1,10 @@
 {
-  "id": "word-count-pages",
-  "name": "Word Count & Pages",
+  "id": "advanced-word-count",
+  "name": "Advanced Word Count",
   "version": "1.0.0",
   "minAppVersion": "0.15.0",
-  "description": "Displays word count and page count in the status bar. Configure words-per-page in settings.",
-  "author": "You",
-  "authorUrl": "",
+  "description": "Allows to create complex word count presets that will display in the status bar. Made with academic use cases in mind.",
+  "author": "pan4ratte",
+  "authorUrl": "https://github.com/pan4ratte/",
   "isDesktopOnly": false
 }
