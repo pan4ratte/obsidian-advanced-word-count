@@ -1,0 +1,10 @@
+{
+  "id": "word-count-pages",
+  "name": "Word Count & Pages",
+  "version": "1.0.0",
+  "minAppVersion": "0.15.0",
+  "description": "Displays word count and page count in the status bar. Configure words-per-page in settings.",
+  "author": "You",
+  "authorUrl": "",
+  "isDesktopOnly": false
+}
