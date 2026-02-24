@@ -16,6 +16,7 @@ const en = {
   // Status bar metric labels
   statusWords: (n: number) => `Words: ${n}`,
   statusChars: (n: number) => `Chars: ${n}`,
+  statusCharsNoSpaces: (n: number) => `Chars (no spaces): ${n}`,
   statusPages: (n: string) => `Pages: ${n}`,
   statusLines: (n: number) => `Lines: ${n}`,
   statusParas: (n: number) => `Paras: ${n}`,
@@ -54,7 +55,11 @@ const en = {
     },
     showCharsWithSpaces: {
       label: "Characters (with spaces)",
-      hint: "Total character count",
+      hint: "Total character count including spaces and linebreaks, based on the advanced settings",
+    },
+    showCharsWithoutSpaces: {
+      label: "Characters (without spaces)",
+      hint: "Total character count excluding all whitespace (spaces, tabs, linebreaks), based on the advanced settings",
     },
     showPages: {
       label: "Pages",

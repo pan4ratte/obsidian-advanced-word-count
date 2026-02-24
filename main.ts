@@ -12,7 +12,8 @@ interface Preset {
 
   // Metric visibility
   showWordsWithSpaces: boolean;    // space-separated word count (was showWords)
-  showCharsWithSpaces: boolean;    // total characters including spaces
+  showCharsWithSpaces: boolean;    // total characters including spaces and linebreaks
+  showCharsWithoutSpaces: boolean; // total characters excluding all whitespace
   showPages: boolean;
   showLines: boolean;
   showParagraphs: boolean;
@@ -20,7 +21,7 @@ interface Preset {
   showWikiLinks: boolean;
   showCitekeys: boolean;
 
-  // Word count inclusions / exclusions (shared by both word metrics)
+  // Word count inclusions / exclusions (shared by both word and char metrics)
   countMdLinksAsWords: boolean;
   countWikiLinkDisplayText: boolean;
   ignoreWikiLinks: boolean;
@@ -36,6 +37,7 @@ interface WordCountSettings {
 interface Metrics {
   wordsWithSpaces: number;
   charsWithSpaces: number;
+  charsWithoutSpaces: number;
   pages: string;
   lines: number;
   paragraphs: number;
@@ -53,6 +55,7 @@ function defaultPreset(overrides: Partial<Preset> = {}): Preset {
     wordsPerPage: 250,
     showWordsWithSpaces: true,
     showCharsWithSpaces: false,
+    showCharsWithoutSpaces: false,
     showPages: true,
     showLines: false,
     showParagraphs: false,
@@ -176,9 +179,8 @@ export default class WordCountPlugin extends Plugin {
 
   // ── Text pre-processing ───────────────────────────────────────────────────
   //
-  // Single pipeline shared by BOTH word metrics. All "include as words"
-  // options are applied here, so the two counters below always agree on
-  // what counts as text.
+  // Single pipeline shared by word AND character metrics. All "include/exclude"
+  // options are applied here so every counter agrees on what counts as text.
 
   preprocessText(raw: string, preset: Preset): string {
     let t = raw;
@@ -188,55 +190,60 @@ export default class WordCountPlugin extends Plugin {
 
     // Comments (stripped first so their content never leaks into counts)
     if (preset.ignoreComments) {
-      t = t.replace(/%%[\s\S]*?%%/g, " ");
-      t = t.replace(/<!--[\s\S]*?-->/g, " ");
+      t = t.replace(/%%[\s\S]*?%%/g, "");
+      t = t.replace(/<!--[\s\S]*?-->/g, "");
     }
 
     // Code blocks (always excluded)
-    t = t.replace(/```[\s\S]*?```/g, " ").replace(/`[^`]*`/g, " ");
+    t = t.replace(/```[\s\S]*?```/g, "").replace(/`[^`]*`/g, "");
 
     // Images (always excluded)
-    t = t.replace(/!\[.*?\]\(.*?\)/g, " ");
+    t = t.replace(/!\[.*?\]\(.*?\)/g, "");
 
     // Markdown links — keep label text or strip
     if (preset.countMdLinksAsWords) {
       t = t.replace(/\[([^\]]*)\]\([^)]*\)/g, "$1"); // [label](url) → label
       t = t.replace(/\([^)]*\)\[([^\]]*)\]/g, "$1"); // (url)[label] → label
     } else {
-      t = t.replace(/\[.*?\]\(.*?\)/g, " ");
-      t = t.replace(/\(.*?\)\[.*?\]/g, " ");
+      // Keep label words + URL as a single token (no splitting URL segments)
+      t = t.replace(/\[([^\]]*)\]\(([^)]*)\)/g, (_, label, url) =>
+        `${label} ${url.trim()}`.trim()
+      );
+      t = t.replace(/\(([^)]*)\)\[([^\]]*)\]/g, (_, url, label) =>
+        `${label} ${url.trim()}`.trim()
+      );
     }
 
     // Wiki links
     if (preset.ignoreWikiLinks) {
       // Strip entirely — overrides display-text setting
-      t = t.replace(/\[\[.*?\]\]/g, " ");
+      t = t.replace(/\[\[.*?\]\]/g, "");
     } else if (preset.countWikiLinkDisplayText) {
       // [[Page|Alias]] → "Alias", [[Page]] → "Page"
       t = t.replace(/\[\[([^\]|]*)\|?([^\]]*)\]\]/g, (_, page, alias) =>
         (alias.trim() || page.trim()).replace(/#.*$/, "").trim()
       );
     } else {
-      t = t.replace(/\[\[.*?\]\]/g, " ");
+      t = t.replace(/\[\[.*?\]\]/g, "");
     }
 
     // Citekeys — keep as word token or strip
     if (preset.countCitekeysAsWords) {
       t = t.replace(/\[@([^\]]+)\]/g, "$1");
     } else {
-      t = t.replace(/\[@[^\]]*\]/g, " ");
+      t = t.replace(/\[@[^\]]*\]/g, "");
     }
 
     // Strip remaining Markdown decoration
     t = t
-      .replace(/#{1,6}\s/g, " ")
+      .replace(/#{1,6}\s/g, "")
       .replace(/(\*\*|__)(.*?)\1/g, "$2")
       .replace(/(\*|_)(.*?)\1/g, "$2")
       .replace(/~~(.*?)~~/g, "$1")
-      .replace(/>\s/g, " ")
-      .replace(/[-*+]\s/g, " ")
-      .replace(/\d+\.\s/g, " ")
-      .replace(/\|/g, " ");
+      .replace(/>\s/g, "")
+      .replace(/[-*+]\s/g, "")
+      .replace(/\d+\.\s/g, "")
+      .replace(/\|/g, "");
 
     return t;
   }
@@ -250,10 +257,20 @@ export default class WordCountPlugin extends Plugin {
     return trimmed.split(/\s+/).filter((w) => w.length > 0).length;
   }
 
-
-  /** Total character count including spaces, after preprocessing. */
+  /**
+   * Character count including spaces and linebreaks, after preprocessing.
+   * Linebreaks are counted as characters (each \n = 1 char).
+   */
   countCharsWithSpaces(preprocessed: string): number {
-    return preprocessed.replace(/\n/g, "").length;
+    return preprocessed.length;
+  }
+
+  /**
+   * Character count excluding all whitespace (spaces, tabs, linebreaks),
+   * after preprocessing.
+   */
+  countCharsWithoutSpaces(preprocessed: string): number {
+    return preprocessed.replace(/\s/g, "").length;
   }
 
   countLines(text: string): number {
@@ -287,7 +304,8 @@ export default class WordCountPlugin extends Plugin {
   buildStatusText(preset: Preset, m: Metrics): string {
     const parts: string[] = [];
     if (preset.showWordsWithSpaces)    parts.push(t.statusWords(m.wordsWithSpaces));
-    if (preset.showCharsWithSpaces)      parts.push(t.statusChars(m.charsWithSpaces));
+    if (preset.showCharsWithSpaces)    parts.push(t.statusChars(m.charsWithSpaces));
+    if (preset.showCharsWithoutSpaces) parts.push(t.statusCharsNoSpaces(m.charsWithoutSpaces));
     if (preset.showPages)              parts.push(t.statusPages(m.pages));
     if (preset.showLines)              parts.push(t.statusLines(m.lines));
     if (preset.showParagraphs)         parts.push(t.statusParas(m.paragraphs));
@@ -312,6 +330,7 @@ export default class WordCountPlugin extends Plugin {
     const metrics: Metrics = {
       wordsWithSpaces,
       charsWithSpaces: this.countCharsWithSpaces(preprocessed),
+      charsWithoutSpaces: this.countCharsWithoutSpaces(preprocessed),
       // Page count is driven by the space-separated word count
       pages: (wordsWithSpaces / preset.wordsPerPage).toFixed(1),
       lines: this.countLines(raw),
@@ -457,6 +476,7 @@ class WordCountSettingTab extends PluginSettingTab {
     const visToggles: { key: keyof typeof t.toggles; }[] = [
       { key: "showWordsWithSpaces" },
       { key: "showCharsWithSpaces" },
+      { key: "showCharsWithoutSpaces" },
       { key: "showPages" },
       { key: "showLines" },
       { key: "showParagraphs" },
