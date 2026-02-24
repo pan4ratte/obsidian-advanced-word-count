@@ -33,7 +33,7 @@ You can quickly cycle your saved presets by clicking on status bar or from the c
 You can specify, how formatting elements will be counted:
 
 | Advanced option 			       | Off 							     			    		  | On 			     					   |
-| -------------------------------- | ------------------------------------------------------------ | -------------------------------------- |
+| :------------------------------- | :----------------------------------------------------------- | :------------------------------------- |
 | **Count links display text** 	   | label → label and url will be counted 						  | only label will be counted 			   |
 | **Ignore wikilinks** 		       | words in wikilinks will be counted	   						  | wikilinks will be ignored			   |
 | **Count wikilinks display text** | `[[wiki\|label]]` → wiki and label will be counted 		  | only label will be counted  		   |
