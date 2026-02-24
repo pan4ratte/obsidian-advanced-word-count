@@ -175,7 +175,13 @@ export default class WordCountPlugin extends Plugin {
   // Single pipeline shared by word AND character metrics. All "include/exclude"
   // options are applied here so every counter agrees on what counts as text.
 
-  preprocessText(raw: string, preset: Preset): string {
+  // ── Text pre-processing (shared base) ────────────────────────────────────
+  //
+  // preprocessBase strips frontmatter, comments, code, links, and inline
+  // decoration — everything EXCEPT list-item markers.  This lets word counting
+  // and character counting diverge only in how they treat those markers.
+
+  private preprocessBase(raw: string, preset: Preset): string {
     let s = raw;
 
     // Frontmatter
@@ -224,16 +230,26 @@ export default class WordCountPlugin extends Plugin {
       s = s.replace(/\[@[^\]]*\]/g, "");
     }
 
-    // Strip remaining Markdown decoration
+    // Strip inline Markdown decoration (headings, bold, italic, strike, quotes, pipes)
+    // List-item markers are intentionally left here for callers to handle.
     s = s
       .replace(/#{1,6}\s/g, "")
       .replace(/(\*\*|__)(.*?)\1/g, "$2")
       .replace(/(\*|_)(.*?)\1/g, "$2")
       .replace(/~~(.*?)~~/g, "$1")
       .replace(/>\s/g, "")
-      .replace(/[-*+]\s/g, "")
-      .replace(/\d+\.\s/g, "")
       .replace(/\|/g, "");
+
+    return s;
+  }
+
+  preprocessText(raw: string, preset: Preset): string {
+    // Build the base (no list markers yet), then strip them for word counting.
+    let s = this.preprocessBase(raw, preset);
+
+    s = s
+      .replace(/[-*+]\s/g, "")
+      .replace(/\d+\.\s/g, "");
 
     return s;
   }
@@ -247,14 +263,46 @@ export default class WordCountPlugin extends Plugin {
     return trimmed ? trimmed.split(/\s+/).length : 0;
   }
 
+  /** Replace list-item markers with fixed-length placeholders.
+   *
+   * Each marker pattern is replaced by a run of placeholder bytes (\x01–\x03)
+   * that cannot appear in real Markdown and contain no whitespace.  The regex
+   * always consumes the trailing space that Markdown requires after the marker,
+   * so the placeholder weight must account for that space explicitly.
+   *
+   * `countSpaces` controls whether the trailing separator space is included:
+   *
+   *   countSpaces = true  (Characters with spaces)
+   *     * / - / +   followed by space  → \x01\x02       (2 chars)
+   *     - [ ] / - [x] followed by space → \x01\x02      (2 chars)
+   *     N. / N)     followed by space  → \x01\x02\x03  (3 chars)
+   *
+   *   countSpaces = false (Characters without spaces)
+   *     * / - / +   followed by space  → \x01           (1 char)
+   *     - [ ] / - [x] followed by space → \x01          (1 char)
+   *     N. / N)     followed by space  → \x01\x02       (2 chars)
+   *
+   * Checkboxes are matched first because "- [ ] " starts with "- ", which
+   * the unordered rule would otherwise consume first.
+   */
+  private substituteListMarkers(base: string, countSpaces: boolean): string {
+    const u = countSpaces ? "\x01\x02"      : "\x01";        // unordered / checkbox
+    const n = countSpaces ? "\x01\x02\x03"  : "\x01\x02";   // numbered
+    return base
+      .replace(/^- \[[ x]\] /gm, u)   // checkbox
+      .replace(/^[*\-+] /gm,     u)   // unordered
+      .replace(/^\d+\. /gm,      n)   // numbered (dot)
+      .replace(/^\d+\) /gm,      n);  // numbered (paren)
+  }
+
   /** Character count including spaces and linebreaks, after preprocessing. */
-  countCharsWithSpaces(preprocessed: string): number {
-    return preprocessed.length;
+  countCharsWithSpaces(base: string): number {
+    return this.substituteListMarkers(base, true).length;
   }
 
   /** Character count excluding all whitespace, after preprocessing. */
-  countCharsWithoutSpaces(preprocessed: string): number {
-    return preprocessed.replace(/\s/g, "").length;
+  countCharsWithoutSpaces(base: string): number {
+    return this.substituteListMarkers(base, false).replace(/\s/g, "").length;
   }
 
   countLines(text: string): number {
@@ -310,13 +358,14 @@ export default class WordCountPlugin extends Plugin {
     if (!view) { this.statusBarItem.setText(""); return; }
 
     const raw = view.getViewData();
+    const base = this.preprocessBase(raw, preset);
     const preprocessed = this.preprocessText(raw, preset);
     const wordsWithSpaces = this.countWordsWithSpaces(preprocessed);
 
     const metrics: Metrics = {
       wordsWithSpaces,
-      charsWithSpaces: this.countCharsWithSpaces(preprocessed),
-      charsWithoutSpaces: this.countCharsWithoutSpaces(preprocessed),
+      charsWithSpaces: this.countCharsWithSpaces(base),
+      charsWithoutSpaces: this.countCharsWithoutSpaces(base),
       pages: (wordsWithSpaces / preset.wordsPerPage).toFixed(1),
       lines: this.countLines(raw),
       paragraphs: this.countParagraphs(raw),
