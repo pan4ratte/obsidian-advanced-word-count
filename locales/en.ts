@@ -26,10 +26,10 @@ const en = {
 
   // ── Settings page ──────────────────────────────────────────────────────────
   settingsHeading: "Advanced Word Count settings",
-  settingsDescription: "Advanced Word Count allows you to create complex word count presets that will display in the status bar. You can cycle presets by clicking on the status bar or using command palette. The plugin is made with academic use cases in mind, so you can count [@citekeys] and [[wikilinks]] with fine-tuning options.",
+  settingsDescription: "This plugin allows you to create complex word count presets that are displayed in the status bar. You can cycle presets by clicking on the status bar or using command palette. The plugin is made with academic use cases in mind, so you can fine-tune counting of [@citekeys] and [[wikilinks]].",
   settingsPresetsName: "Create preset",
   settingsPresetsDesc: "Use presets to set individual mertics for different writing purposes",
-  settingsAddPreset: "+ Add preset",
+  settingsAddPreset: "Add preset",
 
   // Preset card header
   badgeActive: "ACTIVE",
@@ -43,10 +43,10 @@ const en = {
 
   // Section headers
   sectionStatusBar: "Status bar metrics",
-  sectionStatusBarNote: "Choose which metrics appear in the status bar",
+  sectionStatusBarNote: "Choose, which metrics will appear in the status bar",
   sectionWordCountOptions: "Words and characters: advanced settings",
   sectionWordCountOptionsNote:
-    "Choose, what formatting elements are counted or ignored when counting words",
+    "Specify, how formatting elements will be counted when counting words and characters",
 
   // ── Delete confirmation modal ──────────────────────────────────────────────
   deleteConfirmTitle: "Delete preset",

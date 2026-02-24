@@ -8,7 +8,7 @@
 
 .wcp-preset-card {
   border: 1px solid var(--background-modifier-border);
-  border-radius: 8px;
+  border-radius: var(--setting-items-radius);
   padding: 16px;
   margin: 16px 0;
   background-color: var(--setting-items-background);
@@ -28,14 +28,14 @@
 }
 
 .wcp-active-badge {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
+  font-size: var(--font-smallest);
+  font-weight: var(--font-bold);
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   background: var(--interactive-accent);
   color: var(--text-on-accent);
   border-radius: 4px;
-  padding: 2px 6px;
+  padding: 4px 8px;
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -79,8 +79,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   padding: 0;
   background: transparent;
   color: var(--text-muted);
@@ -88,24 +88,25 @@
 }
 
 .wcp-btn-delete svg {
-  width: 15px;
-  height: 15px;
+  width: 16px;
+  height: 16px;
   pointer-events: none;
 }
 
 .wcp-btn-delete:hover {
-  color: var(--text-error);
+  background-color: var(--text-error);
   border-color: var(--text-error);
-  background: transparent;
+  background: var(--text-error);
 }
 
 /* ── Words per page row ──────────────────────────────────────────────────────── */
 
 .wcp-wpp-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    border-radius: var(--setting-items-radius);
 }
 
 .wcp-wpp-label {
@@ -114,12 +115,10 @@
 }
 
 .wcp-wpp-input {
-  width: 48px;
-  padding: 3px 6px;
-  border-radius: 4px;
-  border: 1px solid var(--background-modifier-border);
-  background: var(--background-primary);
-  color: var(--text-normal);
+  field-sizing: content;
+  min-width: 40px;
+  max-width: 25%;
+
 }
 
 .wcp-wpp-input:focus {
@@ -144,13 +143,17 @@
   padding-left: 8px;
 }
 
+.wcp-section-header:first-child {
+  margin-top: 0px !important;
+}
+
 .wcp-section-note {
-    font-size: var(--font-smallest);
-    color: var(--text-muted);
-    margin-bottom: 24px;
-    margin-top: 0;
-    padding-left: 16px;
-    padding-right: 16px;
+  font-size: var(--font-smallest);
+  color: var(--text-muted);
+  margin-bottom: 12px;
+  margin-top: 0;
+  padding-left: 8px;
+  padding-right: 16px;
 }
 
 /* ── Toggle grids ────────────────────────────────────────────────────────────── */
@@ -174,9 +177,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 6px 10px;
-  border-radius: 6px;
-  background: var(--background-primary);
+  padding: 8px 8px;
+  border-radius: 8px;
+  background-color: var(--setting-items-background);
   border: 1px solid var(--background-modifier-border);
   cursor: pointer;
   user-select: none;
