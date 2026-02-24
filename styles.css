@@ -1,0 +1,189 @@
+/* ── Status bar ─────────────────────────────────────────────────────────────── */
+
+.wcp-status-bar {
+  cursor: pointer;
+}
+
+/* ── Preset card ─────────────────────────────────────────────────────────────── */
+
+.wcp-preset-card {
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  padding: 16px;
+  margin: 12px 0;
+  background: var(--background-secondary);
+}
+
+.wcp-preset-card.is-active {
+  border-color: var(--interactive-accent);
+}
+
+/* ── Card header ─────────────────────────────────────────────────────────────── */
+
+.wcp-preset-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.wcp-active-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border-radius: 4px;
+  padding: 2px 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.wcp-name-input {
+  flex: 1;
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 600;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--background-modifier-border);
+  color: var(--text-normal);
+  outline: none;
+  padding: 2px 4px;
+}
+
+.wcp-name-input:focus {
+  border-bottom-color: var(--interactive-accent);
+}
+
+/* ── Header buttons ──────────────────────────────────────────────────────────── */
+
+.wcp-btn {
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid var(--background-modifier-border);
+  color: var(--text-normal);
+  background: var(--interactive-normal);
+  flex-shrink: 0;
+}
+
+.wcp-btn:hover {
+  background: var(--interactive-hover);
+}
+
+.wcp-btn-delete {
+  background: transparent;
+  color: var(--text-muted);
+  padding: 3px 8px;
+  font-size: 13px;
+}
+
+.wcp-btn-delete:hover {
+  color: var(--text-error);
+  border-color: var(--text-error);
+  background: transparent;
+}
+
+.wcp-btn-delete.is-disabled {
+  opacity: 0.3;
+  pointer-events: none;
+  cursor: default;
+}
+
+/* ── Words per page row ──────────────────────────────────────────────────────── */
+
+.wcp-wpp-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.wcp-wpp-label {
+  font-size: 13px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.wcp-wpp-input {
+  width: 80px;
+  padding: 3px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+  color: var(--text-normal);
+}
+
+.wcp-wpp-input:focus {
+  outline: none;
+  border-color: var(--interactive-accent);
+}
+
+.wcp-wpp-suffix {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* ── Section header ──────────────────────────────────────────────────────────── */
+
+.wcp-section-header {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0 0 8px;
+}
+
+.wcp-section-note {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 0 0 10px;
+}
+
+/* ── Toggle grids ────────────────────────────────────────────────────────────── */
+
+.wcp-toggle-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.wcp-toggle-grid-wide {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 6px;
+}
+
+/* ── Toggle chip ─────────────────────────────────────────────────────────────── */
+
+.wcp-toggle-chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  cursor: pointer;
+  user-select: none;
+}
+
+.wcp-toggle-chip:hover {
+  background: var(--background-modifier-hover);
+}
+
+.wcp-toggle-label {
+  font-size: 13px;
+  color: var(--text-normal);
+  pointer-events: none;
+}
+
+.wcp-toggle-chip .checkbox-container {
+  pointer-events: none;
+  flex-shrink: 0;
+}

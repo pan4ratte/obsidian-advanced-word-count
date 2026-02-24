@@ -10,7 +10,8 @@ interface Preset {
   wordsPerPage: number;
 
   // Metric visibility
-  showWords: boolean;
+  showWordsWithSpaces: boolean;    // space-separated word count (was showWords)
+  showCharsWithSpaces: boolean;    // total characters including spaces
   showPages: boolean;
   showLines: boolean;
   showParagraphs: boolean;
@@ -18,12 +19,12 @@ interface Preset {
   showWikiLinks: boolean;
   showCitekeys: boolean;
 
-  // Word count inclusions / exclusions
+  // Word count inclusions / exclusions (shared by both word metrics)
   countMdLinksAsWords: boolean;
-  countWikiLinkDisplayText: boolean; // count [[Page|Alias]] display text
-  ignoreWikiLinks: boolean;          // strip wikilinks entirely (overrides display text)
+  countWikiLinkDisplayText: boolean;
+  ignoreWikiLinks: boolean;
   countCitekeysAsWords: boolean;
-  ignoreComments: boolean;           // strip %% %% and <!-- --> before counting
+  ignoreComments: boolean;
 }
 
 interface WordCountSettings {
@@ -32,7 +33,8 @@ interface WordCountSettings {
 }
 
 interface Metrics {
-  words: number;
+  wordsWithSpaces: number;
+  charsWithSpaces: number;
   pages: string;
   lines: number;
   paragraphs: number;
@@ -48,7 +50,8 @@ function defaultPreset(overrides: Partial<Preset> = {}): Preset {
     id: crypto.randomUUID(),
     name: "Default",
     wordsPerPage: 250,
-    showWords: true,
+    showWordsWithSpaces: true,
+    showCharsWithSpaces: false,
     showPages: true,
     showLines: false,
     showParagraphs: false,
@@ -92,7 +95,7 @@ export default class WordCountPlugin extends Plugin {
     }
 
     this.statusBarItem = this.addStatusBarItem();
-    this.statusBarItem.style.cursor = "pointer";
+    this.statusBarItem.addClass("wcp-status-bar");
     this.statusBarItem.addEventListener("click", () => this.cyclePreset());
 
     this.registerAllPresetCommands();
@@ -133,9 +136,7 @@ export default class WordCountPlugin extends Plugin {
   // ── Commands ──────────────────────────────────────────────────────────────
 
   registerAllPresetCommands() {
-    for (const preset of this.settings.presets) {
-      this.registerPresetCommand(preset);
-    }
+    for (const preset of this.settings.presets) this.registerPresetCommand(preset);
   }
 
   registerPresetCommand(preset: Preset) {
@@ -171,41 +172,42 @@ export default class WordCountPlugin extends Plugin {
     }
   }
 
-  // ── Counters ──────────────────────────────────────────────────────────────
+  // ── Text pre-processing ───────────────────────────────────────────────────
+  //
+  // Single pipeline shared by BOTH word metrics. All "include as words"
+  // options are applied here, so the two counters below always agree on
+  // what counts as text.
 
-  countWords(text: string, preset: Preset): number {
-    let t = text;
+  preprocessText(raw: string, preset: Preset): string {
+    let t = raw;
 
-    // Strip frontmatter
+    // Frontmatter
     t = t.replace(/^---[\s\S]*?---\n?/, "");
 
-    // Comments — strip before anything else so comment content never leaks in
+    // Comments (stripped first so their content never leaks into counts)
     if (preset.ignoreComments) {
-      t = t.replace(/%%[\s\S]*?%%/g, " ");           // Obsidian comments %% ... %%
-      t = t.replace(/<!--[\s\S]*?-->/g, " ");         // HTML comments <!-- ... -->
+      t = t.replace(/%%[\s\S]*?%%/g, " ");
+      t = t.replace(/<!--[\s\S]*?-->/g, " ");
     }
 
-    // Code (always excluded — code is never prose)
-    t = t
-      .replace(/```[\s\S]*?```/g, " ")
-      .replace(/`[^`]*`/g, " ");
+    // Code blocks (always excluded)
+    t = t.replace(/```[\s\S]*?```/g, " ").replace(/`[^`]*`/g, " ");
 
     // Images (always excluded)
     t = t.replace(/!\[.*?\]\(.*?\)/g, " ");
 
-    // MD links
+    // Markdown links — keep label text or strip
     if (preset.countMdLinksAsWords) {
-      t = t.replace(/\[([^\]]*)\]\([^)]*\)/g, "$1"); // keep label
-      t = t.replace(/\([^)]*\)\[([^\]]*)\]/g, "$1"); // reversed — keep label
+      t = t.replace(/\[([^\]]*)\]\([^)]*\)/g, "$1"); // [label](url) → label
+      t = t.replace(/\([^)]*\)\[([^\]]*)\]/g, "$1"); // (url)[label] → label
     } else {
       t = t.replace(/\[.*?\]\(.*?\)/g, " ");
       t = t.replace(/\(.*?\)\[.*?\]/g, " ");
     }
 
-    // Wiki links — two independent decisions:
-    //   ignoreWikiLinks  → strip entirely regardless of display text setting
-    //   countWikiLinkDisplayText → when NOT ignoring, extract display text as words
+    // Wiki links
     if (preset.ignoreWikiLinks) {
+      // Strip entirely — overrides display-text setting
       t = t.replace(/\[\[.*?\]\]/g, " ");
     } else if (preset.countWikiLinkDisplayText) {
       // [[Page|Alias]] → "Alias", [[Page]] → "Page"
@@ -216,14 +218,15 @@ export default class WordCountPlugin extends Plugin {
       t = t.replace(/\[\[.*?\]\]/g, " ");
     }
 
-    // Citekeys
+    // Citekeys — keep as word token or strip
     if (preset.countCitekeysAsWords) {
       t = t.replace(/\[@([^\]]+)\]/g, "$1");
     } else {
       t = t.replace(/\[@[^\]]*\]/g, " ");
     }
 
-    const cleaned = t
+    // Strip remaining Markdown decoration
+    t = t
       .replace(/#{1,6}\s/g, " ")
       .replace(/(\*\*|__)(.*?)\1/g, "$2")
       .replace(/(\*|_)(.*?)\1/g, "$2")
@@ -231,11 +234,24 @@ export default class WordCountPlugin extends Plugin {
       .replace(/>\s/g, " ")
       .replace(/[-*+]\s/g, " ")
       .replace(/\d+\.\s/g, " ")
-      .replace(/\|/g, " ")
-      .trim();
+      .replace(/\|/g, " ");
 
-    if (!cleaned) return 0;
-    return cleaned.split(/\s+/).filter((w) => w.length > 0).length;
+    return t;
+  }
+
+  // ── Counters ──────────────────────────────────────────────────────────────
+
+  /** Traditional word count: space-separated tokens after preprocessing. */
+  countWordsWithSpaces(preprocessed: string): number {
+    const trimmed = preprocessed.trim();
+    if (!trimmed) return 0;
+    return trimmed.split(/\s+/).filter((w) => w.length > 0).length;
+  }
+
+
+  /** Total character count including spaces, after preprocessing. */
+  countCharsWithSpaces(preprocessed: string): number {
+    return preprocessed.replace(/\n/g, "").length;
   }
 
   countLines(text: string): number {
@@ -266,15 +282,16 @@ export default class WordCountPlugin extends Plugin {
 
   // ── Status bar ────────────────────────────────────────────────────────────
 
-  buildStatusText(preset: Preset, metrics: Metrics): string {
+  buildStatusText(preset: Preset, m: Metrics): string {
     const parts: string[] = [];
-    if (preset.showWords)         parts.push(`Words: ${metrics.words}`);
-    if (preset.showPages)         parts.push(`Pages: ${metrics.pages}`);
-    if (preset.showLines)         parts.push(`Lines: ${metrics.lines}`);
-    if (preset.showParagraphs)    parts.push(`Paras: ${metrics.paragraphs}`);
-    if (preset.showMarkdownLinks) parts.push(`MD Links: ${metrics.markdownLinks}`);
-    if (preset.showWikiLinks)     parts.push(`Wiki Links: ${metrics.wikiLinks}`);
-    if (preset.showCitekeys)      parts.push(`Citekeys: ${metrics.citekeys}`);
+    if (preset.showWordsWithSpaces)    parts.push(`Words: ${m.wordsWithSpaces}`);
+    if (preset.showCharsWithSpaces)      parts.push(`Chars: ${m.charsWithSpaces}`);
+    if (preset.showPages)              parts.push(`Pages: ${m.pages}`);
+    if (preset.showLines)              parts.push(`Lines: ${m.lines}`);
+    if (preset.showParagraphs)         parts.push(`Paras: ${m.paragraphs}`);
+    if (preset.showMarkdownLinks)      parts.push(`MD Links: ${m.markdownLinks}`);
+    if (preset.showWikiLinks)          parts.push(`Wiki Links: ${m.wikiLinks}`);
+    if (preset.showCitekeys)           parts.push(`Citekeys: ${m.citekeys}`);
     return parts.join("  |  ");
   }
 
@@ -285,16 +302,21 @@ export default class WordCountPlugin extends Plugin {
     const view = this.app.workspace.getActiveViewOfType(MarkdownView);
     if (!view) { this.statusBarItem.setText(""); return; }
 
-    const text = view.getViewData();
-    const words = this.countWords(text, preset);
+    const raw = view.getViewData();
+    const preprocessed = this.preprocessText(raw, preset);
+
+    const wordsWithSpaces = this.countWordsWithSpaces(preprocessed);
+
     const metrics: Metrics = {
-      words,
-      pages: (words / preset.wordsPerPage).toFixed(1),
-      lines: this.countLines(text),
-      paragraphs: this.countParagraphs(text),
-      markdownLinks: this.countMarkdownLinks(text),
-      wikiLinks: this.countWikiLinks(text),
-      citekeys: this.countCitekeys(text),
+      wordsWithSpaces,
+      charsWithSpaces: this.countCharsWithSpaces(preprocessed),
+      // Page count is driven by the space-separated word count
+      pages: (wordsWithSpaces / preset.wordsPerPage).toFixed(1),
+      lines: this.countLines(raw),
+      paragraphs: this.countParagraphs(raw),
+      markdownLinks: this.countMarkdownLinks(raw),
+      wikiLinks: this.countWikiLinks(raw),
+      citekeys: this.countCitekeys(raw),
     };
 
     const label = this.settings.presets.length > 1 ? `[${preset.name}]  ` : "";
@@ -340,9 +362,7 @@ class WordCountSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Presets")
-      .setDesc(
-        "Each preset has its own metrics and becomes a command palette command."
-      )
+      .setDesc("Each preset has its own metrics and becomes a command palette command.")
       .addButton((btn: ButtonComponent) =>
         btn
           .setButtonText("+ Add preset")
@@ -365,48 +385,27 @@ class WordCountSettingTab extends PluginSettingTab {
   renderPreset(containerEl: HTMLElement, preset: Preset) {
     const isActive = preset.id === this.plugin.settings.activePresetId;
 
-    const card = containerEl.createDiv();
-    card.style.cssText = `
-      border: 1px solid var(--background-modifier-border);
-      border-radius: 8px; padding: 16px; margin: 12px 0;
-      background: var(--background-secondary);
-      ${isActive ? "border-color: var(--interactive-accent);" : ""}
-    `;
+    const card = containerEl.createDiv({ cls: "wcp-preset-card" });
+    if (isActive) card.addClass("is-active");
 
     // ── Header ──────────────────────────────────────────────────────────────
-    const header = card.createDiv();
-    header.style.cssText =
-      "display:flex; align-items:center; gap:10px; margin-bottom:14px;";
+    const header = card.createDiv({ cls: "wcp-preset-header" });
 
     if (isActive) {
-      const badge = header.createEl("span", { text: "ACTIVE" });
-      badge.style.cssText = `
-        font-size:10px; font-weight:700; letter-spacing:.05em;
-        background:var(--interactive-accent); color:var(--text-on-accent);
-        border-radius:4px; padding:2px 6px;
-      `;
+      header.createEl("span", { text: "ACTIVE", cls: "wcp-active-badge" });
     }
 
     const nameInput = header.createEl("input", { type: "text" });
     nameInput.value = preset.name;
     nameInput.placeholder = "Preset name";
-    nameInput.style.cssText = `
-      flex:1; font-size:15px; font-weight:600; background:transparent;
-      border:none; border-bottom:1px solid var(--background-modifier-border);
-      color:var(--text-normal); outline:none; padding:2px 4px;
-    `;
+    nameInput.addClass("wcp-name-input");
     nameInput.addEventListener("change", async () => {
       preset.name = nameInput.value.trim() || "Unnamed";
       await this.save();
     });
 
     if (!isActive) {
-      const actBtn = header.createEl("button", { text: "Set active" });
-      actBtn.style.cssText = `
-        font-size:12px; padding:3px 10px; border-radius:4px; cursor:pointer;
-        background:var(--interactive-normal);
-        border:1px solid var(--background-modifier-border); color:var(--text-normal);
-      `;
+      const actBtn = header.createEl("button", { text: "Set active", cls: "wcp-btn" });
       actBtn.addEventListener("click", async () => {
         await this.plugin.activatePreset(preset.id);
         this.display();
@@ -416,11 +415,8 @@ class WordCountSettingTab extends PluginSettingTab {
     const canDelete = this.plugin.settings.presets.length > 1;
     const delBtn = header.createEl("button", { text: "✕" });
     delBtn.title = "Delete preset";
-    delBtn.style.cssText = `
-      font-size:13px; padding:3px 8px; border-radius:4px; cursor:pointer;
-      background:transparent; border:1px solid var(--background-modifier-border);
-      color:var(--text-muted); ${!canDelete ? "opacity:.3; pointer-events:none;" : ""}
-    `;
+    delBtn.addClass("wcp-btn", "wcp-btn-delete");
+    if (!canDelete) delBtn.addClass("is-disabled");
     delBtn.addEventListener("click", async () => {
       if (!canDelete) return;
       this.plugin.removePresetCommand(preset);
@@ -435,92 +431,82 @@ class WordCountSettingTab extends PluginSettingTab {
     });
 
     // ── Words per page ──────────────────────────────────────────────────────
-    const wppRow = card.createDiv();
-    wppRow.style.cssText =
-      "display:flex; align-items:center; gap:8px; margin-bottom:14px;";
-    const wppLabel = wppRow.createEl("span", { text: "Words per page:" });
-    wppLabel.style.cssText =
-      "font-size:13px; color:var(--text-muted); white-space:nowrap;";
+    const wppRow = card.createDiv({ cls: "wcp-wpp-row" });
+    wppRow.createEl("span", { text: "Words per page:", cls: "wcp-wpp-label" });
 
     const wppInput = wppRow.createEl("input", { type: "number" });
     wppInput.value = String(preset.wordsPerPage);
     wppInput.min = "1";
-    wppInput.style.cssText = `
-      width:80px; padding:3px 6px; border-radius:4px;
-      border:1px solid var(--background-modifier-border);
-      background:var(--background-primary); color:var(--text-normal);
-    `;
+    wppInput.addClass("wcp-wpp-input");
     wppInput.addEventListener("change", async () => {
       const n = parseInt(wppInput.value);
-      if (!isNaN(n) && n > 0) {
-        preset.wordsPerPage = n;
-        await this.save();
-      }
+      if (!isNaN(n) && n > 0) { preset.wordsPerPage = n; await this.save(); }
     });
-    wppRow.createEl("span", { text: "words = 1 page" }).style.cssText =
-      "font-size:12px; color:var(--text-muted);";
+    wppRow.createEl("span", { text: "words = 1 page", cls: "wcp-wpp-suffix" });
 
-    // ── Section: Status bar metrics ─────────────────────────────────────────
+    // ── Status bar metrics ──────────────────────────────────────────────────
     this.sectionHeader(card, "Status bar metrics");
 
-    const visGrid = card.createDiv();
-    visGrid.style.cssText = `
-      display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
-      gap:6px; margin-bottom:16px;
-    `;
+    const visGrid = card.createDiv({ cls: "wcp-toggle-grid" });
 
-    const visToggles: { key: keyof Preset; label: string }[] = [
-      { key: "showWords",         label: "Word count" },
-      { key: "showPages",         label: "Page count" },
-      { key: "showLines",         label: "Line count" },
-      { key: "showParagraphs",    label: "Paragraph count" },
-      { key: "showMarkdownLinks", label: "Markdown links" },
-      { key: "showWikiLinks",     label: "Wiki links" },
-      { key: "showCitekeys",      label: "Citekeys" },
+    const visToggles: { key: keyof Preset; label: string; hint: string }[] = [
+      {
+        key: "showWordsWithSpaces",
+        label: "Words (with spaces)",
+        hint: "Space-separated word count, same as most word processors. Page count is based on this metric.",
+      },
+      {
+        key: "showCharsWithSpaces",
+        label: "Chars (with spaces)",
+        hint: "Total character count including spaces. 'hello world' counts as 11.",
+      },
+      { key: "showPages",         label: "Page count",       hint: "Estimated pages = words ÷ words-per-page." },
+      { key: "showLines",         label: "Line count",       hint: "Total lines including blank lines." },
+      { key: "showParagraphs",    label: "Paragraph count",  hint: "Blocks of text separated by blank lines." },
+      { key: "showMarkdownLinks", label: "Markdown links",   hint: "Count of [label](url) and (url)[label] links." },
+      { key: "showWikiLinks",     label: "Wiki links",       hint: "Count of [[wiki]] style links." },
+      { key: "showCitekeys",      label: "Citekeys",         hint: "Count of [@citekey] citation references." },
     ];
 
     for (const t of visToggles) {
-      this.renderToggleChip(visGrid, preset, t.key, t.label);
+      this.renderToggleChip(visGrid, preset, t.key, t.label, t.hint);
     }
 
-    // ── Section: Word count options ─────────────────────────────────────────
+    // ── Word count — include as words ───────────────────────────────────────
     this.sectionHeader(card, "Word count — include as words");
 
     const note = card.createEl("p", {
-      text: "Control which markup tokens contribute to the word count.",
+      text: "These options apply to both word metrics above. They control what text is kept or stripped before counting.",
     });
-    note.style.cssText =
-      "font-size:12px; color:var(--text-muted); margin:0 0 10px;";
+    note.addClass("wcp-section-note");
 
-    const wcGrid = card.createDiv();
-    wcGrid.style.cssText =
-      "display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:6px;";
+    const wcGrid = card.createDiv({ cls: "wcp-toggle-grid-wide" });
 
     const wcToggles: { key: keyof Preset; label: string; hint: string }[] = [
       {
         key: "countMdLinksAsWords",
         label: "MD link labels",
-        hint: "Count [label](url) label text as words. Off = strip entirely.",
+        hint: "On: [label](url) → label text counts. Off: entire link is stripped.",
       },
       {
         key: "ignoreWikiLinks",
         label: "Ignore wiki links entirely",
-        hint: "Strip [[…]] from word count completely. Overrides the display text option below.",
+        hint: "Strip [[…]] completely. When on, the display text option below has no effect.",
       },
       {
         key: "countWikiLinkDisplayText",
         label: "Wiki link display text",
-        hint: "Count [[Page|Alias]] or [[Page]] text as words. Has no effect if 'Ignore wiki links' is on.",
+        hint: "On: [[Page|Alias]] → 'Alias' counts; [[Page]] → 'Page' counts. Has no effect if 'Ignore wiki links' is on.",
       },
       {
         key: "countCitekeysAsWords",
         label: "Citekey tokens",
-        hint: "Count [@citekey] as a word. Off = strip entirely.",
+        hint: "On: [@doe2020] → 'doe2020' counts as a word. Off: stripped entirely.",
       },
       {
         key: "ignoreComments",
         label: "Ignore comments",
-        hint: "Strip Obsidian comments (%% … %%) and HTML comments (<!-- … -->) before counting words.",
+        hint: "Strip Obsidian comments (%% … %%) and HTML comments (<!-- … -->) before counting.",
       },
     ];
 
@@ -532,11 +518,7 @@ class WordCountSettingTab extends PluginSettingTab {
   // ── UI helpers ────────────────────────────────────────────────────────────
 
   sectionHeader(parent: HTMLElement, text: string) {
-    const h = parent.createEl("p", { text });
-    h.style.cssText = `
-      font-size:11px; font-weight:700; letter-spacing:.06em;
-      text-transform:uppercase; color:var(--text-muted); margin:0 0 8px;
-    `;
+    parent.createEl("p", { text, cls: "wcp-section-header" });
   }
 
   renderToggleChip(
@@ -546,23 +528,13 @@ class WordCountSettingTab extends PluginSettingTab {
     label: string,
     hint?: string
   ) {
-    const row = parent.createDiv();
-    row.style.cssText = `
-      display:flex; align-items:center; justify-content:space-between;
-      padding:6px 10px; border-radius:6px;
-      background:var(--background-primary);
-      border:1px solid var(--background-modifier-border);
-      cursor:pointer;
-    `;
+    const row = parent.createDiv({ cls: "wcp-toggle-chip" });
     if (hint) row.title = hint;
 
-    const labelEl = row.createEl("span", { text: label });
-    labelEl.style.cssText =
-      "font-size:13px; color:var(--text-normal); pointer-events:none;";
+    row.createEl("span", { text: label, cls: "wcp-toggle-label" });
 
     const toggle = row.createDiv({ cls: "checkbox-container" });
     if (preset[key]) toggle.addClass("is-enabled");
-    toggle.style.pointerEvents = "none";
 
     row.addEventListener("click", async () => {
       (preset[key] as boolean) = !(preset[key] as boolean);
