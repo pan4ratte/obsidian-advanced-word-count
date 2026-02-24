@@ -1,4 +1,4 @@
-import { App, Plugin, PluginSettingTab, Setting, MarkdownView, ButtonComponent, setTooltip } from "obsidian";
+import { App, Modal, Plugin, PluginSettingTab, Setting, MarkdownView, ButtonComponent, setIcon, setTooltip } from "obsidian";
 import { t, refreshLocale } from "./locales";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -11,7 +11,7 @@ interface Preset {
   wordsPerPage: number;
 
   // Metric visibility
-  showWordsWithSpaces: boolean;    // space-separated word count (was showWords)
+  showWordsWithSpaces: boolean;    // space-separated word count
   showCharsWithSpaces: boolean;    // total characters including spaces and linebreaks
   showCharsWithoutSpaces: boolean; // total characters excluding all whitespace
   showPages: boolean;
@@ -86,14 +86,13 @@ export default class WordCountPlugin extends Plugin {
   async onload() {
     await this.loadSettings();
 
+    // Ensure at least one preset exists and activePresetId is valid
     if (this.settings.presets.length === 0) {
       const first = defaultPreset({ name: t.defaultPresetName });
       this.settings.presets.push(first);
       this.settings.activePresetId = first.id;
       await this.saveSettings();
-    }
-
-    if (!this.getActivePreset()) {
+    } else if (!this.getActivePreset()) {
       this.settings.activePresetId = this.settings.presets[0].id;
       await this.saveSettings();
     }
@@ -105,12 +104,8 @@ export default class WordCountPlugin extends Plugin {
 
     this.registerAllPresetCommands();
 
-    this.registerEvent(
-      this.app.workspace.on("active-leaf-change", () => this.updateCount())
-    );
-    this.registerEvent(
-      this.app.workspace.on("editor-change", () => this.updateCount())
-    );
+    this.registerEvent(this.app.workspace.on("active-leaf-change", () => this.updateCount()));
+    this.registerEvent(this.app.workspace.on("editor-change", () => this.updateCount()));
 
     this.addSettingTab(new WordCountSettingTab(this.app, this));
     this.updateCount();
@@ -119,9 +114,7 @@ export default class WordCountPlugin extends Plugin {
   // ── Preset helpers ────────────────────────────────────────────────────────
 
   getActivePreset(): Preset | undefined {
-    return this.settings.presets.find(
-      (p) => p.id === this.settings.activePresetId
-    );
+    return this.settings.presets.find((p) => p.id === this.settings.activePresetId);
   }
 
   async activatePreset(id: string) {
@@ -131,11 +124,10 @@ export default class WordCountPlugin extends Plugin {
   }
 
   cyclePreset() {
-    const presets = this.settings.presets;
+    const { presets } = this.settings;
     if (presets.length <= 1) return;
     const idx = presets.findIndex((p) => p.id === this.settings.activePresetId);
-    const next = presets[(idx + 1) % presets.length];
-    this.activatePreset(next.id);
+    this.activatePreset(presets[(idx + 1) % presets.length].id);
   }
 
   // ── Commands ──────────────────────────────────────────────────────────────
@@ -162,17 +154,18 @@ export default class WordCountPlugin extends Plugin {
   }
 
   refreshPresetCommands() {
-    for (const cmdId of this.registeredCommandIds) {
-      const presetId = cmdId.replace("word-count-activate-preset-", "");
-      if (!this.settings.presets.find((p) => p.id === presetId)) {
-        (this.app as any).commands?.removeCommand(`${this.manifest.id}:${cmdId}`);
-        this.registeredCommandIds.delete(cmdId);
-      }
+    // Collect stale IDs first to avoid mutating the Set during iteration
+    const stale = [...this.registeredCommandIds].filter(
+      (cmdId) => !this.settings.presets.find((p) => p.id === cmdId.replace("word-count-activate-preset-", ""))
+    );
+    for (const cmdId of stale) {
+      (this.app as any).commands?.removeCommand(`${this.manifest.id}:${cmdId}`);
+      this.registeredCommandIds.delete(cmdId);
     }
+
     for (const preset of this.settings.presets) {
       this.registerPresetCommand(preset);
-      const fullId = `${this.manifest.id}:word-count-activate-preset-${preset.id}`;
-      const cmd = (this.app as any).commands?.commands?.[fullId];
+      const cmd = (this.app as any).commands?.commands?.[`${this.manifest.id}:word-count-activate-preset-${preset.id}`];
       if (cmd) cmd.name = t.commandActivatePreset(preset.name);
     }
   }
@@ -183,59 +176,56 @@ export default class WordCountPlugin extends Plugin {
   // options are applied here so every counter agrees on what counts as text.
 
   preprocessText(raw: string, preset: Preset): string {
-    let t = raw;
+    let s = raw;
 
     // Frontmatter
-    t = t.replace(/^---[\s\S]*?---\n?/, "");
+    s = s.replace(/^---[\s\S]*?---\n?/, "");
 
     // Comments (stripped first so their content never leaks into counts)
     if (preset.ignoreComments) {
-      t = t.replace(/%%[\s\S]*?%%/g, "");
-      t = t.replace(/<!--[\s\S]*?-->/g, "");
+      s = s.replace(/%%[\s\S]*?%%/g, "").replace(/<!--[\s\S]*?-->/g, "");
     }
 
     // Code blocks (always excluded)
-    t = t.replace(/```[\s\S]*?```/g, "").replace(/`[^`]*`/g, "");
+    s = s.replace(/```[\s\S]*?```/g, "").replace(/`[^`]*`/g, "");
 
     // Images (always excluded)
-    t = t.replace(/!\[.*?\]\(.*?\)/g, "");
+    s = s.replace(/!\[.*?\]\(.*?\)/g, "");
 
     // Markdown links — keep label text or strip
     if (preset.countMdLinksAsWords) {
-      t = t.replace(/\[([^\]]*)\]\([^)]*\)/g, "$1"); // [label](url) → label
-      t = t.replace(/\([^)]*\)\[([^\]]*)\]/g, "$1"); // (url)[label] → label
+      s = s.replace(/\[([^\]]*)\]\([^)]*\)/g, "$1");
+      s = s.replace(/\([^)]*\)\[([^\]]*)\]/g, "$1");
     } else {
-      // Keep label words + URL as a single token (no splitting URL segments)
-      t = t.replace(/\[([^\]]*)\]\(([^)]*)\)/g, (_, label, url) =>
-        `${label} ${url.trim()}`.trim()
-      );
-      t = t.replace(/\(([^)]*)\)\[([^\]]*)\]/g, (_, url, label) =>
-        `${label} ${url.trim()}`.trim()
-      );
+      s = s.replace(/\[([^\]]*)\]\(([^)]*)\)/g, (_, label, url) => `${label} ${url.trim()}`.trim());
+      s = s.replace(/\(([^)]*)\)\[([^\]]*)\]/g, (_, url, label) => `${label} ${url.trim()}`.trim());
     }
 
     // Wiki links
     if (preset.ignoreWikiLinks) {
-      // Strip entirely — overrides display-text setting
-      t = t.replace(/\[\[.*?\]\]/g, "");
+      // Strip entirely
+      s = s.replace(/\[\[.*?\]\]/g, "");
     } else if (preset.countWikiLinkDisplayText) {
       // [[Page|Alias]] → "Alias", [[Page]] → "Page"
-      t = t.replace(/\[\[([^\]|]*)\|?([^\]]*)\]\]/g, (_, page, alias) =>
+      s = s.replace(/\[\[([^\]|]*)\|?([^\]]*)\]\]/g, (_, page, alias) =>
         (alias.trim() || page.trim()).replace(/#.*$/, "").trim()
       );
     } else {
-      t = t.replace(/\[\[.*?\]\]/g, "");
+      // Count every word inside: [[Page#Heading|Alias]] → "Page Heading Alias"
+      s = s.replace(/\[\[([^\]]*)\]\]/g, (_, inner) =>
+        inner.replace(/[|#]/g, " ").trim()
+      );
     }
 
     // Citekeys — keep as word token or strip
     if (preset.countCitekeysAsWords) {
-      t = t.replace(/\[@([^\]]+)\]/g, "$1");
+      s = s.replace(/\[@([^\]]+)\]/g, "$1");
     } else {
-      t = t.replace(/\[@[^\]]*\]/g, "");
+      s = s.replace(/\[@[^\]]*\]/g, "");
     }
 
     // Strip remaining Markdown decoration
-    t = t
+    s = s
       .replace(/#{1,6}\s/g, "")
       .replace(/(\*\*|__)(.*?)\1/g, "$2")
       .replace(/(\*|_)(.*?)\1/g, "$2")
@@ -245,7 +235,7 @@ export default class WordCountPlugin extends Plugin {
       .replace(/\d+\.\s/g, "")
       .replace(/\|/g, "");
 
-    return t;
+    return s;
   }
 
   // ── Counters ──────────────────────────────────────────────────────────────
@@ -253,22 +243,16 @@ export default class WordCountPlugin extends Plugin {
   /** Traditional word count: space-separated tokens after preprocessing. */
   countWordsWithSpaces(preprocessed: string): number {
     const trimmed = preprocessed.trim();
-    if (!trimmed) return 0;
-    return trimmed.split(/\s+/).filter((w) => w.length > 0).length;
+    // split(/\s+/) on a non-empty trimmed string never produces empty tokens
+    return trimmed ? trimmed.split(/\s+/).length : 0;
   }
 
-  /**
-   * Character count including spaces and linebreaks, after preprocessing.
-   * Linebreaks are counted as characters (each \n = 1 char).
-   */
+  /** Character count including spaces and linebreaks, after preprocessing. */
   countCharsWithSpaces(preprocessed: string): number {
     return preprocessed.length;
   }
 
-  /**
-   * Character count excluding all whitespace (spaces, tabs, linebreaks),
-   * after preprocessing.
-   */
+  /** Character count excluding all whitespace, after preprocessing. */
   countCharsWithoutSpaces(preprocessed: string): number {
     return preprocessed.replace(/\s/g, "").length;
   }
@@ -279,16 +263,15 @@ export default class WordCountPlugin extends Plugin {
 
   countParagraphs(text: string): number {
     if (!text) return 0;
-    const stripped = text.replace(/^---[\s\S]*?---\n?/, "");
-    return stripped.split(/\n{2,}/).filter((b) => b.trim().length > 0).length;
+    return text
+      .replace(/^---[\s\S]*?---\n?/, "")
+      .split(/\n{2,}/)
+      .filter((b) => b.trim().length > 0).length;
   }
 
   countMarkdownLinks(text: string): number {
-    const standard = (text.match(/\[.*?\]\(.*?\)/g) ?? []).filter(
-      (m) => !m.startsWith("!")
-    );
-    const reversed = text.match(/\(.*?\)\[.*?\]/g) ?? [];
-    return standard.length + reversed.length;
+    const standard = (text.match(/\[.*?\]\(.*?\)/g) ?? []).filter((m) => !m.startsWith("!"));
+    return standard.length + (text.match(/\(.*?\)\[.*?\]/g) ?? []).length;
   }
 
   countWikiLinks(text: string): number {
@@ -302,16 +285,20 @@ export default class WordCountPlugin extends Plugin {
   // ── Status bar ────────────────────────────────────────────────────────────
 
   buildStatusText(preset: Preset, m: Metrics): string {
-    const parts: string[] = [];
-    if (preset.showWordsWithSpaces)    parts.push(t.statusWords(m.wordsWithSpaces));
-    if (preset.showCharsWithSpaces)    parts.push(t.statusChars(m.charsWithSpaces));
-    if (preset.showCharsWithoutSpaces) parts.push(t.statusCharsNoSpaces(m.charsWithoutSpaces));
-    if (preset.showPages)              parts.push(t.statusPages(m.pages));
-    if (preset.showLines)              parts.push(t.statusLines(m.lines));
-    if (preset.showParagraphs)         parts.push(t.statusParas(m.paragraphs));
-    if (preset.showMarkdownLinks)      parts.push(t.statusMdLinks(m.markdownLinks));
-    if (preset.showWikiLinks)          parts.push(t.statusWikiLinks(m.wikiLinks));
-    if (preset.showCitekeys)           parts.push(t.statusCitekeys(m.citekeys));
+    const parts: string[] = (
+      [
+        [preset.showWordsWithSpaces,    t.statusWords(m.wordsWithSpaces)],
+        [preset.showCharsWithSpaces,    t.statusChars(m.charsWithSpaces)],
+        [preset.showCharsWithoutSpaces, t.statusCharsNoSpaces(m.charsWithoutSpaces)],
+        [preset.showPages,              t.statusPages(m.pages)],
+        [preset.showLines,              t.statusLines(m.lines)],
+        [preset.showParagraphs,         t.statusParas(m.paragraphs)],
+        [preset.showMarkdownLinks,      t.statusMdLinks(m.markdownLinks)],
+        [preset.showWikiLinks,          t.statusWikiLinks(m.wikiLinks)],
+        [preset.showCitekeys,           t.statusCitekeys(m.citekeys)],
+      ] as [boolean, string][]
+    ).filter(([show]) => show).map(([, text]) => text);
+
     return parts.join("  |  ");
   }
 
@@ -324,14 +311,12 @@ export default class WordCountPlugin extends Plugin {
 
     const raw = view.getViewData();
     const preprocessed = this.preprocessText(raw, preset);
-
     const wordsWithSpaces = this.countWordsWithSpaces(preprocessed);
 
     const metrics: Metrics = {
       wordsWithSpaces,
       charsWithSpaces: this.countCharsWithSpaces(preprocessed),
       charsWithoutSpaces: this.countCharsWithoutSpaces(preprocessed),
-      // Page count is driven by the space-separated word count
       pages: (wordsWithSpaces / preset.wordsPerPage).toFixed(1),
       lines: this.countLines(raw),
       paragraphs: this.countParagraphs(raw),
@@ -340,14 +325,13 @@ export default class WordCountPlugin extends Plugin {
       citekeys: this.countCitekeys(raw),
     };
 
-    const label = this.settings.presets.length > 1 ? `[${preset.name}]  ` : "";
+    const multiPreset = this.settings.presets.length > 1;
+    const label = multiPreset ? `[${preset.name}]  ` : "";
     const stats = this.buildStatusText(preset, metrics);
     this.statusBarItem.setText(label + (stats || t.statusNoMetrics));
     setTooltip(
       this.statusBarItem,
-      this.settings.presets.length > 1
-        ? t.statusTooltipCycle(preset.name)
-        : t.statusTooltipSingle(preset.name),
+      multiPreset ? t.statusTooltipCycle(preset.name) : t.statusTooltipSingle(preset.name),
       { placement: "top" }
     );
   }
@@ -383,22 +367,20 @@ class WordCountSettingTab extends PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
     containerEl.createEl("h2", { text: t.settingsHeading });
+    containerEl.createEl("p", { text: t.settingsDescription, cls: "wcp-section-note" });
 
     new Setting(containerEl)
       .setName(t.settingsPresetsName)
       .setDesc(t.settingsPresetsDesc)
       .addButton((btn: ButtonComponent) =>
-        btn
-          .setButtonText(t.settingsAddPreset)
-          .setCta()
-          .onClick(async () => {
-            const preset = defaultPreset({
-              name: t.newPresetName(this.plugin.settings.presets.length + 1),
-            });
-            this.plugin.settings.presets.push(preset);
-            await this.save();
-            this.display();
-          })
+        btn.setButtonText(t.settingsAddPreset).setCta().onClick(async () => {
+          const preset = defaultPreset({
+            name: t.newPresetName(this.plugin.settings.presets.length + 1),
+          });
+          this.plugin.settings.presets.push(preset);
+          await this.save();
+          this.display();
+        })
       );
 
     for (const preset of this.plugin.settings.presets) {
@@ -408,16 +390,12 @@ class WordCountSettingTab extends PluginSettingTab {
 
   renderPreset(containerEl: HTMLElement, preset: Preset) {
     const isActive = preset.id === this.plugin.settings.activePresetId;
-
-    const card = containerEl.createDiv({ cls: "wcp-preset-card" });
-    if (isActive) card.addClass("is-active");
+    const card = containerEl.createDiv({ cls: `wcp-preset-card${isActive ? " is-active" : ""}` });
 
     // ── Header ──────────────────────────────────────────────────────────────
     const header = card.createDiv({ cls: "wcp-preset-header" });
 
-    if (isActive) {
-      header.createEl("span", { text: t.badgeActive, cls: "wcp-active-badge" });
-    }
+    if (isActive) header.createEl("span", { text: t.badgeActive, cls: "wcp-active-badge" });
 
     const nameInput = header.createEl("input", { type: "text" });
     nameInput.value = preset.name;
@@ -436,22 +414,20 @@ class WordCountSettingTab extends PluginSettingTab {
       });
     }
 
-    const canDelete = this.plugin.settings.presets.length > 1;
-    const delBtn = header.createEl("button", { text: t.btnDelete });
+    const delBtn = header.createEl("button");
+    setIcon(delBtn, "trash-2");
     setTooltip(delBtn, t.btnDeleteTooltip, { placement: "top" });
     delBtn.addClass("wcp-btn", "wcp-btn-delete");
-    if (!canDelete) delBtn.addClass("is-disabled");
-    delBtn.addEventListener("click", async () => {
-      if (!canDelete) return;
-      this.plugin.removePresetCommand(preset);
-      this.plugin.settings.presets = this.plugin.settings.presets.filter(
-        (p) => p.id !== preset.id
-      );
-      if (this.plugin.settings.activePresetId === preset.id) {
-        this.plugin.settings.activePresetId = this.plugin.settings.presets[0].id;
-      }
-      await this.save();
-      this.display();
+    delBtn.addEventListener("click", () => {
+      new DeleteConfirmModal(this.plugin.app, preset.name, async () => {
+        this.plugin.removePresetCommand(preset);
+        this.plugin.settings.presets = this.plugin.settings.presets.filter((p) => p.id !== preset.id);
+        if (this.plugin.settings.activePresetId === preset.id) {
+          this.plugin.settings.activePresetId = this.plugin.settings.presets[0]?.id ?? "";
+        }
+        await this.save();
+        this.display();
+      }).open();
     });
 
     // ── Words per page ──────────────────────────────────────────────────────
@@ -470,45 +446,20 @@ class WordCountSettingTab extends PluginSettingTab {
 
     // ── Status bar metrics ──────────────────────────────────────────────────
     this.sectionHeader(card, t.sectionStatusBar);
+    card.createEl("p", { text: t.sectionStatusBarNote, cls: "wcp-section-note" });
 
     const visGrid = card.createDiv({ cls: "wcp-toggle-grid" });
-
-    const visToggles: { key: keyof typeof t.toggles; }[] = [
-      { key: "showWordsWithSpaces" },
-      { key: "showCharsWithSpaces" },
-      { key: "showCharsWithoutSpaces" },
-      { key: "showPages" },
-      { key: "showLines" },
-      { key: "showParagraphs" },
-      { key: "showMarkdownLinks" },
-      { key: "showWikiLinks" },
-      { key: "showCitekeys" },
-    ];
-
-    for (const { key } of visToggles) {
-      this.renderToggleChip(visGrid, preset, key, t.toggles[key].label, t.toggles[key].hint);
+    for (const key of Object.keys(t.toggles) as (keyof typeof t.toggles)[]) {
+      this.renderToggleChip(visGrid, preset, key as keyof Preset, t.toggles[key].label, t.toggles[key].hint);
     }
 
-    // ── Word count — include as words ───────────────────────────────────────
+    // ── Word count options ──────────────────────────────────────────────────
     this.sectionHeader(card, t.sectionWordCountOptions);
-
-    const note = card.createEl("p", {
-      text: t.sectionWordCountOptionsNote,
-    });
-    note.addClass("wcp-section-note");
+    card.createEl("p", { text: t.sectionWordCountOptionsNote, cls: "wcp-section-note" });
 
     const wcGrid = card.createDiv({ cls: "wcp-toggle-grid-wide" });
-
-    const wcToggles: { key: keyof typeof t.wordCountOptions; }[] = [
-      { key: "countMdLinksAsWords" },
-      { key: "ignoreWikiLinks" },
-      { key: "countWikiLinkDisplayText" },
-      { key: "countCitekeysAsWords" },
-      { key: "ignoreComments" },
-    ];
-
-    for (const { key } of wcToggles) {
-      this.renderToggleChip(wcGrid, preset, key, t.wordCountOptions[key].label, t.wordCountOptions[key].hint);
+    for (const key of Object.keys(t.wordCountOptions) as (keyof typeof t.wordCountOptions)[]) {
+      this.renderToggleChip(wcGrid, preset, key as keyof Preset, t.wordCountOptions[key].label, t.wordCountOptions[key].hint);
     }
   }
 
@@ -518,13 +469,7 @@ class WordCountSettingTab extends PluginSettingTab {
     parent.createEl("p", { text, cls: "wcp-section-header" });
   }
 
-  renderToggleChip(
-    parent: HTMLElement,
-    preset: Preset,
-    key: keyof Preset,
-    label: string,
-    hint?: string
-  ) {
+  renderToggleChip(parent: HTMLElement, preset: Preset, key: keyof Preset, label: string, hint?: string) {
     const row = parent.createDiv({ cls: "wcp-toggle-chip" });
     if (hint) setTooltip(row, hint, { placement: "top" });
 
@@ -538,5 +483,40 @@ class WordCountSettingTab extends PluginSettingTab {
       toggle.toggleClass("is-enabled", preset[key] as boolean);
       await this.save();
     });
+  }
+}
+
+// ── Delete confirmation modal ─────────────────────────────────────────────────
+
+class DeleteConfirmModal extends Modal {
+  private presetName: string;
+  private onConfirm: () => void;
+
+  constructor(app: App, presetName: string, onConfirm: () => void) {
+    super(app);
+    this.presetName = presetName;
+    this.onConfirm = onConfirm;
+  }
+
+  onOpen() {
+    const { contentEl } = this;
+    contentEl.createEl("h3", { text: t.deleteConfirmTitle });
+    contentEl.createEl("p", { text: t.deleteConfirmMessage(this.presetName) });
+
+    const btnRow = contentEl.createDiv({ cls: "wcp-modal-buttons" });
+
+    btnRow.createEl("button", { text: t.deleteConfirmNo })
+      .addEventListener("click", () => this.close());
+
+    const confirmBtn = btnRow.createEl("button", { text: t.deleteConfirmYes });
+    confirmBtn.addClass("mod-warning");
+    confirmBtn.addEventListener("click", () => {
+      this.onConfirm();
+      this.close();
+    });
+  }
+
+  onClose() {
+    this.contentEl.empty();
   }
 }

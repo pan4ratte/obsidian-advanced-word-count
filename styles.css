@@ -7,11 +7,11 @@
 /* ── Preset card ─────────────────────────────────────────────────────────────── */
 
 .wcp-preset-card {
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 8px;
-    padding: 16px;
-    margin: 16px 0;
-    background-color: var(--setting-items-background);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  padding: 16px;
+  margin: 16px 0;
+  background-color: var(--setting-items-background);
 }
 
 .wcp-preset-card.is-active {
@@ -74,11 +74,23 @@
   background: var(--interactive-hover);
 }
 
+/* Icon-only delete button */
 .wcp-btn-delete {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
   background: transparent;
   color: var(--text-muted);
-  padding: 3px 8px;
-  font-size: 13px;
+  border-color: transparent;
+}
+
+.wcp-btn-delete svg {
+  width: 15px;
+  height: 15px;
+  pointer-events: none;
 }
 
 .wcp-btn-delete:hover {
@@ -87,26 +99,17 @@
   background: transparent;
 }
 
-.wcp-btn-delete.is-disabled {
-  opacity: 0.3;
-  pointer-events: none;
-  cursor: default;
-}
-
 /* ── Words per page row ──────────────────────────────────────────────────────── */
 
 .wcp-wpp-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding-left: 8px;
-    padding-right: 8px;
-    padding-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 8px 0;
 }
 
 .wcp-wpp-label {
-  font-size: 13px;
-  color: var(--text-muted);
+  font-size: var(--font-small);
   white-space: nowrap;
 }
 
@@ -125,30 +128,29 @@
 }
 
 .wcp-wpp-suffix {
-  font-size: 12px;
-  color: var(--text-muted);
+  font-size: var(--font-small);
 }
 
 /* ── Section header ──────────────────────────────────────────────────────────── */
 
 .wcp-section-header {
-    font-size: var(--font-smallest);
-    font-weight: var(--font-bold);
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    margin-top: 20px;
-    margin-bottom: 8px;
-    padding-left: 8px;
+  font-size: var(--font-smallest);
+  font-weight: var(--font-bold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-top: 24px;
+  margin-bottom: 4px;
+  padding-left: 8px;
 }
 
 .wcp-section-note {
     font-size: var(--font-smallest);
     color: var(--text-muted);
-    margin-bottom: 12px;
-    margin-top: 0px;
-    padding-left: 8px;
-
+    margin-bottom: 24px;
+    margin-top: 0;
+    padding-left: 16px;
+    padding-right: 16px;
 }
 
 /* ── Toggle grids ────────────────────────────────────────────────────────────── */
@@ -161,9 +163,9 @@
 }
 
 .wcp-toggle-grid-wide {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 8px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
 }
 
 /* ── Toggle chip ─────────────────────────────────────────────────────────────── */
@@ -193,4 +195,13 @@
 .wcp-toggle-chip .checkbox-container {
   pointer-events: none;
   flex-shrink: 0;
+}
+
+/* ── Delete confirmation modal ───────────────────────────────────────────────── */
+
+.wcp-modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
 }

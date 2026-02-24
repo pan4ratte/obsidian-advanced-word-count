@@ -26,6 +26,7 @@ const en = {
 
   // ── Settings page ──────────────────────────────────────────────────────────
   settingsHeading: "Advanced Word Count settings",
+  settingsDescription: "Advanced Word Count allows you to create complex word count presets that will display in the status bar. You can cycle presets by clicking on the status bar or using command palette. The plugin is made with academic use cases in mind, so you can count [@citekeys] and [[wikilinks]] with fine-tuning options.",
   settingsPresetsName: "Create preset",
   settingsPresetsDesc: "Use presets to set individual mertics for different writing purposes",
   settingsAddPreset: "+ Add preset",
@@ -33,19 +34,25 @@ const en = {
   // Preset card header
   badgeActive: "ACTIVE",
   btnSetActive: "Set as active preset",
-  btnDelete: "✕",
   btnDeleteTooltip: "Delete preset",
   inputNamePlaceholder: "Enter preset name",
 
   // Words per page row
-  wppLabel: "Count ",
+  wppLabel: "Count",
   wppSuffix: "words as one page",
 
   // Section headers
   sectionStatusBar: "Status bar metrics",
-  sectionWordCountOptions: "Word count: advanced settings",
+  sectionStatusBarNote: "Choose which metrics appear in the status bar",
+  sectionWordCountOptions: "Words and characters: advanced settings",
   sectionWordCountOptionsNote:
-    "Control, what formatting elements are kept or stripped before counting words.",
+    "Choose, what formatting elements are counted or ignored when counting words",
+
+  // ── Delete confirmation modal ──────────────────────────────────────────────
+  deleteConfirmTitle: "Delete preset",
+  deleteConfirmMessage: (name: string) => `Are you sure you want to delete "${name}"? This cannot be undone.`,
+  deleteConfirmYes: "Yes, delete",
+  deleteConfirmNo: "Cancel",
 
   // ── Status bar metric toggles ──────────────────────────────────────────────
   toggles: {
@@ -55,23 +62,23 @@ const en = {
     },
     showCharsWithSpaces: {
       label: "Characters (with spaces)",
-      hint: "Total character count including spaces and linebreaks, based on the advanced settings",
+      hint: "Counts characters and spaces, based on the advanced settings",
     },
     showCharsWithoutSpaces: {
       label: "Characters (without spaces)",
-      hint: "Total character count excluding all whitespace (spaces, tabs, linebreaks), based on the advanced settings",
+      hint: "Counts characters, ignores spaces, based on the advanced settings",
     },
     showPages: {
       label: "Pages",
-      hint: "Based on the number of words per page, specified above",
+      hint: "Counts pages, based on the number of words per page, specified above",
     },
     showLines: {
       label: "Lines",
-      hint: "Total lines, including blank lines",
+      hint: "Counts lines, including blank lines",
     },
     showParagraphs: {
       label: "Paragraphs",
-      hint: "Blocks of text, excluding blank lines",
+      hint: "Counts blocks of text, excluding blank lines",
     },
     showMarkdownLinks: {
       label: "Markdown links",
@@ -79,7 +86,7 @@ const en = {
     },
     showWikiLinks: {
       label: "Wikilinks",
-      hint: "Counts [[wiki]] style links",
+      hint: "Counts [[wiki]] and [[wiki|label]] links",
     },
     showCitekeys: {
       label: "Citekeys",
@@ -91,23 +98,28 @@ const en = {
   wordCountOptions: {
     countMdLinksAsWords: {
       label: "Count links display text",
-      hint: "Off: MD links are not counted / On: [label](url) → label text is counted",
+      hint: `Off: [label](url) → label and url will be counted
+On: only label will be counted`,
     },
     ignoreWikiLinks: {
       label: "Ignore wikilinks",
-      hint: "Off: [[label]]  → label text is counted / On: wikilinks are ignored",
+      hint: `Off: words in wikilinks will be counted
+On: wikilinks will be ignored`,
     },
     countWikiLinkDisplayText: {
       label: "Count wikilinks display text",
-      hint: "On: [[Page|Alias]] → 'Alias' counts; [[Page]] → 'Page' counts. Has no effect if 'Ignore wikilinks' is on.",
+      hint: `Off: [[wiki|label]] → wiki and label will be counted
+On: only label will be counted`,
     },
     countCitekeysAsWords: {
       label: "Count citekeys",
-      hint: "Off: all citekeys are ignored / On: [@doe2020] counts as a word",
+      hint: `Off: citekeys will be ignored
+On: [@doe2020]  → doe2020 will be counted`,
     },
     ignoreComments: {
       label: "Ignore comments",
-      hint: "Off: comments (%% … %%) and (<!-- … -->) are counted / On: comments are ignored",
+      hint: `Off: words in comments %% … %% and <!-- … --> will be counted
+On: comments will be ignored`,
     },
   },
 } as const;
