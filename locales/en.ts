@@ -5,12 +5,12 @@ const en = {
   newPresetName: (n: number) => `Preset ${n}`,
 
   // ── Commands ───────────────────────────────────────────────────────────────
-  commandActivatePreset: (name: string) => `Switch to ${name}`,
+  commandActivatePreset: (name: string) => `Switch to ${name} preset`,
 
   // ── Status bar ─────────────────────────────────────────────────────────────
   statusNoMetrics: "No metrics enabled",
-  statusTooltipSingle: (name: string) => `Preset: ${name}`,
-  statusTooltipCycle: (name: string) => `Active preset: ${name} — Click to cycle`,
+  statusTooltipSingle: (name: string) => `${name}`,
+  statusTooltipCycle: (name: string) => `${name}`,
 
   // Status bar metric labels
   statusWords: (n: number) => `Words: ${n}`,
@@ -25,15 +25,15 @@ const en = {
 
   // ── Settings page ──────────────────────────────────────────────────────────
   settingsHeading: "Advanced Word Count settings",
-  settingsDescription: "This plugin allows you to create complex word count presets that are displayed in the status bar. You can cycle presets by clicking on the status bar or using command palette. The plugin is made with academic use cases in mind, so you can fine-tune counting of [@citekeys] and [[wikilinks]].",
+  settingsDescription: "This plugin allows you to create complex word count presets that are displayed in the status bar. Cycle presets by clicking on the status bar or using command palette. The plugin is made with academic use cases in mind, so you can fine-tune counting of [@citekeys] and [[wikilinks]].",
   settingsPresetsName: "Create preset",
   settingsPresetsDesc: "Use presets to set individual mertics for different writing purposes",
   settingsAddPreset: "Add preset",
   settingsSeparatorName: "Metrics separator",
-  settingsSeparatorDesc: "Symbol(s) used to divide metrics in the status bar. Default: \"  |  \"",
+  settingsSeparatorDesc: "Specify the look of metrics separator by typing anything",
 
   // Preset card header
-  badgeActive: "ACTIVE",
+  badgeActive: "Active",
   btnSetActive: "Set as active preset",
   btnDeleteTooltip: "Delete preset",
   inputNamePlaceholder: "Enter preset name",
@@ -47,11 +47,11 @@ const en = {
   sectionStatusBarNote: "Choose, which metrics will appear in the status bar",
   sectionWordCountOptions: "Words and characters: advanced settings",
   sectionWordCountOptionsNote:
-    "Specify, how formatting elements will be counted when counting words and characters",
+    "Specify counting rules of formatting elements when words and characters are counted",
 
   // ── Delete confirmation modal ──────────────────────────────────────────────
   deleteConfirmTitle: "Delete preset",
-  deleteConfirmMessage: (name: string) => `Are you sure you want to delete "${name}"? This cannot be undone.`,
+  deleteConfirmMessage: (name: string) => `Are you sure you want to delete "${name}" preset? This action is irreversible.`,
   deleteConfirmYes: "Yes, delete",
   deleteConfirmNo: "Cancel",
 
@@ -104,7 +104,7 @@ On: only label will be counted`,
     },
     ignoreWikiLinks: {
       label: "Ignore wikilinks",
-      hint: `Off: words in wikilinks will be counted
+      hint: `Off: wikilinks text will be counted
 On: wikilinks will be ignored`,
     },
     countWikiLinkDisplayText: {
@@ -115,11 +115,11 @@ On: only label will be counted`,
     countCitekeysAsWords: {
       label: "Count citekeys",
       hint: `Off: citekeys will be ignored
-On: [@doe2020]  → doe2020 will be counted`,
+On: citekeys text will be counted`,
     },
     ignoreComments: {
       label: "Ignore comments",
-      hint: `Off: words in comments %% … %% and <!-- … --> will be counted
+      hint: `Off: text in comments %% … %% and <!-- … --> will be counted
 On: comments will be ignored`,
     },
   },
