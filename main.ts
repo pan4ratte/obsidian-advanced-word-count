@@ -32,6 +32,7 @@ interface Preset {
 interface WordCountSettings {
   activePresetId: string;
   presets: Preset[];
+  separator: string;
 }
 
 interface Metrics {
@@ -74,6 +75,7 @@ function defaultPreset(overrides: Partial<Preset> = {}): Preset {
 const DEFAULT_SETTINGS: WordCountSettings = {
   activePresetId: "",
   presets: [],
+  separator: "  |  ",
 };
 
 // ── Plugin ────────────────────────────────────────────────────────────────────
@@ -106,6 +108,7 @@ export default class WordCountPlugin extends Plugin {
 
     this.registerEvent(this.app.workspace.on("active-leaf-change", () => this.updateCount()));
     this.registerEvent(this.app.workspace.on("editor-change", () => this.updateCount()));
+    this.registerEvent(this.app.workspace.on("editor-selection-change", () => this.updateCount()));
 
     this.addSettingTab(new WordCountSettingTab(this.app, this));
     this.updateCount();
@@ -301,7 +304,7 @@ export default class WordCountPlugin extends Plugin {
 
   // ── Status bar ────────────────────────────────────────────────────────────
 
-  buildStatusText(preset: Preset, m: Metrics): string {
+  buildStatusText(preset: Preset, m: Metrics, separator: string): string {
     const parts: string[] = (
       [
         [preset.showWordsWithSpaces,    t.statusWords(m.wordsWithSpaces)],
@@ -316,17 +319,19 @@ export default class WordCountPlugin extends Plugin {
       ] as [boolean, string][]
     ).filter(([show]) => show).map(([, text]) => text);
 
-    return parts.join("  |  ");
+    return parts.join(separator);
   }
 
   updateCount() {
     const preset = this.getActivePreset();
-    if (!preset) { this.statusBarItem.setText(t.statusNoPreset); return; }
+    if (!preset) { this.statusBarItem.setText(""); return; }
 
     const view = this.app.workspace.getActiveViewOfType(MarkdownView);
     if (!view) { this.statusBarItem.setText(""); return; }
 
-    const raw = view.getViewData();
+    const selection = view.editor.getSelection();
+    const raw = selection.length > 0 ? selection : view.getViewData();
+
     const base = this.preprocessBase(raw, preset);
     const preprocessed = this.preprocessText(raw, preset);
     const wordsWithSpaces = this.countWordsWithSpaces(preprocessed);
@@ -344,9 +349,8 @@ export default class WordCountPlugin extends Plugin {
     };
 
     const multiPreset = this.settings.presets.length > 1;
-    const label = multiPreset ? `[${preset.name}]  ` : "";
-    const stats = this.buildStatusText(preset, metrics);
-    this.statusBarItem.setText(label + (stats || t.statusNoMetrics));
+    const stats = this.buildStatusText(preset, metrics, this.settings.separator);
+    this.statusBarItem.setText(stats || t.statusNoMetrics);
     setTooltip(
       this.statusBarItem,
       multiPreset ? t.statusTooltipCycle(preset.name) : t.statusTooltipSingle(preset.name),
@@ -386,6 +390,19 @@ class WordCountSettingTab extends PluginSettingTab {
     containerEl.empty();
     containerEl.createEl("h2", { text: t.settingsHeading });
     containerEl.createEl("p", { text: t.settingsDescription, cls: "wcp-section-note" });
+
+    new Setting(containerEl)
+      .setName(t.settingsSeparatorName)
+      .setDesc(t.settingsSeparatorDesc)
+      .addText((text) =>
+        text
+          .setPlaceholder("  |  ")
+          .setValue(this.plugin.settings.separator)
+          .onChange(async (value) => {
+            this.plugin.settings.separator = value;
+            await this.save();
+          })
+      );
 
     new Setting(containerEl)
       .setName(t.settingsPresetsName)

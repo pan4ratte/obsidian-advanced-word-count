@@ -8,7 +8,6 @@ const en = {
   commandActivatePreset: (name: string) => `Switch to ${name}`,
 
   // ── Status bar ─────────────────────────────────────────────────────────────
-  statusNoPreset: "No preset",
   statusNoMetrics: "No metrics enabled",
   statusTooltipSingle: (name: string) => `Preset: ${name}`,
   statusTooltipCycle: (name: string) => `Active preset: ${name} — Click to cycle`,
@@ -30,6 +29,8 @@ const en = {
   settingsPresetsName: "Create preset",
   settingsPresetsDesc: "Use presets to set individual mertics for different writing purposes",
   settingsAddPreset: "Add preset",
+  settingsSeparatorName: "Metrics separator",
+  settingsSeparatorDesc: "Symbol(s) used to divide metrics in the status bar. Default: \"  |  \"",
 
   // Preset card header
   badgeActive: "ACTIVE",
