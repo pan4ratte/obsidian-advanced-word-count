@@ -113,13 +113,13 @@ On: wikilinks will be ignored`,
 On: only label will be counted`,
     },
     countCitekeysAsWords: {
-      label: "Count citekeys",
-      hint: `Off: citekeys will be ignored
-On: citekeys text will be counted`,
+      label: "Ignore citekeys",
+      hint: `Off: citekeys text will be counted
+On: citekeys will be ignored`,
     },
     ignoreComments: {
       label: "Ignore comments",
-      hint: `Off: text in comments %% … %% and <!-- … --> will be counted
+      hint: `Off: comments %% … %% and <!-- … --> text will be counted
 On: comments will be ignored`,
     },
   },

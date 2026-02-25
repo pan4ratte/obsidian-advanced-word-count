@@ -217,11 +217,11 @@ export default class WordCountPlugin extends Plugin {
       );
     }
 
-    // Citekeys — keep as word token or strip
+    // Citekeys — strip of keep as word token
     if (preset.countCitekeysAsWords) {
-      s = s.replace(/\[@([^\]]+)\]/g, "$1");
-    } else {
       s = s.replace(/\[@[^\]]*\]/g, "");
+    } else {
+      s = s.replace(/\[@([^\]]+)\]/g, "$1");
     }
 
     // Strip inline Markdown decoration (headings, bold, italic, strike, quotes, pipes)

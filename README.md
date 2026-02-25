@@ -35,10 +35,10 @@ You can specify, how formatting elements will be counted:
 | Advanced option 			       		 | Off 							   											    			    		  | On 			     					   					|
 | :------------------------------- | :----------------------------------------------------------- | :-------------------------------- |
 | **Count links display text** 	   | `(url)[label]` → label and url will be counted 						  | only label will be counted 		    |
-| **Ignore wikilinks** 		         | text in wikilinks will be counted	   											  | wikilinks will be ignored	  		  |
+| **Ignore wikilinks** 		         | wikilinks text will be counted	   											 		  | wikilinks will be ignored	  		  |
 | **Count wikilinks display text** | `[[wiki\|label]]` → wiki and label will be counted 				  | only label will be counted  		  |
-| **Count citekeys** 			         | citekeys will be ignored 																	  | text in citekeys will be counted  |
-| **Ignore comments**			         | text in comments `%% … %%` and `<!-- … -->` will be counted  | comments will be ignored 	   		  |
+| **Ignore citekeys** 			       | citekeys text will be counted 															  | citekeys will be ignored 				  |
+| **Ignore comments**			         | comments `%% … %%` and `<!-- … -->` text will be counted		  | comments will be ignored 	   		  |
 
 ## Use case
 
