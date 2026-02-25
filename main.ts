@@ -171,15 +171,6 @@ export default class WordCountPlugin extends Plugin {
   }
 
   // ── Text pre-processing ───────────────────────────────────────────────────
-  //
-  // Single pipeline shared by word AND character metrics. All "include/exclude"
-  // options are applied here so every counter agrees on what counts as text.
-
-  // ── Text pre-processing (shared base) ────────────────────────────────────
-  //
-  // preprocessBase strips frontmatter, comments, code, links, and inline
-  // decoration — everything EXCEPT list-item markers.  This lets word counting
-  // and character counting diverge only in how they treat those markers.
 
   private preprocessBase(raw: string, preset: Preset): string {
     let s = raw;
@@ -263,28 +254,6 @@ export default class WordCountPlugin extends Plugin {
     return trimmed ? trimmed.split(/\s+/).length : 0;
   }
 
-  /** Replace list-item markers with fixed-length placeholders.
-   *
-   * Each marker pattern is replaced by a run of placeholder bytes (\x01–\x03)
-   * that cannot appear in real Markdown and contain no whitespace.  The regex
-   * always consumes the trailing space that Markdown requires after the marker,
-   * so the placeholder weight must account for that space explicitly.
-   *
-   * `countSpaces` controls whether the trailing separator space is included:
-   *
-   *   countSpaces = true  (Characters with spaces)
-   *     * / - / +   followed by space  → \x01\x02       (2 chars)
-   *     - [ ] / - [x] followed by space → \x01\x02      (2 chars)
-   *     N. / N)     followed by space  → \x01\x02\x03  (3 chars)
-   *
-   *   countSpaces = false (Characters without spaces)
-   *     * / - / +   followed by space  → \x01           (1 char)
-   *     - [ ] / - [x] followed by space → \x01          (1 char)
-   *     N. / N)     followed by space  → \x01\x02       (2 chars)
-   *
-   * Checkboxes are matched first because "- [ ] " starts with "- ", which
-   * the unordered rule would otherwise consume first.
-   */
   private substituteListMarkers(base: string, countSpaces: boolean): string {
     const u = countSpaces ? "\x01\x02"      : "\x01";        // unordered / checkbox
     const n = countSpaces ? "\x01\x02\x03"  : "\x01\x02";   // numbered
