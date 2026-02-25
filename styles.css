@@ -160,14 +160,14 @@
 
 .wcp-toggle-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(228px, 1fr));
   gap: 8px;
   margin-bottom: 12px;
 }
 
 .wcp-toggle-grid-wide {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(228px, 1fr));
   gap: 8px;
 }
 
