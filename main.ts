@@ -84,6 +84,7 @@ export default class WordCountPlugin extends Plugin {
   settings: WordCountSettings;
   statusBarItem: HTMLElement;
   private registeredCommandIds: Set<string> = new Set();
+  private resizeObserver: ResizeObserver | null = null;
 
   async onload() {
     await this.loadSettings();
@@ -104,14 +105,22 @@ export default class WordCountPlugin extends Plugin {
     this.statusBarItem.addClass("wcp-status-bar");
     this.statusBarItem.addEventListener("click", () => this.cyclePreset());
 
+    this.resizeObserver = new ResizeObserver(() => this.updateSeparators());
+    this.resizeObserver.observe(this.statusBarItem);
+
     this.registerAllPresetCommands();
 
     this.registerEvent(this.app.workspace.on("active-leaf-change", () => this.updateCount()));
     this.registerEvent(this.app.workspace.on("editor-change", () => this.updateCount()));
+    // @ts-ignore: editor-selection-change is a valid runtime event not yet typed in obsidian API
     this.registerEvent(this.app.workspace.on("editor-selection-change", () => this.updateCount()));
 
     this.addSettingTab(new WordCountSettingTab(this.app, this));
     this.updateCount();
+  }
+
+  onunload() {
+    this.resizeObserver?.disconnect();
   }
 
   // ── Preset helpers ────────────────────────────────────────────────────────
@@ -304,8 +313,8 @@ export default class WordCountPlugin extends Plugin {
 
   // ── Status bar ────────────────────────────────────────────────────────────
 
-  buildStatusText(preset: Preset, m: Metrics, separator: string): string {
-    const parts: string[] = (
+  buildStatusParts(preset: Preset, m: Metrics): string[] {
+    return (
       [
         [preset.showWordsWithSpaces,    t.statusWords(m.wordsWithSpaces)],
         [preset.showCharsWithSpaces,    t.statusChars(m.charsWithSpaces)],
@@ -318,16 +327,24 @@ export default class WordCountPlugin extends Plugin {
         [preset.showCitekeys,           t.statusCitekeys(m.citekeys)],
       ] as [boolean, string][]
     ).filter(([show]) => show).map(([, text]) => text);
+  }
 
-    return parts.join(separator);
+  updateSeparators() {
+    const metrics = this.statusBarItem.querySelectorAll<HTMLElement>(".wcp-metric");
+    const seps = this.statusBarItem.querySelectorAll<HTMLElement>(".wcp-sep");
+    for (let i = 0; i < seps.length; i++) {
+      const sameRow =
+        metrics[i].getBoundingClientRect().top === metrics[i + 1].getBoundingClientRect().top;
+      seps[i].style.display = sameRow ? "" : "none";
+    }
   }
 
   updateCount() {
     const preset = this.getActivePreset();
-    if (!preset) { this.statusBarItem.setText(""); return; }
+    if (!preset) { this.statusBarItem.empty(); return; }
 
     const view = this.app.workspace.getActiveViewOfType(MarkdownView);
-    if (!view) { this.statusBarItem.setText(""); return; }
+    if (!view) { this.statusBarItem.empty(); return; }
 
     const selection = view.editor.getSelection();
     const raw = selection.length > 0 ? selection : view.getViewData();
@@ -349,8 +366,22 @@ export default class WordCountPlugin extends Plugin {
     };
 
     const multiPreset = this.settings.presets.length > 1;
-    const stats = this.buildStatusText(preset, metrics, this.settings.separator);
-    this.statusBarItem.setText(stats || t.statusNoMetrics);
+    const parts = this.buildStatusParts(preset, metrics);
+
+    this.statusBarItem.empty();
+
+    if (parts.length === 0) {
+      this.statusBarItem.createSpan({ text: t.statusNoMetrics });
+    } else {
+      parts.forEach((text, i) => {
+        this.statusBarItem.createSpan({ text, cls: "wcp-metric" });
+        if (i < parts.length - 1) {
+          this.statusBarItem.createSpan({ text: this.settings.separator, cls: "wcp-sep" });
+        }
+      });
+      requestAnimationFrame(() => this.updateSeparators());
+    }
+
     setTooltip(
       this.statusBarItem,
       multiPreset ? t.statusTooltipCycle(preset.name) : t.statusTooltipSingle(preset.name),

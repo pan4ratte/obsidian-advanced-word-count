@@ -2,6 +2,13 @@
 
 .wcp-status-bar {
   cursor: pointer;
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+}
+
+.wcp-sep {
+  white-space: pre;
 }
 
 /* ── Preset card ─────────────────────────────────────────────────────────────── */
