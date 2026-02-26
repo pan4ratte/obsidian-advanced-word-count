@@ -5,6 +5,7 @@
   display: inline-flex;
   flex-wrap: wrap;
   align-items: baseline;
+  justify-content: center;
 }
 
 .wcp-sep {
