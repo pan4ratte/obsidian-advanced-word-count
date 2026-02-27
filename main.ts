@@ -85,6 +85,8 @@ export default class WordCountPlugin extends Plugin {
   statusBarItem: HTMLElement;
   private registeredCommandIds: Set<string> = new Set();
   private resizeObserver: ResizeObserver | null = null;
+  private lastParts: string[] = [];
+  private lastSeparator: string = "";
 
   async onload() {
     await this.loadSettings();
@@ -341,10 +343,24 @@ export default class WordCountPlugin extends Plugin {
 
   updateCount() {
     const preset = this.getActivePreset();
-    if (!preset) { this.statusBarItem.empty(); return; }
+    if (!preset) {
+      if (this.lastParts.length > 0) {
+        this.statusBarItem.empty();
+        this.lastParts = [];
+        this.lastSeparator = "";
+      }
+      return;
+    }
 
     const view = this.app.workspace.getActiveViewOfType(MarkdownView);
-    if (!view) { this.statusBarItem.empty(); return; }
+    if (!view) {
+      if (this.lastParts.length > 0) {
+        this.statusBarItem.empty();
+        this.lastParts = [];
+        this.lastSeparator = "";
+      }
+      return;
+    }
 
     const selection = view.editor.getSelection();
     const raw = selection.length > 0 ? selection : view.getViewData();
@@ -367,19 +383,39 @@ export default class WordCountPlugin extends Plugin {
 
     const multiPreset = this.settings.presets.length > 1;
     const parts = this.buildStatusParts(preset, metrics);
+    const separator = this.settings.separator;
 
-    this.statusBarItem.empty();
+    const partsUnchanged =
+      parts.length === this.lastParts.length &&
+      parts.every((p, i) => p === this.lastParts[i]);
 
-    if (parts.length === 0) {
-      this.statusBarItem.createSpan({ text: t.statusNoMetrics });
+    if (partsUnchanged && separator === this.lastSeparator) {
+      // Nothing changed visually — skip DOM update entirely
+      return;
+    }
+
+    if (parts.length === this.lastParts.length && parts.length > 0 && separator === this.lastSeparator) {
+      // Same structure, only values changed — update text in-place, no flicker
+      const metricEls = this.statusBarItem.querySelectorAll<HTMLElement>(".wcp-metric");
+      parts.forEach((text, i) => { metricEls[i].textContent = text; });
+      this.lastParts = parts.slice();
     } else {
-      parts.forEach((text, i) => {
-        this.statusBarItem.createSpan({ text, cls: "wcp-metric" });
-        if (i < parts.length - 1) {
-          this.statusBarItem.createSpan({ text: this.settings.separator, cls: "wcp-sep" });
-        }
-      });
-      requestAnimationFrame(() => this.updateSeparators());
+      // Structure changed — full rebuild
+      this.lastParts = parts.slice();
+      this.lastSeparator = separator;
+      this.statusBarItem.empty();
+
+      if (parts.length === 0) {
+        this.statusBarItem.createSpan({ text: t.statusNoMetrics });
+      } else {
+        parts.forEach((text, i) => {
+          this.statusBarItem.createSpan({ text, cls: "wcp-metric" });
+          if (i < parts.length - 1) {
+            this.statusBarItem.createSpan({ text: separator, cls: "wcp-sep" });
+          }
+        });
+        requestAnimationFrame(() => this.updateSeparators());
+      }
     }
 
     setTooltip(
