@@ -1,5 +1,6 @@
 import { moment } from "obsidian";
 import en from "./locales/en";
+import ru from "./locales/ru";
 import type { Locale } from "./locales/en";
 
 // ── Locale registry ───────────────────────────────────────────────────────────
@@ -14,6 +15,7 @@ import type { Locale } from "./locales/en";
 
 const LOCALES: Record<string, Locale> = {
   en,
+  ru,
   // de,
   // fr,
   // zh,
@@ -30,18 +32,6 @@ function resolveLocale(): Locale {
   const tag = moment.locale(); // e.g. "en", "de", "zh-tw"
   return LOCALES[tag] ?? LOCALES[tag.split("-")[0]] ?? en;
 }
-
-// ── Public API ─────────────────────────────────────────────────────────────────
-//
-// Import `t` wherever you need a translated string:
-//   import { t } from "./locales";
-//
-// Usage:
-//   t.settingsHeading                         → "Word Count & Pages"
-//   t.commandActivatePreset("My Preset")      → "Activate preset: My Preset"
-//   t.statusWords(342)                        → "Words: 342"
-//   t.toggles.showPages.label                 → "Page count"
-//   t.wordCountOptions.ignoreComments.hint    → "Strip Obsidian comments…"
 
 export let t: Locale = resolveLocale();
 
