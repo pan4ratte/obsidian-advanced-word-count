@@ -144,7 +144,7 @@
 }
 
 .wcp-section-header:first-child {
-  margin-top: 0px !important;
+  margin-top: 0;
 }
 
 .wcp-section-note {
