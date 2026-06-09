@@ -290,8 +290,8 @@ export default class WordCountPlugin extends Plugin {
   }
 
   countMarkdownLinks(text: string): number {
-    const standard = (text.match(/\[.*?\]\(.*?\)/g) ?? []).filter((m) => !m.startsWith("!"));
-    return standard.length + (text.match(/\(.*?\)\[.*?\]/g) ?? []).length;
+    const standard = (text.match(/\[[^\]]{0,500}\]\([^)]{0,2000}\)/g) ?? []).filter((m) => !m.startsWith("!"));
+    return standard.length + (text.match(/\([^)]{0,500}\)\[[^\]]{0,500}\]/g) ?? []).length;
   }
 
   countWikiLinks(text: string): number {
