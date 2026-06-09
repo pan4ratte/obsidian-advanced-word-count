@@ -299,7 +299,7 @@ export default class WordCountPlugin extends Plugin {
   }
 
   countCitekeys(text: string): number {
-    return (text.match(/\[@[^\]]+\]/g) ?? []).length;
+    return (text.match(/\[@[^\]]{1,100}\]/g) ?? []).length;
   }
 
   // ── Status bar ────────────────────────────────────────────────────────────
