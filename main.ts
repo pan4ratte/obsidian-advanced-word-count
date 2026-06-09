@@ -295,7 +295,7 @@ export default class WordCountPlugin extends Plugin {
   }
 
   countWikiLinks(text: string): number {
-    return (text.match(/\[\[.*?\]\]/g) ?? []).length;
+    return (text.match(/\[\[[^\]]{0,500}\]\]/g) ?? []).length;
   }
 
   countCitekeys(text: string): number {
