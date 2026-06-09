@@ -65,7 +65,7 @@
     "p-limit": "^3.1.0",
     "p-locate": "^5.0.0",
     "path-key": "^3.1.1",
-    "picomatch": "^4.0.3",
+    "picomatch": "^4.0.4",
     "prelude-ls": "^1.2.1",
     "punycode": "^2.3.1",
     "semver": "^7.7.4",
