@@ -44,7 +44,7 @@
     "fdir": "^6.5.0",
     "file-entry-cache": "^8.0.0",
     "flat-cache": "^4.0.1",
-    "flatted": "^3.3.3",
+    "flatted": "^3.4.2",
     "glob-parent": "^6.0.2",
     "ignore": "^7.0.5",
     "imurmurhash": "^0.1.4",
