@@ -5,16 +5,19 @@
   "main": "main.js",
   "scripts": {
     "dev": "node esbuild.config.mjs",
-    "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production"
+    "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+    "lint": "eslint ."
   },
   "keywords": [],
   "author": "pan4ratte",
   "license": "AGPL-3.0",
   "devDependencies": {
     "@types/node": "^16.11.6",
-    "@typescript-eslint/eslint-plugin": "^8.56.1",
-    "@typescript-eslint/parser": "^8.56.1",
+    "@typescript-eslint/eslint-plugin": "^8.61.0",
+    "@typescript-eslint/parser": "^8.61.0",
+    "builtin-modules": "^5.2.0",
     "esbuild": "^0.27.3",
+    "eslint": "^10.4.1",
     "obsidian": "latest",
     "tslib": "2.4.0",
     "typescript": "^5.9.3"
@@ -30,7 +33,6 @@
     "debug": "^4.4.3",
     "deep-is": "^0.1.4",
     "escape-string-regexp": "^4.0.0",
-    "eslint": "^10.0.2",
     "eslint-scope": "^9.1.1",
     "eslint-visitor-keys": "^5.0.1",
     "espree": "^11.1.1",

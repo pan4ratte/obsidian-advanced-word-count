@@ -108,7 +108,7 @@ export default class WordCountPlugin extends Plugin {
 
     this.registerEvent(this.app.workspace.on("active-leaf-change", () => this.updateCount()));
     this.registerEvent(this.app.workspace.on("editor-change", () => this.updateCount()));
-    this.registerEvent(this.app.workspace.on("editor-selection-change", () => this.updateCount()));
+    this.registerEvent((this.app.workspace as any).on("editor-selection-change", () => this.updateCount()));
 
     this.addSettingTab(new WordCountSettingTab(this.app, this));
     this.updateCount();

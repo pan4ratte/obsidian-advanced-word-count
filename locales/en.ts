@@ -125,5 +125,12 @@ On: comments will be ignored`,
   },
 } as const;
 
-export type Locale = typeof en;
+type Stringified<T> = {
+  [K in keyof T]: T[K] extends string
+    ? string
+    : T[K] extends Record<string, unknown>
+    ? Stringified<T[K]>
+    : T[K];
+};
+export type Locale = Stringified<typeof en>;
 export default en;
