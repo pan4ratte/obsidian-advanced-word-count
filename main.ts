@@ -1,7 +1,19 @@
-import { App, Modal, Plugin, PluginSettingTab, Setting, MarkdownView, ButtonComponent, setIcon, setTooltip } from "obsidian";
+import { App, EventRef, Modal, Plugin, PluginSettingTab, Setting, MarkdownView, Workspace, ButtonComponent, setIcon, setTooltip } from "obsidian";
 import { t, refreshLocale } from "./locales";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
+
+// Undocumented Obsidian internals not present in the public type definitions
+interface ObsidianCommands {
+  removeCommand(id: string): void;
+  commands: Record<string, { name: string }>;
+}
+interface AppInternal extends App {
+  commands: ObsidianCommands;
+}
+type WorkspaceInternal = Workspace & {
+  on(name: string, callback: (...args: unknown[]) => void): EventRef;
+};
 
 interface Preset {
   id: string;
@@ -108,7 +120,7 @@ export default class WordCountPlugin extends Plugin {
 
     this.registerEvent(this.app.workspace.on("active-leaf-change", () => this.updateCount()));
     this.registerEvent(this.app.workspace.on("editor-change", () => this.updateCount()));
-    this.registerEvent((this.app.workspace as any).on("editor-selection-change", () => this.updateCount()));
+    this.registerEvent((this.app.workspace as WorkspaceInternal).on("editor-selection-change", () => this.updateCount()));
 
     this.addSettingTab(new WordCountSettingTab(this.app, this));
     this.updateCount();
@@ -152,7 +164,7 @@ export default class WordCountPlugin extends Plugin {
 
   removePresetCommand(preset: Preset) {
     const cmdId = `word-count-activate-preset-${preset.id}`;
-    (this.app as any).commands?.removeCommand(`${this.manifest.id}:${cmdId}`);
+    (this.app as AppInternal).commands?.removeCommand(`${this.manifest.id}:${cmdId}`);
     this.registeredCommandIds.delete(cmdId);
   }
 
@@ -162,13 +174,13 @@ export default class WordCountPlugin extends Plugin {
       (cmdId) => !this.settings.presets.find((p) => p.id === cmdId.replace("word-count-activate-preset-", ""))
     );
     for (const cmdId of stale) {
-      (this.app as any).commands?.removeCommand(`${this.manifest.id}:${cmdId}`);
+      (this.app as AppInternal).commands?.removeCommand(`${this.manifest.id}:${cmdId}`);
       this.registeredCommandIds.delete(cmdId);
     }
 
     for (const preset of this.settings.presets) {
       this.registerPresetCommand(preset);
-      const cmd = (this.app as any).commands?.commands?.[`${this.manifest.id}:word-count-activate-preset-${preset.id}`];
+      const cmd = (this.app as AppInternal).commands?.commands?.[`${this.manifest.id}:word-count-activate-preset-${preset.id}`];
       if (cmd) cmd.name = t.commandActivatePreset(preset.name);
     }
   }
