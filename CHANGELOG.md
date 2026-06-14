@@ -6,8 +6,9 @@
 
 * **Display metrics in the right pane.** Now you can view your counters in the status bar, the right pane tab or both with "Counters display method" setting. The right pane layout can be arranged in one or two columns and has fancy design and subtle animations.
 * **Limit warnings.** Add a limit warning for any of the enabled metric in the preset. The metric is highlighted as it approaches it: orange at ≥90% of the limit and red at ≥100%. A separate "Limit warnings display method" setting controls whether warnings appear in the status bar, the right pane, or both.
+* **New counter metrics: Embeds, Tables, Tags**: Count `![[]]` embeds, complete tables and all Obsidian-compatible `#tags`.
+* **New advanced setting: Ignore HTML tags.** A new advanced counting option strips HTML tags, counting only the words and symbols inside them.
 * **Hide the default Obsidian word counter.** A new toggle disables the built-in word count core plugin so you don't get a duplicate counter. It switches itself off automatically if you re-enable the core plugin from Obsidian's own settings.
-* **Ignore HTML tags setting.** A new advanced counting option strips HTML tags, counting only the words and symbols inside them.
 
 ### UI/UX enhancements and bug fixes
 
