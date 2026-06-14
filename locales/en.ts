@@ -30,11 +30,11 @@ const en = {
   settingsPresetsName: "Create preset",
   settingsPresetsDesc: "Use presets to set individual mertics for different writing purposes",
   settingsAddPreset: "Add preset",
-  settingsSeparatorName: "Metrics separator",
+  settingsSeparatorName: "Status bar metrics separator",
   settingsSeparatorDesc: "Specify the look of metrics separator by typing anything",
   settingsHideDefaultName: "Hide default Obsidian word counter",
   settingsHideDefaultDesc: "Disables Obsidian word count core plugin",
-  settingsDisplayMethodName: "Display method",
+  settingsDisplayMethodName: "Counters display method",
   settingsDisplayMethodDesc: "Choose where the enabled metrics are shown",
   displayMethodStatusBar: "Status bar",
   displayMethodRightPane: "Right pane",
@@ -64,6 +64,13 @@ const en = {
   sectionWordCountOptions: "Words and characters: advanced settings",
   sectionWordCountOptionsNote:
     "Specify counting rules of formatting elements when words and characters are counted",
+
+  // Limit warnings
+  limitsTitle: "Limit warnings",
+  limitsDesc: "Add limit warnings for any enabled metric",
+  limitSelectMetric: "Select metric…",
+  limitLabel: (name: string) => `Limit warning for: ${name}`,
+  btnRemoveLimit: "Remove warning",
 
   // ── Delete confirmation modal ──────────────────────────────────────────────
   deleteConfirmTitle: "Delete preset",

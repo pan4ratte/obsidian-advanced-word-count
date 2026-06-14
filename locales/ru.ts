@@ -30,11 +30,11 @@ const ru = {
   settingsPresetsName: "Создать пресет",
   settingsPresetsDesc: "Пресеты позволяют индивидуально настраивать наборы метрик для разных писательских целей",
   settingsAddPreset: "Добавить пресет",
-  settingsSeparatorName: "Разделитель счётчиков",
+  settingsSeparatorName: "Разделитель счётчиков в строке состояния",
   settingsSeparatorDesc: "Введите символы, которые будут визуально разделять метрики в строке состояния",
   settingsHideDefaultName: "Скрыть стандартный счётчик слов Obsidian",
   settingsHideDefaultDesc: "Отключает встроенный плагин подсчёта слов Obsidian",
-  settingsDisplayMethodName: "Способ отображения",
+  settingsDisplayMethodName: "Способ отображения счётчиков",
   settingsDisplayMethodDesc: "Выберите, где будут показаны включённые метрики",
   displayMethodStatusBar: "Строка состояния",
   displayMethodRightPane: "Правая панель",
@@ -64,6 +64,13 @@ const ru = {
   sectionWordCountOptions: "Слова и символы: расширенные настройки",
   sectionWordCountOptionsNote:
     "Настройте правила подсчёта элементов форматирования при подсчёте слов и символов",
+
+  // Limit warnings
+  limitsTitle: "Предупреждения о лимитах",
+  limitsDesc: "Добавьте предупреждения о достижении лимита для любой включённой метрики",
+  limitSelectMetric: "Выберите метрику…",
+  limitLabel: (name: string) => `Лимит для: ${name}`,
+  btnRemoveLimit: "Удалить предупреждение",
 
   // ── Delete confirmation modal ──────────────────────────────────────────────
   deleteConfirmTitle: "Удалить пресет",

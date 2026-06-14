@@ -56,6 +56,9 @@ interface Preset {
   countCitekeysAsWords: boolean;
   ignoreComments: boolean;
   ignoreHtmlTags: boolean;
+
+  // Per-metric warning limits (metric key → threshold)
+  limits: Partial<Record<MetricKey, number>>;
 }
 
 interface WordCountSettings {
@@ -79,6 +82,27 @@ interface Metrics {
   citekeys: number;
 }
 
+// Metric identifiers match the field names in Metrics
+type MetricKey = keyof Metrics;
+type WarnLevel = "none" | "orange" | "red";
+
+// Display order and the preset "show" flag that gates each metric
+const METRIC_ORDER: MetricKey[] = [
+  "wordsWithSpaces", "charsWithSpaces", "charsWithoutSpaces", "pages",
+  "lines", "paragraphs", "markdownLinks", "wikiLinks", "citekeys",
+];
+const METRIC_SHOW_KEY: Record<MetricKey, keyof Preset> = {
+  wordsWithSpaces: "showWordsWithSpaces",
+  charsWithSpaces: "showCharsWithSpaces",
+  charsWithoutSpaces: "showCharsWithoutSpaces",
+  pages: "showPages",
+  lines: "showLines",
+  paragraphs: "showParagraphs",
+  markdownLinks: "showMarkdownLinks",
+  wikiLinks: "showWikiLinks",
+  citekeys: "showCitekeys",
+};
+
 // ── Defaults ──────────────────────────────────────────────────────────────────
 
 function defaultPreset(overrides: Partial<Preset> = {}): Preset {
@@ -101,6 +125,7 @@ function defaultPreset(overrides: Partial<Preset> = {}): Preset {
     countCitekeysAsWords: false,
     ignoreComments: true,
     ignoreHtmlTags: false,
+    limits: {},
     ...overrides,
   };
 }
@@ -424,24 +449,35 @@ export default class WordCountPlugin extends Plugin {
     return (text.match(/\[@[^\]]{1,100}\]/g) ?? []).length;
   }
 
-  // ── Status bar ────────────────────────────────────────────────────────────
+  // ── Metric rows & warnings ──────────────────────────────────────────────────
 
-  buildStatusText(preset: Preset, m: Metrics, separator: string): string {
-    const parts: string[] = (
-      [
-        [preset.showWordsWithSpaces,    t.statusWords(m.wordsWithSpaces)],
-        [preset.showCharsWithSpaces,    t.statusChars(m.charsWithSpaces)],
-        [preset.showCharsWithoutSpaces, t.statusCharsNoSpaces(m.charsWithoutSpaces)],
-        [preset.showPages,              t.statusPages(m.pages)],
-        [preset.showLines,              t.statusLines(m.lines)],
-        [preset.showParagraphs,         t.statusParas(m.paragraphs)],
-        [preset.showMarkdownLinks,      t.statusMdLinks(m.markdownLinks)],
-        [preset.showWikiLinks,          t.statusWikiLinks(m.wikiLinks)],
-        [preset.showCitekeys,           t.statusCitekeys(m.citekeys)],
-      ] as [boolean, string][]
-    ).filter(([show]) => show).map(([, text]) => text);
+  /** Warning level for a metric given its limit (90% → orange, 100%+ → red). */
+  warnLevel(preset: Preset, m: Metrics, key: MetricKey): WarnLevel {
+    const limit = preset.limits?.[key];
+    if (!limit || limit <= 0) return "none";
+    const value = key === "pages" ? parseFloat(m.pages) : (m[key] as number);
+    const ratio = value / limit;
+    if (ratio >= 1) return "red";
+    if (ratio >= 0.9) return "orange";
+    return "none";
+  }
 
-    return parts.join(separator);
+  /** Enabled metrics in display order, with status-bar text, block label/value and warning level. */
+  metricRows(preset: Preset, m: Metrics): { key: MetricKey; blockLabel: string; statusText: string; value: string; level: WarnLevel }[] {
+    const defs: { key: MetricKey; show: boolean; blockLabel: string; statusText: string; value: string }[] = [
+      { key: "wordsWithSpaces",    show: preset.showWordsWithSpaces,    blockLabel: t.toggles.showWordsWithSpaces.label,    statusText: t.statusWords(m.wordsWithSpaces),           value: String(m.wordsWithSpaces) },
+      { key: "charsWithSpaces",    show: preset.showCharsWithSpaces,    blockLabel: t.toggles.showCharsWithSpaces.label,    statusText: t.statusChars(m.charsWithSpaces),           value: String(m.charsWithSpaces) },
+      { key: "charsWithoutSpaces", show: preset.showCharsWithoutSpaces, blockLabel: t.toggles.showCharsWithoutSpaces.label, statusText: t.statusCharsNoSpaces(m.charsWithoutSpaces), value: String(m.charsWithoutSpaces) },
+      { key: "pages",              show: preset.showPages,              blockLabel: t.toggles.showPages.label,              statusText: t.statusPages(m.pages),                     value: m.pages },
+      { key: "lines",              show: preset.showLines,              blockLabel: t.toggles.showLines.label,              statusText: t.statusLines(m.lines),                     value: String(m.lines) },
+      { key: "paragraphs",         show: preset.showParagraphs,         blockLabel: t.toggles.showParagraphs.label,         statusText: t.statusParas(m.paragraphs),                value: String(m.paragraphs) },
+      { key: "markdownLinks",      show: preset.showMarkdownLinks,      blockLabel: t.toggles.showMarkdownLinks.label,      statusText: t.statusMdLinks(m.markdownLinks),           value: String(m.markdownLinks) },
+      { key: "wikiLinks",          show: preset.showWikiLinks,          blockLabel: t.toggles.showWikiLinks.label,          statusText: t.statusWikiLinks(m.wikiLinks),             value: String(m.wikiLinks) },
+      { key: "citekeys",           show: preset.showCitekeys,           blockLabel: t.toggles.showCitekeys.label,           statusText: t.statusCitekeys(m.citekeys),               value: String(m.citekeys) },
+    ];
+    return defs
+      .filter((d) => d.show)
+      .map((d) => ({ key: d.key, blockLabel: d.blockLabel, statusText: d.statusText, value: d.value, level: this.warnLevel(preset, m, d.key) }));
   }
 
   private computeMetrics(raw: string, preset: Preset): Metrics {
@@ -460,22 +496,6 @@ export default class WordCountPlugin extends Plugin {
       wikiLinks: this.countWikiLinks(raw),
       citekeys: this.countCitekeys(raw),
     };
-  }
-
-  /** Enabled metrics as label/value pairs, in display order (used by the right pane). */
-  enabledMetrics(preset: Preset, m: Metrics): { label: string; value: string }[] {
-    const rows: [boolean, string, string][] = [
-      [preset.showWordsWithSpaces,    t.toggles.showWordsWithSpaces.label,    String(m.wordsWithSpaces)],
-      [preset.showCharsWithSpaces,    t.toggles.showCharsWithSpaces.label,    String(m.charsWithSpaces)],
-      [preset.showCharsWithoutSpaces, t.toggles.showCharsWithoutSpaces.label, String(m.charsWithoutSpaces)],
-      [preset.showPages,              t.toggles.showPages.label,              m.pages],
-      [preset.showLines,              t.toggles.showLines.label,              String(m.lines)],
-      [preset.showParagraphs,         t.toggles.showParagraphs.label,         String(m.paragraphs)],
-      [preset.showMarkdownLinks,      t.toggles.showMarkdownLinks.label,      String(m.markdownLinks)],
-      [preset.showWikiLinks,          t.toggles.showWikiLinks.label,          String(m.wikiLinks)],
-      [preset.showCitekeys,           t.toggles.showCitekeys.label,           String(m.citekeys)],
-    ];
-    return rows.filter(([show]) => show).map(([, label, value]) => ({ label, value }));
   }
 
   updateCount() {
@@ -501,11 +521,21 @@ export default class WordCountPlugin extends Plugin {
     this.statusBarItem.toggle(showStatusBar);
     if (!showStatusBar) return;
 
-    if (!preset || !metrics) { this.statusBarItem.setText(""); return; }
+    this.statusBarItem.empty();
+    if (!preset || !metrics) return;
+
+    const rows = this.metricRows(preset, metrics);
+    if (rows.length === 0) {
+      this.statusBarItem.setText(t.statusNoMetrics);
+    } else {
+      rows.forEach((row, i) => {
+        if (i > 0) this.statusBarItem.createSpan({ text: this.settings.separator });
+        const span = this.statusBarItem.createSpan({ text: row.statusText });
+        if (row.level !== "none") span.addClass(`wcp-limit-${row.level}`);
+      });
+    }
 
     const multiPreset = this.settings.presets.length > 1;
-    const stats = this.buildStatusText(preset, metrics, this.settings.separator);
-    this.statusBarItem.setText(stats || t.statusNoMetrics);
     setTooltip(
       this.statusBarItem,
       multiPreset ? t.statusTooltipCycle(preset.name) : t.statusTooltipSingle(preset.name),
@@ -523,6 +553,8 @@ export default class WordCountPlugin extends Plugin {
 
   async loadSettings() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    // Migrate presets saved before per-metric limits existed
+    for (const p of this.settings.presets) if (!p.limits) p.limits = {};
   }
 
   async saveSettings() {
@@ -534,6 +566,10 @@ export default class WordCountPlugin extends Plugin {
 
 class MetricsView extends ItemView {
   private plugin: WordCountPlugin;
+  // Signature of the currently rendered structure; while it stays the same we
+  // update blocks in place so CSS color transitions can animate.
+  private gridSig: string | null = null;
+  private blockRefs: Map<MetricKey, { block: HTMLElement; value: HTMLElement }> = new Map();
 
   constructor(leaf: WorkspaceLeaf, plugin: WordCountPlugin) {
     super(leaf);
@@ -546,19 +582,47 @@ class MetricsView extends ItemView {
 
   async onOpen() { this.render(); }
 
+  private setLevel(block: HTMLElement, level: WarnLevel) {
+    block.toggleClass("wcp-limit-orange", level === "orange");
+    block.toggleClass("wcp-limit-red", level === "red");
+  }
+
   render() {
+    const preset = this.plugin.getActivePreset();
+    const metrics = preset ? this.plugin.lastMetrics : null;
+    const rows = preset && metrics ? this.plugin.metricRows(preset, metrics) : [];
+    const layout = this.plugin.settings.rightPaneLayout;
+    const multiPreset = this.plugin.settings.presets.length > 1;
+
+    // Structure signature — when unchanged we can update in place and animate.
+    const sig = preset && metrics && rows.length > 0
+      ? [preset.id, preset.name, multiPreset, layout, ...rows.map((r) => r.key)].join("|")
+      : null;
+
+    if (sig && sig === this.gridSig) {
+      for (const row of rows) {
+        const ref = this.blockRefs.get(row.key);
+        if (!ref) continue;
+        ref.value.setText(row.value);
+        this.setLevel(ref.block, row.level);
+      }
+      return;
+    }
+
+    // Structure changed (or placeholder state) — full rebuild.
+    this.gridSig = sig;
+    this.blockRefs.clear();
+
     const container = this.contentEl;
     container.empty();
     container.addClass("wcp-view");
 
-    const preset = this.plugin.getActivePreset();
     if (!preset) {
       container.createEl("p", { text: t.statusNoMetrics, cls: "wcp-view-empty" });
       return;
     }
 
     // Header: preset name (clickable to cycle when multiple presets exist)
-    const multiPreset = this.plugin.settings.presets.length > 1;
     const header = container.createDiv({ cls: "wcp-view-header" });
     const nameEl = header.createEl("span", { text: preset.name, cls: "wcp-view-preset-name" });
     if (multiPreset) {
@@ -567,24 +631,23 @@ class MetricsView extends ItemView {
       nameEl.addEventListener("click", () => this.plugin.cyclePreset());
     }
 
-    const metrics = this.plugin.lastMetrics;
     if (!metrics) {
       container.createEl("p", { text: t.viewNoFile, cls: "wcp-view-empty" });
       return;
     }
-
-    const blocks = this.plugin.enabledMetrics(preset, metrics);
-    if (blocks.length === 0) {
+    if (rows.length === 0) {
       container.createEl("p", { text: t.statusNoMetrics, cls: "wcp-view-empty" });
       return;
     }
 
-    const cols = this.plugin.settings.rightPaneLayout === "one" ? "wcp-cols-1" : "wcp-cols-2";
+    const cols = layout === "one" ? "wcp-cols-1" : "wcp-cols-2";
     const grid = container.createDiv({ cls: `wcp-block-grid ${cols}` });
-    for (const { label, value } of blocks) {
+    for (const row of rows) {
       const block = grid.createDiv({ cls: "wcp-metric-block" });
-      block.createEl("div", { text: value, cls: "wcp-metric-value" });
-      block.createEl("div", { text: label, cls: "wcp-metric-label" });
+      this.setLevel(block, row.level);
+      const value = block.createEl("div", { text: row.value, cls: "wcp-metric-value" });
+      block.createEl("div", { text: row.blockLabel, cls: "wcp-metric-label" });
+      this.blockRefs.set(row.key, { block, value });
     }
   }
 }
@@ -764,6 +827,61 @@ class WordCountSettingTab extends PluginSettingTab {
     const wcGrid = card.createDiv({ cls: "wcp-toggle-grid-wide" });
     for (const key of Object.keys(t.wordCountOptions) as (keyof typeof t.wordCountOptions)[]) {
       this.renderToggleChip(wcGrid, preset, key as keyof Preset, t.wordCountOptions[key].label, t.wordCountOptions[key].hint);
+    }
+
+    // ── Limit warnings ────────────────────────────────────────────────────────
+    this.renderLimits(card, preset);
+  }
+
+  renderLimits(card: HTMLElement, preset: Preset) {
+    this.sectionHeader(card, t.limitsTitle);
+    card.createEl("p", { text: t.limitsDesc, cls: "wcp-section-note" });
+
+    // Dropdown to add a limit for an enabled metric that doesn't have one yet
+    const enabledKeys = METRIC_ORDER.filter((k) => preset[METRIC_SHOW_KEY[k]]);
+    const available = enabledKeys.filter((k) => preset.limits[k] === undefined);
+
+    const addRow = card.createDiv({ cls: "wcp-limit-add" });
+    const select = addRow.createEl("select", { cls: "dropdown" });
+    select.createEl("option", { text: t.limitSelectMetric, value: "" });
+    for (const k of available) {
+      select.createEl("option", { text: t.toggles[METRIC_SHOW_KEY[k] as keyof typeof t.toggles].label, value: k });
+    }
+    select.value = "";
+    select.disabled = available.length === 0;
+    select.addEventListener("change", async () => {
+      const k = select.value as MetricKey;
+      if (!k) return;
+      preset.limits[k] = 0;
+      await this.save();
+      this.display();
+    });
+
+    // Existing limit rows
+    for (const key of METRIC_ORDER) {
+      const limit = preset.limits[key];
+      if (limit === undefined) continue;
+      const label = t.toggles[METRIC_SHOW_KEY[key] as keyof typeof t.toggles].label;
+      new Setting(card)
+        .setClass("wcp-limit-item")
+        .setName(t.limitLabel(label))
+        .addText((text) => {
+          text.inputEl.type = "number";
+          text.inputEl.min = "0";
+          text.setValue(String(limit));
+          text.onChange(async (v) => {
+            const n = Number(v);
+            preset.limits[key] = isFinite(n) && n >= 0 ? n : 0;
+            await this.save();
+          });
+        })
+        .addExtraButton((btn) =>
+          btn.setIcon("trash-2").setTooltip(t.btnRemoveLimit).onClick(async () => {
+            delete preset.limits[key];
+            await this.save();
+            this.display();
+          })
+        );
     }
   }
 

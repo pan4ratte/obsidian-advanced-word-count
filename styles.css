@@ -178,7 +178,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 8px 8px;
-  border-radius: 8px;
+  border-radius: var(--radius-l);
   background-color: var(--setting-items-background);
   border: 1px solid var(--background-modifier-border);
   cursor: pointer;
@@ -256,6 +256,7 @@
   /* Equal width comes from the 1fr columns; this keeps every block equal height
      regardless of how many lines its label wraps to. */
   min-width: 0;
+  transition: border-color 0.4s ease;
 }
 
 .wcp-metric-value {
@@ -263,6 +264,7 @@
   font-weight: var(--font-bold);
   line-height: 1.1;
   color: var(--text-normal);
+  transition: color 0.4s ease;
 }
 
 .wcp-metric-label {
@@ -272,6 +274,73 @@
   min-height: 2.4em;
   display: flex;
   align-items: center;
+  transition: color 0.4s ease;
+}
+
+/* ── Limit warnings ──────────────────────────────────────────────────────────── */
+
+/* Right pane blocks */
+.wcp-metric-block.wcp-limit-orange {
+  border-color: var(--color-orange);
+}
+
+.wcp-metric-block.wcp-limit-orange .wcp-metric-value,
+.wcp-metric-block.wcp-limit-orange .wcp-metric-label {
+  color: var(--color-orange);
+}
+
+.wcp-metric-block.wcp-limit-red {
+  border-color: var(--color-red);
+}
+
+.wcp-metric-block.wcp-limit-red .wcp-metric-value,
+.wcp-metric-block.wcp-limit-red .wcp-metric-label {
+  color: var(--color-red);
+}
+
+/* Status bar segments */
+.wcp-status-bar .wcp-limit-orange {
+  color: var(--color-orange);
+}
+
+.wcp-status-bar .wcp-limit-red {
+  color: var(--color-red);
+}
+
+/* Add-limit dropdown row in settings */
+.wcp-limit-add {
+  margin-bottom: 8px;
+}
+
+.wcp-limit-add .dropdown {
+  width: 100%;
+}
+
+/* Limit rows — scoped to the preset card to override the generic .setting-item */
+.wcp-preset-card .setting-item.wcp-limit-item {
+  padding: 8px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-l);
+  margin-bottom: 0;
+  margin-top: 12px;
+}
+
+.wcp-preset-card .setting-item.wcp-limit-item .setting-item-name {
+  font-size: var(--font-smaller);
+}
+
+.wcp-preset-card .setting-item.wcp-limit-item input[type="number"] {
+
+}
+
+.wcp-preset-card .setting-item.wcp-limit-item .setting-item-control .clickable-icon {
+  color: var(--text-muted);
+  padding: 0px 8px;
+}
+
+.wcp-preset-card .setting-item.wcp-limit-item .setting-item-control .clickable-icon:hover {
+  color: var(--text-error);
+  background-color: transparent;
 }
 
 /* ── Delete confirmation modal ───────────────────────────────────────────────── */
