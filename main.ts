@@ -68,6 +68,7 @@ interface WordCountSettings {
   hideDefaultWordCount: boolean;
   displayMethod: DisplayMethod;
   rightPaneLayout: RightPaneLayout;
+  limitWarningsDisplayMethod: DisplayMethod;
 }
 
 interface Metrics {
@@ -137,6 +138,7 @@ const DEFAULT_SETTINGS: WordCountSettings = {
   hideDefaultWordCount: false,
   displayMethod: "statusBar",
   rightPaneLayout: "two",
+  limitWarningsDisplayMethod: "both",
 };
 
 // ── Plugin ────────────────────────────────────────────────────────────────────
@@ -451,6 +453,14 @@ export default class WordCountPlugin extends Plugin {
 
   // ── Metric rows & warnings ──────────────────────────────────────────────────
 
+  /** Adjust a metric's warning level for a given surface, honoring the limit-warnings display method. */
+  surfaceWarnLevel(surface: "statusBar" | "rightPane", level: WarnLevel): WarnLevel {
+    if (level === "none") return "none";
+    const m = this.settings.limitWarningsDisplayMethod;
+    const show = surface === "statusBar" ? m !== "rightPane" : m !== "statusBar";
+    return show ? level : "none";
+  }
+
   /** Warning level for a metric given its limit (90% → orange, 100%+ → red). */
   warnLevel(preset: Preset, m: Metrics, key: MetricKey): WarnLevel {
     const limit = preset.limits?.[key];
@@ -531,7 +541,8 @@ export default class WordCountPlugin extends Plugin {
       rows.forEach((row, i) => {
         if (i > 0) this.statusBarItem.createSpan({ text: this.settings.separator });
         const span = this.statusBarItem.createSpan({ text: row.statusText });
-        if (row.level !== "none") span.addClass(`wcp-limit-${row.level}`);
+        const level = this.surfaceWarnLevel("statusBar", row.level);
+        if (level !== "none") span.addClass(`wcp-limit-${level}`);
       });
     }
 
@@ -604,7 +615,7 @@ class MetricsView extends ItemView {
         const ref = this.blockRefs.get(row.key);
         if (!ref) continue;
         ref.value.setText(row.value);
-        this.setLevel(ref.block, row.level);
+        this.setLevel(ref.block, this.plugin.surfaceWarnLevel("rightPane", row.level));
       }
       return;
     }
@@ -644,7 +655,7 @@ class MetricsView extends ItemView {
     const grid = container.createDiv({ cls: `wcp-block-grid ${cols}` });
     for (const row of rows) {
       const block = grid.createDiv({ cls: "wcp-metric-block" });
-      this.setLevel(block, row.level);
+      this.setLevel(block, this.plugin.surfaceWarnLevel("rightPane", row.level));
       const value = block.createEl("div", { text: row.value, cls: "wcp-metric-value" });
       block.createEl("div", { text: row.blockLabel, cls: "wcp-metric-label" });
       this.blockRefs.set(row.key, { block, value });
@@ -680,6 +691,23 @@ class WordCountSettingTab extends PluginSettingTab {
     containerEl.createEl("h2", { text: t.settingsHeading });
     containerEl.createEl("p", { text: t.settingsDescription, cls: "wcp-section-note" });
 
+    // ── General ───────────────────────────────────────────────────────────────
+    new Setting(containerEl).setName(t.settingsSectionGeneral).setHeading();
+
+    new Setting(containerEl)
+      .setName(t.settingsHideDefaultName)
+      .setDesc(t.settingsHideDefaultDesc)
+      .addToggle((toggle) => {
+        this.hideDefaultToggle = toggle;
+        toggle
+          .setValue(this.plugin.settings.hideDefaultWordCount)
+          .onChange(async (value) => {
+            this.plugin.settings.hideDefaultWordCount = value;
+            await this.plugin.setDefaultWordCountHidden(value);
+            await this.save();
+          });
+      });
+
     new Setting(containerEl)
       .setName(t.settingsDisplayMethodName)
       .setDesc(t.settingsDisplayMethodDesc)
@@ -710,6 +738,21 @@ class WordCountSettingTab extends PluginSettingTab {
       });
 
     new Setting(containerEl)
+      .setName(t.settingsLimitWarningsDisplayName)
+      .setDesc(t.settingsLimitWarningsDisplayDesc)
+      .addDropdown((dd) => {
+        dd.addOption("statusBar", t.displayMethodStatusBar);
+        dd.addOption("rightPane", t.displayMethodRightPane);
+        dd.addOption("both", t.displayMethodBoth);
+        dd.setValue(this.plugin.settings.limitWarningsDisplayMethod);
+        dd.onChange(async (value) => {
+          this.plugin.settings.limitWarningsDisplayMethod = value as DisplayMethod;
+          await this.plugin.saveSettings();
+          this.plugin.updateCount();
+        });
+      });
+
+    new Setting(containerEl)
       .setName(t.settingsSeparatorName)
       .setDesc(t.settingsSeparatorDesc)
       .addText((text) =>
@@ -722,19 +765,8 @@ class WordCountSettingTab extends PluginSettingTab {
           })
       );
 
-    new Setting(containerEl)
-      .setName(t.settingsHideDefaultName)
-      .setDesc(t.settingsHideDefaultDesc)
-      .addToggle((toggle) => {
-        this.hideDefaultToggle = toggle;
-        toggle
-          .setValue(this.plugin.settings.hideDefaultWordCount)
-          .onChange(async (value) => {
-            this.plugin.settings.hideDefaultWordCount = value;
-            await this.plugin.setDefaultWordCountHidden(value);
-            await this.save();
-          });
-      });
+    // ── Presets ───────────────────────────────────────────────────────────────
+    new Setting(containerEl).setName(t.settingsSectionPresets).setHeading();
 
     new Setting(containerEl)
       .setName(t.settingsPresetsName)

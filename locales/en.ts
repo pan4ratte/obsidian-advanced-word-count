@@ -27,6 +27,8 @@ const en = {
   // ── Settings page ──────────────────────────────────────────────────────────
   settingsHeading: "Advanced Word Count settings",
   settingsDescription: "This plugin allows you to create complex word count presets that are displayed in the status bar. Cycle presets by clicking on the status bar or using command palette. The plugin is made with academic use cases in mind, so you can fine-tune counting of [@citekeys] and [[wikilinks]].",
+  settingsSectionGeneral: "General",
+  settingsSectionPresets: "Presets",
   settingsPresetsName: "Create preset",
   settingsPresetsDesc: "Use presets to set individual mertics for different writing purposes",
   settingsAddPreset: "Add preset",
@@ -43,6 +45,8 @@ const en = {
   settingsRightPaneLayoutDesc: "Choose how metric blocks are arranged in the right pane",
   rightPaneLayoutOne: "One column",
   rightPaneLayoutTwo: "Two columns",
+  settingsLimitWarningsDisplayName: "Limit warnings display method",
+  settingsLimitWarningsDisplayDesc: "Choose where limit warnings are shown",
 
   // ── Right pane view ────────────────────────────────────────────────────────
   viewTitle: "Word count",

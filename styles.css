@@ -256,7 +256,8 @@
   /* Equal width comes from the 1fr columns; this keeps every block equal height
      regardless of how many lines its label wraps to. */
   min-width: 0;
-  transition: border-color 0.4s ease;
+  box-sizing: border-box;
+  transition: border-color 0.4s ease, border-width 0.4s ease;
 }
 
 .wcp-metric-value {
@@ -282,6 +283,7 @@
 /* Right pane blocks */
 .wcp-metric-block.wcp-limit-orange {
   border-color: var(--color-orange);
+  border-width: 1.5px;
 }
 
 .wcp-metric-block.wcp-limit-orange .wcp-metric-value,
@@ -291,6 +293,7 @@
 
 .wcp-metric-block.wcp-limit-red {
   border-color: var(--color-red);
+  border-width: 1.5px;
 }
 
 .wcp-metric-block.wcp-limit-red .wcp-metric-value,
