@@ -688,7 +688,7 @@ class MetricsView extends ItemView {
 
   getViewType(): string { return VIEW_TYPE_METRICS; }
   getDisplayText(): string { return t.viewTitle; }
-  getIcon(): string { return "calculator"; }
+  getIcon(): string { return "whole-word"; }
 
   async onOpen() { this.render(); }
 
