@@ -733,7 +733,7 @@ class WordCountSettingTab extends PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
     containerEl.createEl("h2", { text: t.settingsHeading });
-    containerEl.createEl("p", { text: t.settingsDescription, cls: "wcp-section-note" });
+    containerEl.createEl("p", { text: t.settingsDescription, cls: "wcp-plugin-note" });
 
     // ── General ───────────────────────────────────────────────────────────────
     new Setting(containerEl).setName(t.settingsSectionGeneral).setHeading();

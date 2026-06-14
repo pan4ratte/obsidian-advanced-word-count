@@ -168,12 +168,23 @@
   margin-top: 0;
 }
 
+/* Preset card section notes */
 .wcp-section-note {
   font-size: var(--font-smallest);
   color: var(--text-muted);
   margin-bottom: 12px;
   margin-top: 0;
   padding-left: 8px;
+  padding-right: 16px;
+}
+
+/* Plugin description at the top of the settings page */
+.wcp-plugin-note {
+  font-size: var(--font-smallest);
+  color: var(--text-muted);
+  margin-bottom: 16px;
+  margin-top: 0;
+  padding-left: 16px;
   padding-right: 16px;
 }
 
