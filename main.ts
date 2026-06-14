@@ -224,7 +224,7 @@ export default class WordCountPlugin extends Plugin {
     this.addCommand({
       id: "open-metrics-view",
       name: t.commandOpenView,
-      callback: () => this.activateRightPane(),
+      callback: () => this.activateRightPane(true),
     });
 
     this.registerEvent(this.app.workspace.on("active-leaf-change", () => this.updateCount()));
@@ -250,14 +250,26 @@ export default class WordCountPlugin extends Plugin {
 
   // ── Display method ──────────────────────────────────────────────────────────
 
-  /** Open or close the right pane to match the chosen display method. */
-  async applyDisplayMethod() {
+  /**
+   * Open or close the right pane to match the chosen display method.
+   * @param reveal When true (user-initiated), bring the pane into view. When
+   *   false (automatic startup activation), leave the sidebar's saved state
+   *   untouched so we don't steal focus from the last-active tab.
+   */
+  async applyDisplayMethod(reveal = false) {
     if (this.settings.displayMethod === "statusBar") this.detachRightPane();
-    else await this.activateRightPane();
+    else await this.activateRightPane(reveal);
     this.updateCount();
   }
 
-  async activateRightPane() {
+  /**
+   * Ensure exactly one metrics leaf exists in the right pane.
+   * @param reveal When true, reveal the leaf (used for explicit user actions
+   *   like the command or a settings change). When false (the default, used on
+   *   startup), the leaf is created but NOT revealed so Obsidian's restored
+   *   workspace layout — which tab the user last had focused — is preserved.
+   */
+  async activateRightPane(reveal = false) {
     // Guard against re-entrancy: two overlapping calls (e.g. onLayoutReady plus a
     // settings change) could each create a leaf before the other's await resolves.
     if (this.activatingRightPane) return;
@@ -268,7 +280,7 @@ export default class WordCountPlugin extends Plugin {
       // If a single healthy tab already exists, reuse it (avoids flicker).
       const existing = workspace.getLeavesOfType(VIEW_TYPE_METRICS);
       if (existing.length === 1 && existing[0].view instanceof MetricsView) {
-        void workspace.revealLeaf(existing[0]);
+        if (reveal) void workspace.revealLeaf(existing[0]);
         return;
       }
 
@@ -280,9 +292,10 @@ export default class WordCountPlugin extends Plugin {
       const right = workspace.getRightLeaf(false);
       if (!right) return;
       // active:false so we don't pull focus away from the editor (which would
-      // stop the live count); revealLeaf still brings the pane into view.
+      // stop the live count). Only revealLeaf when the user explicitly asked for
+      // the pane; on startup we leave the sidebar as the saved layout left it.
       await right.setViewState({ type: VIEW_TYPE_METRICS, active: false });
-      void workspace.revealLeaf(right);
+      if (reveal) void workspace.revealLeaf(right);
     } finally {
       this.activatingRightPane = false;
     }
@@ -857,7 +870,7 @@ class WordCountSettingTab extends PluginSettingTab {
         dd.onChange(async (value) => {
           this.plugin.settings.displayMethod = value as DisplayMethod;
           await this.plugin.saveSettings();
-          await this.plugin.applyDisplayMethod();
+          await this.plugin.applyDisplayMethod(true);
         });
       });
 
