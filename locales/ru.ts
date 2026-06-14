@@ -23,6 +23,9 @@ const ru = {
   statusMdLinks: (n: number) => `MD ссылок: ${n}`,
   statusWikiLinks: (n: number) => `Викиссылок: ${n}`,
   statusCitekeys: (n: number) => `Цитирований: ${n}`,
+  statusEmbeds: (n: number) => `Вложений: ${n}`,
+  statusTables: (n: number) => `Таблиц: ${n}`,
+  statusTags: (n: number) => `Тегов: ${n}`,
 
   // ── Settings page ──────────────────────────────────────────────────────────
   settingsHeading: "Настройки Advanced Word Count",
@@ -37,12 +40,12 @@ const ru = {
   settingsHideDefaultName: "Скрыть стандартный счётчик слов Obsidian",
   settingsHideDefaultDesc: "Отключает встроенный плагин подсчёта слов Obsidian",
   settingsDisplayMethodName: "Способ отображения счётчиков",
-  settingsDisplayMethodDesc: "Выберите, где будут показаны включённые метрики",
+  settingsDisplayMethodDesc: "Выберите, где будут отображаться пресеты счётчиков",
   displayMethodStatusBar: "Строка состояния",
   displayMethodRightPane: "Правая панель",
   displayMethodBoth: "Строка состояния + Правая панель",
-  settingsRightPaneLayoutName: "Расположение метрик в правой панели",
-  settingsRightPaneLayoutDesc: "Выберите, как блоки метрик располагаются в правой панели",
+  settingsRightPaneLayoutName: "Макет счётчиков в правой панели",
+  settingsRightPaneLayoutDesc: "Выберите, каким образом метрики будут отображаться в правой панели",
   rightPaneLayoutOne: "Один столбец",
   rightPaneLayoutTwo: "Два столбца",
   settingsLimitWarningsDisplayName: "Способ отображения предупреждений о лимитах",
@@ -119,6 +122,18 @@ const ru = {
     showCitekeys: {
       label: "Цитирования",
       hint: "Считает [@цитирования]",
+    },
+    showEmbeds: {
+      label: "Вложения",
+      hint: "Считает вложения ![[...]]",
+    },
+    showTables: {
+      label: "Таблицы",
+      hint: "Считает полные таблицы",
+    },
+    showTags: {
+      label: "Теги",
+      hint: "Считает #теги",
     },
   },
 

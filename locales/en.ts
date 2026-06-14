@@ -23,6 +23,9 @@ const en = {
   statusMdLinks: (n: number) => `MD Links: ${n}`,
   statusWikiLinks: (n: number) => `Wikilinks: ${n}`,
   statusCitekeys: (n: number) => `Citekeys: ${n}`,
+  statusEmbeds: (n: number) => `Embeds: ${n}`,
+  statusTables: (n: number) => `Tables: ${n}`,
+  statusTags: (n: number) => `Tags: ${n}`,
 
   // ── Settings page ──────────────────────────────────────────────────────────
   settingsHeading: "Advanced Word Count settings",
@@ -63,8 +66,8 @@ const en = {
   wppSuffix: "words as one page",
 
   // Section headers
-  sectionStatusBar: "Status bar metrics",
-  sectionStatusBarNote: "Choose, which metrics will appear in the status bar",
+  sectionStatusBar: "Counter metrics",
+  sectionStatusBarNote: "Choose, which metrics will appear in the counter",
   sectionWordCountOptions: "Words and characters: advanced settings",
   sectionWordCountOptionsNote:
     "Specify counting rules of formatting elements when words and characters are counted",
@@ -105,7 +108,7 @@ const en = {
       hint: "Counts lines, including blank lines",
     },
     showParagraphs: {
-      label: "Paragraphs",
+      label: "Blocks",
       hint: "Counts blocks of text, excluding blank lines",
     },
     showMarkdownLinks: {
@@ -119,6 +122,18 @@ const en = {
     showCitekeys: {
       label: "Citekeys",
       hint: "Counts [@citekey] references",
+    },
+    showEmbeds: {
+      label: "Embeds",
+      hint: "Counts ![[...]] embeds",
+    },
+    showTables: {
+      label: "Tables",
+      hint: "Counts complete tables",
+    },
+    showTags: {
+      label: "Tags",
+      hint: "Counts #tags",
     },
   },
 

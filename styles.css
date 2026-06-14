@@ -170,10 +170,6 @@
   padding-left: 8px;
 }
 
-.wcp-section-header:first-child {
-  margin-top: 0;
-}
-
 /* Preset card section notes */
 .wcp-section-note {
   font-size: var(--font-smallest);

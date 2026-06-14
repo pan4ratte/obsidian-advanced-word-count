@@ -48,6 +48,9 @@ interface Preset {
   showMarkdownLinks: boolean;
   showWikiLinks: boolean;
   showCitekeys: boolean;
+  showEmbeds: boolean;
+  showTables: boolean;
+  showTags: boolean;
 
   // Word count inclusions / exclusions (shared by both word and char metrics)
   countMdLinksAsWords: boolean;
@@ -59,6 +62,9 @@ interface Preset {
 
   // Per-metric warning limits (metric key → threshold)
   limits: Partial<Record<MetricKey, number>>;
+  // Limits of metrics that are currently disabled, preserved so they return
+  // when the metric is re-enabled.
+  stashedLimits: Partial<Record<MetricKey, number>>;
 }
 
 interface WordCountSettings {
@@ -81,6 +87,9 @@ interface Metrics {
   markdownLinks: number;
   wikiLinks: number;
   citekeys: number;
+  embeds: number;
+  tables: number;
+  tags: number;
 }
 
 // Metric identifiers match the field names in Metrics
@@ -91,6 +100,7 @@ type WarnLevel = "none" | "orange" | "red";
 const METRIC_ORDER: MetricKey[] = [
   "wordsWithSpaces", "charsWithSpaces", "charsWithoutSpaces", "pages",
   "lines", "paragraphs", "markdownLinks", "wikiLinks", "citekeys",
+  "embeds", "tables", "tags",
 ];
 const METRIC_SHOW_KEY: Record<MetricKey, keyof Preset> = {
   wordsWithSpaces: "showWordsWithSpaces",
@@ -102,6 +112,9 @@ const METRIC_SHOW_KEY: Record<MetricKey, keyof Preset> = {
   markdownLinks: "showMarkdownLinks",
   wikiLinks: "showWikiLinks",
   citekeys: "showCitekeys",
+  embeds: "showEmbeds",
+  tables: "showTables",
+  tags: "showTags",
 };
 
 // ── Defaults ──────────────────────────────────────────────────────────────────
@@ -120,6 +133,9 @@ function defaultPreset(overrides: Partial<Preset> = {}): Preset {
     showMarkdownLinks: false,
     showWikiLinks: false,
     showCitekeys: false,
+    showEmbeds: false,
+    showTables: false,
+    showTags: false,
     countMdLinksAsWords: false,
     countWikiLinkDisplayText: false,
     ignoreWikiLinks: false,
@@ -127,8 +143,29 @@ function defaultPreset(overrides: Partial<Preset> = {}): Preset {
     ignoreComments: true,
     ignoreHtmlTags: false,
     limits: {},
+    stashedLimits: {},
     ...overrides,
   };
+}
+
+// When a metric is toggled, move its limit warning between the active `limits`
+// and the per-preset `stashedLimits` store so disabling/re-enabling a metric
+// hides/restores its warning without losing the configured threshold.
+function syncMetricLimit(preset: Preset, key: MetricKey) {
+  const enabled = preset[METRIC_SHOW_KEY[key]] as boolean;
+  if (enabled) {
+    const stashed = preset.stashedLimits[key];
+    if (stashed !== undefined) {
+      preset.limits[key] = stashed;
+      delete preset.stashedLimits[key];
+    }
+  } else {
+    const active = preset.limits[key];
+    if (active !== undefined) {
+      preset.stashedLimits[key] = active;
+      delete preset.limits[key];
+    }
+  }
 }
 
 const DEFAULT_SETTINGS: WordCountSettings = {
@@ -456,11 +493,36 @@ export default class WordCountPlugin extends Plugin {
   }
 
   countWikiLinks(text: string): number {
-    return (text.match(/\[\[[^\]]{0,500}\]\]/g) ?? []).length;
+    // Exclude embeds (![[...]]) — those are counted separately.
+    return (text.match(/(?<!!)\[\[[^\]]{0,500}\]\]/g) ?? []).length;
   }
 
   countCitekeys(text: string): number {
     return (text.match(/\[@[^\]]{1,100}\]/g) ?? []).length;
+  }
+
+  countEmbeds(text: string): number {
+    return (text.match(/!\[\[[^\]]{0,500}\]\]/g) ?? []).length;
+  }
+
+  /** Counts complete Markdown tables (a header row followed by a delimiter row). */
+  countTables(text: string): number {
+    const lines = text.split("\n");
+    let count = 0;
+    for (let i = 1; i < lines.length; i++) {
+      const delim = lines[i];
+      // Delimiter row: only pipes, dashes, colons and spaces, with at least one of each pipe/dash.
+      if (!/^[\s|:-]+$/.test(delim) || !delim.includes("|") || !delim.includes("-")) continue;
+      const header = lines[i - 1];
+      if (header.includes("|") && header.trim().length > 0) count++;
+    }
+    return count;
+  }
+
+  /** Counts Obsidian #tags (must contain at least one non-numeric character; Unicode-aware). */
+  countTags(text: string): number {
+    const matches = text.match(/(?<![\p{L}\p{N}_#])#[\p{L}\p{N}_/-]+/gu) ?? [];
+    return matches.filter((m) => /[^\p{N}]/u.test(m.slice(1))).length;
   }
 
   // ── Metric rows & warnings ──────────────────────────────────────────────────
@@ -496,6 +558,9 @@ export default class WordCountPlugin extends Plugin {
       { key: "markdownLinks",      show: preset.showMarkdownLinks,      blockLabel: t.toggles.showMarkdownLinks.label,      statusText: t.statusMdLinks(m.markdownLinks),           value: String(m.markdownLinks) },
       { key: "wikiLinks",          show: preset.showWikiLinks,          blockLabel: t.toggles.showWikiLinks.label,          statusText: t.statusWikiLinks(m.wikiLinks),             value: String(m.wikiLinks) },
       { key: "citekeys",           show: preset.showCitekeys,           blockLabel: t.toggles.showCitekeys.label,           statusText: t.statusCitekeys(m.citekeys),               value: String(m.citekeys) },
+      { key: "embeds",             show: preset.showEmbeds,             blockLabel: t.toggles.showEmbeds.label,             statusText: t.statusEmbeds(m.embeds),                   value: String(m.embeds) },
+      { key: "tables",             show: preset.showTables,             blockLabel: t.toggles.showTables.label,             statusText: t.statusTables(m.tables),                   value: String(m.tables) },
+      { key: "tags",               show: preset.showTags,               blockLabel: t.toggles.showTags.label,               statusText: t.statusTags(m.tags),                       value: String(m.tags) },
     ];
     return defs
       .filter((d) => d.show)
@@ -517,6 +582,9 @@ export default class WordCountPlugin extends Plugin {
       markdownLinks: this.countMarkdownLinks(raw),
       wikiLinks: this.countWikiLinks(raw),
       citekeys: this.countCitekeys(raw),
+      embeds: this.countEmbeds(raw),
+      tables: this.countTables(raw),
+      tags: this.countTags(raw),
     };
   }
 
@@ -577,7 +645,10 @@ export default class WordCountPlugin extends Plugin {
   async loadSettings() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
     // Migrate presets saved before per-metric limits existed
-    for (const p of this.settings.presets) if (!p.limits) p.limits = {};
+    for (const p of this.settings.presets) {
+      if (!p.limits) p.limits = {};
+      if (!p.stashedLimits) p.stashedLimits = {};
+    }
   }
 
   async saveSettings() {
@@ -898,6 +969,11 @@ class WordCountSettingTab extends PluginSettingTab {
       pagesChip?.toggleClass("wcp-invalid", invalid);
     };
 
+    // Filled in below; toggling a metric must refresh the limit-warnings dropdown
+    // so newly enabled metrics become available there.
+    let limitsContainer: HTMLElement | null = null;
+    const refreshLimits = () => { if (limitsContainer) this.renderLimits(limitsContainer, preset); };
+
     wppInput.addEventListener("change", async () => {
       const n = parseInt(wppInput.value);
       if (!isNaN(n) && n >= 0) { preset.wordsPerPage = n; }
@@ -911,8 +987,12 @@ class WordCountSettingTab extends PluginSettingTab {
 
     const visGrid = card.createDiv({ cls: "wcp-toggle-grid" });
     for (const key of Object.keys(t.toggles) as (keyof typeof t.toggles)[]) {
-      const chip = this.renderToggleChip(visGrid, preset, key as keyof Preset, t.toggles[key].label, t.toggles[key].hint,
-        key === "showPages" ? refreshPagesValidity : undefined);
+      const chip = this.renderToggleChip(visGrid, preset, key as keyof Preset, t.toggles[key].label, t.toggles[key].hint, () => {
+        if (key === "showPages") refreshPagesValidity();
+        const metricKey = METRIC_ORDER.find((mk) => METRIC_SHOW_KEY[mk] === key);
+        if (metricKey) syncMetricLimit(preset, metricKey);
+        refreshLimits();
+      });
       if (key === "showPages") pagesChip = chip;
     }
 
@@ -928,25 +1008,26 @@ class WordCountSettingTab extends PluginSettingTab {
     }
 
     // ── Limit warnings ────────────────────────────────────────────────────────
-    this.renderLimits(card, preset);
+    limitsContainer = card.createDiv();
+    this.renderLimits(limitsContainer, preset);
   }
 
-  renderLimits(card: HTMLElement, preset: Preset) {
-    this.sectionHeader(card, t.limitsTitle);
-    card.createEl("p", { text: t.limitsDesc, cls: "wcp-section-note" });
+  renderLimits(container: HTMLElement, preset: Preset) {
+    container.empty();
+    this.sectionHeader(container, t.limitsTitle);
+    container.createEl("p", { text: t.limitsDesc, cls: "wcp-section-note" });
 
     // Dropdown to add a limit for an enabled metric that doesn't have one yet
     const enabledKeys = METRIC_ORDER.filter((k) => preset[METRIC_SHOW_KEY[k]]);
     const available = enabledKeys.filter((k) => preset.limits[k] === undefined);
 
-    const addRow = card.createDiv({ cls: "wcp-limit-add" });
+    const addRow = container.createDiv({ cls: "wcp-limit-add" });
     const select = addRow.createEl("select", { cls: "dropdown" });
     select.createEl("option", { text: t.limitSelectMetric, value: "" });
     for (const k of available) {
       select.createEl("option", { text: t.toggles[METRIC_SHOW_KEY[k] as keyof typeof t.toggles].label, value: k });
     }
     select.value = "";
-    select.disabled = available.length === 0;
     select.addEventListener("change", async () => {
       const k = select.value as MetricKey;
       if (!k) return;
@@ -960,7 +1041,7 @@ class WordCountSettingTab extends PluginSettingTab {
       const limit = preset.limits[key];
       if (limit === undefined) continue;
       const label = t.toggles[METRIC_SHOW_KEY[key] as keyof typeof t.toggles].label;
-      new Setting(card)
+      new Setting(container)
         .setClass("wcp-limit-item")
         .setName(t.limitLabel(label))
         .addText((text) => {
