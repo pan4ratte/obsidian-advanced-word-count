@@ -71,10 +71,10 @@ const en = {
 
   // Limit warnings
   limitsTitle: "Limit warnings",
-  limitsDesc: "Add limit warnings for any enabled metric",
-  limitSelectMetric: "Select metric…",
+  limitsDesc: "Add a warning for any enabled metric: ≥90% of limit adds orange color and ≥100% adds red color",
+  limitSelectMetric: "Select a metric…",
   limitLabel: (name: string) => `Limit warning for: ${name}`,
-  btnRemoveLimit: "Remove warning",
+  btnRemoveLimit: "Remove limit warning",
 
   // ── Delete confirmation modal ──────────────────────────────────────────────
   deleteConfirmTitle: "Delete preset",

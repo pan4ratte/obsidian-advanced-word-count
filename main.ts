@@ -149,6 +149,7 @@ export default class WordCountPlugin extends Plugin {
   lastMetrics: Metrics | null = null;
   private settingTab: WordCountSettingTab;
   private registeredCommandIds: Set<string> = new Set();
+  private activatingRightPane = false;
 
   async onload() {
     await this.loadSettings();
@@ -210,23 +211,34 @@ export default class WordCountPlugin extends Plugin {
   }
 
   async activateRightPane() {
-    const { workspace } = this.app;
-    const existing = workspace.getLeavesOfType(VIEW_TYPE_METRICS);
+    // Guard against re-entrancy: two overlapping calls (e.g. onLayoutReady plus a
+    // settings change) could each create a leaf before the other's await resolves.
+    if (this.activatingRightPane) return;
+    this.activatingRightPane = true;
+    try {
+      const { workspace } = this.app;
 
-    // Keep a single tab — detach any extras that may have been restored from a
-    // saved layout or otherwise duplicated.
-    for (let i = 1; i < existing.length; i++) existing[i].detach();
+      // If a single healthy tab already exists, reuse it (avoids flicker).
+      const existing = workspace.getLeavesOfType(VIEW_TYPE_METRICS);
+      if (existing.length === 1 && existing[0].view instanceof MetricsView) {
+        workspace.revealLeaf(existing[0]);
+        return;
+      }
 
-    let leaf = existing[0];
-    if (!leaf) {
+      // Otherwise guarantee a single tab: remove every existing/duplicate/dead/
+      // orphaned leaf of our type, then create exactly one. onLayoutReady ensures
+      // the workspace's own restore has already finished, so nothing reappears.
+      workspace.detachLeavesOfType(VIEW_TYPE_METRICS);
+
       const right = workspace.getRightLeaf(false);
       if (!right) return;
       // active:false so we don't pull focus away from the editor (which would
       // stop the live count); revealLeaf still brings the pane into view.
       await right.setViewState({ type: VIEW_TYPE_METRICS, active: false });
-      leaf = right;
+      workspace.revealLeaf(right);
+    } finally {
+      this.activatingRightPane = false;
     }
-    workspace.revealLeaf(leaf);
   }
 
   detachRightPane() {
@@ -539,7 +551,7 @@ export default class WordCountPlugin extends Plugin {
       this.statusBarItem.setText(t.statusNoMetrics);
     } else {
       rows.forEach((row, i) => {
-        if (i > 0) this.statusBarItem.createSpan({ text: this.settings.separator });
+        if (i > 0) this.statusBarItem.createSpan({ text: this.settings.separator, cls: "wcp-separator" });
         const span = this.statusBarItem.createSpan({ text: row.statusText });
         const level = this.surfaceWarnLevel("statusBar", row.level);
         if (level !== "none") span.addClass(`wcp-limit-${level}`);
@@ -580,7 +592,7 @@ class MetricsView extends ItemView {
   // Signature of the currently rendered structure; while it stays the same we
   // update blocks in place so CSS color transitions can animate.
   private gridSig: string | null = null;
-  private blockRefs: Map<MetricKey, { block: HTMLElement; value: HTMLElement }> = new Map();
+  private blockRefs: Map<MetricKey, { block: HTMLElement; value: HTMLElement; text: string }> = new Map();
 
   constructor(leaf: WorkspaceLeaf, plugin: WordCountPlugin) {
     super(leaf);
@@ -596,6 +608,31 @@ class MetricsView extends ItemView {
   private setLevel(block: HTMLElement, level: WarnLevel) {
     block.toggleClass("wcp-limit-orange", level === "orange");
     block.toggleClass("wcp-limit-red", level === "red");
+  }
+
+  /** Subtle one-shot fade played when a character changes. */
+  private pulse(el: HTMLElement) {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    el.animate(
+      [{ opacity: 0.35 }, { opacity: 1 }],
+      { duration: 25, easing: "ease-out" }
+    );
+  }
+
+  /**
+   * Render a value as per-character spans, fading in only the characters that
+   * differ from the previous value. Comparison is right-aligned so digits line
+   * up by place value (e.g. 100 → 101 animates only the last digit).
+   */
+  private renderValue(el: HTMLElement, next: string, prev: string, animate: boolean) {
+    el.empty();
+    const offset = next.length - prev.length;
+    for (let i = 0; i < next.length; i++) {
+      const span = el.createSpan({ text: next[i] });
+      const prevIdx = i - offset;
+      const changed = prevIdx < 0 || prev[prevIdx] !== next[i];
+      if (animate && changed) this.pulse(span);
+    }
   }
 
   render() {
@@ -614,7 +651,10 @@ class MetricsView extends ItemView {
       for (const row of rows) {
         const ref = this.blockRefs.get(row.key);
         if (!ref) continue;
-        ref.value.setText(row.value);
+        if (ref.text !== row.value) {
+          this.renderValue(ref.value, row.value, ref.text, true);
+          ref.text = row.value;
+        }
         this.setLevel(ref.block, this.plugin.surfaceWarnLevel("rightPane", row.level));
       }
       return;
@@ -635,9 +675,12 @@ class MetricsView extends ItemView {
 
     // Header: preset name (clickable to cycle when multiple presets exist)
     const header = container.createDiv({ cls: "wcp-view-header" });
-    const nameEl = header.createEl("span", { text: preset.name, cls: "wcp-view-preset-name" });
+    const nameEl = header.createEl("span", { cls: "wcp-view-preset-name" });
+    nameEl.createSpan({ text: preset.name });
     if (multiPreset) {
       nameEl.addClass("is-clickable");
+      const icon = nameEl.createSpan({ cls: "wcp-view-cycle-icon" });
+      setIcon(icon, "repeat");
       setTooltip(nameEl, t.statusTooltipCycle(preset.name), { placement: "bottom" });
       nameEl.addEventListener("click", () => this.plugin.cyclePreset());
     }
@@ -656,9 +699,10 @@ class MetricsView extends ItemView {
     for (const row of rows) {
       const block = grid.createDiv({ cls: "wcp-metric-block" });
       this.setLevel(block, this.plugin.surfaceWarnLevel("rightPane", row.level));
-      const value = block.createEl("div", { text: row.value, cls: "wcp-metric-value" });
+      const value = block.createEl("div", { cls: "wcp-metric-value" });
+      this.renderValue(value, row.value, "", false);
       block.createEl("div", { text: row.blockLabel, cls: "wcp-metric-label" });
-      this.blockRefs.set(row.key, { block, value });
+      this.blockRefs.set(row.key, { block, value, text: row.value });
     }
   }
 }
@@ -776,7 +820,7 @@ class WordCountSettingTab extends PluginSettingTab {
           const preset = defaultPreset({
             name: t.newPresetName(this.plugin.settings.presets.length + 1),
           });
-          this.plugin.settings.presets.push(preset);
+          this.plugin.settings.presets.unshift(preset);
           await this.save();
           this.display();
         })

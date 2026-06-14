@@ -32,7 +32,7 @@ const ru = {
   settingsPresetsName: "Создать пресет",
   settingsPresetsDesc: "Пресеты позволяют индивидуально настраивать наборы метрик для разных писательских целей",
   settingsAddPreset: "Добавить пресет",
-  settingsSeparatorName: "Разделитель счётчиков в строке состояния",
+  settingsSeparatorName: "Разделитель метрик в строке состояния",
   settingsSeparatorDesc: "Введите символы, которые будут визуально разделять метрики в строке состояния",
   settingsHideDefaultName: "Скрыть стандартный счётчик слов Obsidian",
   settingsHideDefaultDesc: "Отключает встроенный плагин подсчёта слов Obsidian",
@@ -71,10 +71,10 @@ const ru = {
 
   // Limit warnings
   limitsTitle: "Предупреждения о лимитах",
-  limitsDesc: "Добавьте предупреждения о достижении лимита для любой включённой метрики",
+  limitsDesc: "Добавьте предупреждение для любой включённой метрики: ≥90% лимита добавляет оранжевый цвет и ≥100% добавляет красный цвет",
   limitSelectMetric: "Выберите метрику…",
   limitLabel: (name: string) => `Лимит для: ${name}`,
-  btnRemoveLimit: "Удалить предупреждение",
+  btnRemoveLimit: "Удалить предупреждение о лимите",
 
   // ── Delete confirmation modal ──────────────────────────────────────────────
   deleteConfirmTitle: "Удалить пресет",

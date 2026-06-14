@@ -4,6 +4,11 @@
   cursor: pointer;
 }
 
+/* Preserve spaces typed into the metrics separator (HTML would otherwise collapse them) */
+.wcp-status-bar .wcp-separator {
+  white-space: pre;
+}
+
 /* ── Preset card ─────────────────────────────────────────────────────────────── */
 
 .wcp-preset-card {
@@ -211,11 +216,14 @@
 }
 
 .wcp-view-preset-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-size: var(--font-ui-small);
-  font-weight: var(--font-bold);
-  letter-spacing: 0.04em;
+  font-weight: var(--font-semibold);
   text-transform: uppercase;
   color: var(--text-muted);
+  padding-left: 4px;
 }
 
 .wcp-view-preset-name.is-clickable {
@@ -224,6 +232,17 @@
 
 .wcp-view-preset-name.is-clickable:hover {
   color: var(--text-normal);
+}
+
+.wcp-view-cycle-icon {
+  display: inline-flex;
+  align-items: center;
+}
+
+.wcp-view-cycle-icon svg {
+  width: 0.9em;
+  height: 0.9em;
+  stroke-width: 2.75;
 }
 
 .wcp-view-empty {
@@ -269,6 +288,7 @@
 }
 
 .wcp-metric-label {
+  font-weight: var(--font-semibold);
   font-size: var(--font-ui-smaller);
   color: var(--text-muted);
   /* Reserve two lines so single- and double-line labels yield equal-height blocks */
