@@ -1,4 +1,4 @@
-import { App, EventRef, Modal, Plugin, PluginSettingTab, Setting, MarkdownView, Workspace, ButtonComponent, setIcon, setTooltip } from "obsidian";
+import { App, EventRef, Modal, Plugin, PluginSettingTab, Setting, MarkdownView, Workspace, ButtonComponent, ToggleComponent, setIcon, setTooltip } from "obsidian";
 import { t, refreshLocale } from "./locales";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -8,8 +8,18 @@ interface ObsidianCommands {
   removeCommand(id: string): void;
   commands: Record<string, { name: string }>;
 }
+interface InternalPlugin {
+  enabled: boolean;
+}
+interface InternalPlugins {
+  getPluginById(id: string): InternalPlugin | null;
+  enablePluginAndSave(id: string): Promise<void>;
+  disablePluginAndSave(id: string): Promise<void>;
+  on(name: "change", callback: () => void): EventRef;
+}
 interface AppInternal extends App {
   commands: ObsidianCommands;
+  internalPlugins: InternalPlugins;
 }
 type WorkspaceInternal = Workspace & {
   on(name: string, callback: (...args: unknown[]) => void): EventRef;
@@ -46,6 +56,7 @@ interface WordCountSettings {
   activePresetId: string;
   presets: Preset[];
   separator: string;
+  hideDefaultWordCount: boolean;
 }
 
 interface Metrics {
@@ -90,6 +101,7 @@ const DEFAULT_SETTINGS: WordCountSettings = {
   activePresetId: "",
   presets: [],
   separator: "  |  ",
+  hideDefaultWordCount: false,
 };
 
 // ── Plugin ────────────────────────────────────────────────────────────────────
@@ -97,6 +109,7 @@ const DEFAULT_SETTINGS: WordCountSettings = {
 export default class WordCountPlugin extends Plugin {
   settings: WordCountSettings;
   statusBarItem: HTMLElement;
+  private settingTab: WordCountSettingTab;
   private registeredCommandIds: Set<string> = new Set();
 
   async onload() {
@@ -124,8 +137,44 @@ export default class WordCountPlugin extends Plugin {
     this.registerEvent(this.app.workspace.on("editor-change", () => this.updateCount()));
     this.registerEvent((this.app.workspace as WorkspaceInternal).on("editor-selection-change", () => this.updateCount()));
 
-    this.addSettingTab(new WordCountSettingTab(this.app, this));
+    this.settingTab = new WordCountSettingTab(this.app, this);
+    this.addSettingTab(this.settingTab);
     this.updateCount();
+
+    // React to the core word counter being toggled from Obsidian's own settings
+    this.registerEvent(
+      (this.app as AppInternal).internalPlugins.on("change", () => this.syncDefaultWordCountState())
+    );
+
+    // Apply the "hide default word counter" preference if enabled
+    if (this.settings.hideDefaultWordCount) {
+      this.app.workspace.onLayoutReady(() => this.setDefaultWordCountHidden(true));
+    }
+  }
+
+  // ── Core word counter toggle ────────────────────────────────────────────────
+
+  async setDefaultWordCountHidden(hidden: boolean) {
+    const internal = (this.app as AppInternal).internalPlugins;
+    const core = internal?.getPluginById("word-count");
+    if (!core) return;
+    if (hidden && core.enabled) await internal.disablePluginAndSave("word-count");
+    else if (!hidden && !core.enabled) await internal.enablePluginAndSave("word-count");
+  }
+
+  /**
+   * If the user re-enables the core word counter from Obsidian's settings while
+   * our "hide" toggle is on, back off and turn the toggle off to avoid a
+   * duplicate counter in the status bar.
+   */
+  private async syncDefaultWordCountState() {
+    if (!this.settings.hideDefaultWordCount) return;
+    const core = (this.app as AppInternal).internalPlugins?.getPluginById("word-count");
+    if (core?.enabled) {
+      this.settings.hideDefaultWordCount = false;
+      await this.saveSettings();
+      this.settingTab.refreshHideDefaultToggle();
+    }
   }
 
   // ── Preset helpers ────────────────────────────────────────────────────────
@@ -392,6 +441,7 @@ export default class WordCountPlugin extends Plugin {
 
 class WordCountSettingTab extends PluginSettingTab {
   plugin: WordCountPlugin;
+  private hideDefaultToggle: ToggleComponent | null = null;
 
   constructor(app: App, plugin: WordCountPlugin) {
     super(app, plugin);
@@ -402,6 +452,11 @@ class WordCountSettingTab extends PluginSettingTab {
     this.plugin.refreshPresetCommands();
     await this.plugin.saveSettings();
     this.plugin.updateCount();
+  }
+
+  /** Sync the "hide default word counter" toggle with the stored setting. */
+  refreshHideDefaultToggle() {
+    this.hideDefaultToggle?.setValue(this.plugin.settings.hideDefaultWordCount);
   }
 
   display(): void {
@@ -422,6 +477,20 @@ class WordCountSettingTab extends PluginSettingTab {
             await this.save();
           })
       );
+
+    new Setting(containerEl)
+      .setName(t.settingsHideDefaultName)
+      .setDesc(t.settingsHideDefaultDesc)
+      .addToggle((toggle) => {
+        this.hideDefaultToggle = toggle;
+        toggle
+          .setValue(this.plugin.settings.hideDefaultWordCount)
+          .onChange(async (value) => {
+            this.plugin.settings.hideDefaultWordCount = value;
+            await this.plugin.setDefaultWordCountHidden(value);
+            await this.save();
+          });
+      });
 
     new Setting(containerEl)
       .setName(t.settingsPresetsName)

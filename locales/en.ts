@@ -31,6 +31,8 @@ const en = {
   settingsAddPreset: "Add preset",
   settingsSeparatorName: "Metrics separator",
   settingsSeparatorDesc: "Specify the look of metrics separator by typing anything",
+  settingsHideDefaultName: "Hide default Obsidian word counter",
+  settingsHideDefaultDesc: "Disables Obsidian word count core plugin",
 
   // Preset card header
   badgeActive: "Active",

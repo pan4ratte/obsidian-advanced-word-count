@@ -31,6 +31,8 @@ const ru = {
   settingsAddPreset: "Добавить пресет",
   settingsSeparatorName: "Разделитель счётчиков",
   settingsSeparatorDesc: "Введите символы, которые будут визуально разделять метрики в строке состояния",
+  settingsHideDefaultName: "Скрыть стандартный счётчик слов Obsidian",
+  settingsHideDefaultDesc: "Отключает встроенный плагин подсчёта слов Obsidian",
 
   // Preset card header
   badgeActive: "Активный",
