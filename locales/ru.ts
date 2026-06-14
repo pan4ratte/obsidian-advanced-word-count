@@ -6,6 +6,7 @@ const ru = {
 
   // ── Commands ───────────────────────────────────────────────────────────────
   commandActivatePreset: (name: string) => `Переключиться на пресет ${name}`,
+  commandOpenView: "Открыть панель счётчиков",
 
   // ── Status bar ─────────────────────────────────────────────────────────────
   statusNoMetrics: "Нет включённых счётчиков",
@@ -33,6 +34,19 @@ const ru = {
   settingsSeparatorDesc: "Введите символы, которые будут визуально разделять метрики в строке состояния",
   settingsHideDefaultName: "Скрыть стандартный счётчик слов Obsidian",
   settingsHideDefaultDesc: "Отключает встроенный плагин подсчёта слов Obsidian",
+  settingsDisplayMethodName: "Способ отображения",
+  settingsDisplayMethodDesc: "Выберите, где будут показаны включённые метрики",
+  displayMethodStatusBar: "Строка состояния",
+  displayMethodRightPane: "Правая панель",
+  displayMethodBoth: "Строка состояния + Правая панель",
+  settingsRightPaneLayoutName: "Расположение метрик в правой панели",
+  settingsRightPaneLayoutDesc: "Выберите, как блоки метрик располагаются в правой панели",
+  rightPaneLayoutOne: "Один столбец",
+  rightPaneLayoutTwo: "Два столбца",
+
+  // ── Right pane view ────────────────────────────────────────────────────────
+  viewTitle: "Счётчик слов",
+  viewNoFile: "Откройте заметку, чтобы увидеть метрики",
 
   // Preset card header
   badgeActive: "Активный",

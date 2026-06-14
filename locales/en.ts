@@ -6,6 +6,7 @@ const en = {
 
   // ── Commands ───────────────────────────────────────────────────────────────
   commandActivatePreset: (name: string) => `Switch to ${name} preset`,
+  commandOpenView: "Open metrics panel",
 
   // ── Status bar ─────────────────────────────────────────────────────────────
   statusNoMetrics: "No metrics enabled",
@@ -33,6 +34,19 @@ const en = {
   settingsSeparatorDesc: "Specify the look of metrics separator by typing anything",
   settingsHideDefaultName: "Hide default Obsidian word counter",
   settingsHideDefaultDesc: "Disables Obsidian word count core plugin",
+  settingsDisplayMethodName: "Display method",
+  settingsDisplayMethodDesc: "Choose where the enabled metrics are shown",
+  displayMethodStatusBar: "Status bar",
+  displayMethodRightPane: "Right pane",
+  displayMethodBoth: "Status bar + Right pane",
+  settingsRightPaneLayoutName: "Right pane metrics layout",
+  settingsRightPaneLayoutDesc: "Choose how metric blocks are arranged in the right pane",
+  rightPaneLayoutOne: "One column",
+  rightPaneLayoutTwo: "Two columns",
+
+  // ── Right pane view ────────────────────────────────────────────────────────
+  viewTitle: "Word count",
+  viewNoFile: "Open a note to see metrics",
 
   // Preset card header
   badgeActive: "Active",

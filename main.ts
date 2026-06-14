@@ -1,5 +1,11 @@
-import { App, EventRef, Modal, Plugin, PluginSettingTab, Setting, MarkdownView, Workspace, ButtonComponent, ToggleComponent, setIcon, setTooltip } from "obsidian";
+import { App, EventRef, ItemView, Modal, Plugin, PluginSettingTab, Setting, MarkdownView, Workspace, WorkspaceLeaf, ButtonComponent, ToggleComponent, setIcon, setTooltip } from "obsidian";
 import { t, refreshLocale } from "./locales";
+
+const VIEW_TYPE_METRICS = "advanced-word-count-view";
+
+type DisplayMethod = "statusBar" | "rightPane" | "both";
+
+type RightPaneLayout = "one" | "two";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -57,6 +63,8 @@ interface WordCountSettings {
   presets: Preset[];
   separator: string;
   hideDefaultWordCount: boolean;
+  displayMethod: DisplayMethod;
+  rightPaneLayout: RightPaneLayout;
 }
 
 interface Metrics {
@@ -102,6 +110,8 @@ const DEFAULT_SETTINGS: WordCountSettings = {
   presets: [],
   separator: "  |  ",
   hideDefaultWordCount: false,
+  displayMethod: "statusBar",
+  rightPaneLayout: "two",
 };
 
 // ── Plugin ────────────────────────────────────────────────────────────────────
@@ -109,6 +119,7 @@ const DEFAULT_SETTINGS: WordCountSettings = {
 export default class WordCountPlugin extends Plugin {
   settings: WordCountSettings;
   statusBarItem: HTMLElement;
+  lastMetrics: Metrics | null = null;
   private settingTab: WordCountSettingTab;
   private registeredCommandIds: Set<string> = new Set();
 
@@ -133,23 +144,66 @@ export default class WordCountPlugin extends Plugin {
 
     this.registerAllPresetCommands();
 
+    // Right pane metrics view
+    this.registerView(VIEW_TYPE_METRICS, (leaf) => new MetricsView(leaf, this));
+    this.addCommand({
+      id: "open-metrics-view",
+      name: t.commandOpenView,
+      callback: () => this.activateRightPane(),
+    });
+
     this.registerEvent(this.app.workspace.on("active-leaf-change", () => this.updateCount()));
     this.registerEvent(this.app.workspace.on("editor-change", () => this.updateCount()));
     this.registerEvent((this.app.workspace as WorkspaceInternal).on("editor-selection-change", () => this.updateCount()));
 
     this.settingTab = new WordCountSettingTab(this.app, this);
     this.addSettingTab(this.settingTab);
-    this.updateCount();
 
     // React to the core word counter being toggled from Obsidian's own settings
     this.registerEvent(
       (this.app as AppInternal).internalPlugins.on("change", () => this.syncDefaultWordCountState())
     );
 
-    // Apply the "hide default word counter" preference if enabled
-    if (this.settings.hideDefaultWordCount) {
-      this.app.workspace.onLayoutReady(() => this.setDefaultWordCountHidden(true));
+    // Defer view/leaf work until the workspace layout is ready
+    this.app.workspace.onLayoutReady(() => {
+      if (this.settings.hideDefaultWordCount) this.setDefaultWordCountHidden(true);
+      this.applyDisplayMethod();
+    });
+
+    this.updateCount();
+  }
+
+  // ── Display method ──────────────────────────────────────────────────────────
+
+  /** Open or close the right pane to match the chosen display method. */
+  async applyDisplayMethod() {
+    if (this.settings.displayMethod === "statusBar") this.detachRightPane();
+    else await this.activateRightPane();
+    this.updateCount();
+  }
+
+  async activateRightPane() {
+    const { workspace } = this.app;
+    const existing = workspace.getLeavesOfType(VIEW_TYPE_METRICS);
+
+    // Keep a single tab — detach any extras that may have been restored from a
+    // saved layout or otherwise duplicated.
+    for (let i = 1; i < existing.length; i++) existing[i].detach();
+
+    let leaf = existing[0];
+    if (!leaf) {
+      const right = workspace.getRightLeaf(false);
+      if (!right) return;
+      // active:false so we don't pull focus away from the editor (which would
+      // stop the live count); revealLeaf still brings the pane into view.
+      await right.setViewState({ type: VIEW_TYPE_METRICS, active: false });
+      leaf = right;
     }
+    workspace.revealLeaf(leaf);
+  }
+
+  detachRightPane() {
+    this.app.workspace.detachLeavesOfType(VIEW_TYPE_METRICS);
   }
 
   // ── Core word counter toggle ────────────────────────────────────────────────
@@ -390,21 +444,12 @@ export default class WordCountPlugin extends Plugin {
     return parts.join(separator);
   }
 
-  updateCount() {
-    const preset = this.getActivePreset();
-    if (!preset) { this.statusBarItem.setText(""); return; }
-
-    const view = this.app.workspace.getActiveViewOfType(MarkdownView);
-    if (!view) { this.statusBarItem.setText(""); return; }
-
-    const selection = view.editor.getSelection();
-    const raw = selection.length > 0 ? selection : view.getViewData();
-
+  private computeMetrics(raw: string, preset: Preset): Metrics {
     const base = this.preprocessBase(raw, preset);
     const preprocessed = this.preprocessText(raw, preset);
     const wordsWithSpaces = this.countWordsWithSpaces(preprocessed);
 
-    const metrics: Metrics = {
+    return {
       wordsWithSpaces,
       charsWithSpaces: this.countCharsWithSpaces(base),
       charsWithoutSpaces: this.countCharsWithoutSpaces(base),
@@ -415,6 +460,48 @@ export default class WordCountPlugin extends Plugin {
       wikiLinks: this.countWikiLinks(raw),
       citekeys: this.countCitekeys(raw),
     };
+  }
+
+  /** Enabled metrics as label/value pairs, in display order (used by the right pane). */
+  enabledMetrics(preset: Preset, m: Metrics): { label: string; value: string }[] {
+    const rows: [boolean, string, string][] = [
+      [preset.showWordsWithSpaces,    t.toggles.showWordsWithSpaces.label,    String(m.wordsWithSpaces)],
+      [preset.showCharsWithSpaces,    t.toggles.showCharsWithSpaces.label,    String(m.charsWithSpaces)],
+      [preset.showCharsWithoutSpaces, t.toggles.showCharsWithoutSpaces.label, String(m.charsWithoutSpaces)],
+      [preset.showPages,              t.toggles.showPages.label,              m.pages],
+      [preset.showLines,              t.toggles.showLines.label,              String(m.lines)],
+      [preset.showParagraphs,         t.toggles.showParagraphs.label,         String(m.paragraphs)],
+      [preset.showMarkdownLinks,      t.toggles.showMarkdownLinks.label,      String(m.markdownLinks)],
+      [preset.showWikiLinks,          t.toggles.showWikiLinks.label,          String(m.wikiLinks)],
+      [preset.showCitekeys,           t.toggles.showCitekeys.label,           String(m.citekeys)],
+    ];
+    return rows.filter(([show]) => show).map(([, label, value]) => ({ label, value }));
+  }
+
+  updateCount() {
+    const preset = this.getActivePreset();
+    const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+
+    if (preset && view) {
+      const selection = view.editor.getSelection();
+      const raw = selection.length > 0 ? selection : view.getViewData();
+      this.lastMetrics = this.computeMetrics(raw, preset);
+    } else if (this.app.workspace.getLeavesOfType("markdown").length === 0) {
+      // No notes open at all — clear. If a note is still open but focus moved to
+      // another pane (e.g. our own right pane), keep the last computed metrics.
+      this.lastMetrics = null;
+    }
+
+    this.renderStatusBar(preset, this.lastMetrics);
+    this.renderRightPane();
+  }
+
+  private renderStatusBar(preset: Preset | undefined, metrics: Metrics | null) {
+    const showStatusBar = this.settings.displayMethod !== "rightPane";
+    this.statusBarItem.toggle(showStatusBar);
+    if (!showStatusBar) return;
+
+    if (!preset || !metrics) { this.statusBarItem.setText(""); return; }
 
     const multiPreset = this.settings.presets.length > 1;
     const stats = this.buildStatusText(preset, metrics, this.settings.separator);
@@ -426,6 +513,12 @@ export default class WordCountPlugin extends Plugin {
     );
   }
 
+  private renderRightPane() {
+    for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_METRICS)) {
+      if (leaf.view instanceof MetricsView) leaf.view.render();
+    }
+  }
+
   // ── Persistence ───────────────────────────────────────────────────────────
 
   async loadSettings() {
@@ -434,6 +527,65 @@ export default class WordCountPlugin extends Plugin {
 
   async saveSettings() {
     await this.saveData(this.settings);
+  }
+}
+
+// ── Right pane metrics view ────────────────────────────────────────────────────
+
+class MetricsView extends ItemView {
+  private plugin: WordCountPlugin;
+
+  constructor(leaf: WorkspaceLeaf, plugin: WordCountPlugin) {
+    super(leaf);
+    this.plugin = plugin;
+  }
+
+  getViewType(): string { return VIEW_TYPE_METRICS; }
+  getDisplayText(): string { return t.viewTitle; }
+  getIcon(): string { return "calculator"; }
+
+  async onOpen() { this.render(); }
+
+  render() {
+    const container = this.contentEl;
+    container.empty();
+    container.addClass("wcp-view");
+
+    const preset = this.plugin.getActivePreset();
+    if (!preset) {
+      container.createEl("p", { text: t.statusNoMetrics, cls: "wcp-view-empty" });
+      return;
+    }
+
+    // Header: preset name (clickable to cycle when multiple presets exist)
+    const multiPreset = this.plugin.settings.presets.length > 1;
+    const header = container.createDiv({ cls: "wcp-view-header" });
+    const nameEl = header.createEl("span", { text: preset.name, cls: "wcp-view-preset-name" });
+    if (multiPreset) {
+      nameEl.addClass("is-clickable");
+      setTooltip(nameEl, t.statusTooltipCycle(preset.name), { placement: "bottom" });
+      nameEl.addEventListener("click", () => this.plugin.cyclePreset());
+    }
+
+    const metrics = this.plugin.lastMetrics;
+    if (!metrics) {
+      container.createEl("p", { text: t.viewNoFile, cls: "wcp-view-empty" });
+      return;
+    }
+
+    const blocks = this.plugin.enabledMetrics(preset, metrics);
+    if (blocks.length === 0) {
+      container.createEl("p", { text: t.statusNoMetrics, cls: "wcp-view-empty" });
+      return;
+    }
+
+    const cols = this.plugin.settings.rightPaneLayout === "one" ? "wcp-cols-1" : "wcp-cols-2";
+    const grid = container.createDiv({ cls: `wcp-block-grid ${cols}` });
+    for (const { label, value } of blocks) {
+      const block = grid.createDiv({ cls: "wcp-metric-block" });
+      block.createEl("div", { text: value, cls: "wcp-metric-value" });
+      block.createEl("div", { text: label, cls: "wcp-metric-label" });
+    }
   }
 }
 
@@ -464,6 +616,35 @@ class WordCountSettingTab extends PluginSettingTab {
     containerEl.empty();
     containerEl.createEl("h2", { text: t.settingsHeading });
     containerEl.createEl("p", { text: t.settingsDescription, cls: "wcp-section-note" });
+
+    new Setting(containerEl)
+      .setName(t.settingsDisplayMethodName)
+      .setDesc(t.settingsDisplayMethodDesc)
+      .addDropdown((dd) => {
+        dd.addOption("statusBar", t.displayMethodStatusBar);
+        dd.addOption("rightPane", t.displayMethodRightPane);
+        dd.addOption("both", t.displayMethodBoth);
+        dd.setValue(this.plugin.settings.displayMethod);
+        dd.onChange(async (value) => {
+          this.plugin.settings.displayMethod = value as DisplayMethod;
+          await this.plugin.saveSettings();
+          await this.plugin.applyDisplayMethod();
+        });
+      });
+
+    new Setting(containerEl)
+      .setName(t.settingsRightPaneLayoutName)
+      .setDesc(t.settingsRightPaneLayoutDesc)
+      .addDropdown((dd) => {
+        dd.addOption("two", t.rightPaneLayoutTwo);
+        dd.addOption("one", t.rightPaneLayoutOne);
+        dd.setValue(this.plugin.settings.rightPaneLayout);
+        dd.onChange(async (value) => {
+          this.plugin.settings.rightPaneLayout = value as RightPaneLayout;
+          await this.plugin.saveSettings();
+          this.plugin.updateCount();
+        });
+      });
 
     new Setting(containerEl)
       .setName(t.settingsSeparatorName)

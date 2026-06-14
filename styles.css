@@ -200,6 +200,80 @@
   flex-shrink: 0;
 }
 
+/* ── Right pane metrics view ─────────────────────────────────────────────────── */
+
+.wcp-view {
+  padding: 12px;
+}
+
+.wcp-view-header {
+  margin-bottom: 12px;
+}
+
+.wcp-view-preset-name {
+  font-size: var(--font-ui-small);
+  font-weight: var(--font-bold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.wcp-view-preset-name.is-clickable {
+  cursor: pointer;
+}
+
+.wcp-view-preset-name.is-clickable:hover {
+  color: var(--text-normal);
+}
+
+.wcp-view-empty {
+  font-size: var(--font-ui-small);
+  color: var(--text-muted);
+}
+
+.wcp-block-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.wcp-block-grid.wcp-cols-1 {
+  grid-template-columns: 1fr;
+}
+
+.wcp-block-grid.wcp-cols-2 {
+  grid-template-columns: 1fr 1fr;
+}
+
+.wcp-metric-block {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  padding: 12px;
+  border-radius: 8px;
+  background-color: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  /* Equal width comes from the 1fr columns; this keeps every block equal height
+     regardless of how many lines its label wraps to. */
+  min-width: 0;
+}
+
+.wcp-metric-value {
+  font-size: 1.6em;
+  font-weight: var(--font-bold);
+  line-height: 1.1;
+  color: var(--text-normal);
+}
+
+.wcp-metric-label {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+  /* Reserve two lines so single- and double-line labels yield equal-height blocks */
+  min-height: 2.4em;
+  display: flex;
+  align-items: center;
+}
+
 /* ── Delete confirmation modal ───────────────────────────────────────────────── */
 
 .wcp-modal-buttons {
