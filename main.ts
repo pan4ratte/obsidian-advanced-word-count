@@ -490,7 +490,7 @@ export default class WordCountPlugin extends Plugin {
       { key: "wordsWithSpaces",    show: preset.showWordsWithSpaces,    blockLabel: t.toggles.showWordsWithSpaces.label,    statusText: t.statusWords(m.wordsWithSpaces),           value: String(m.wordsWithSpaces) },
       { key: "charsWithSpaces",    show: preset.showCharsWithSpaces,    blockLabel: t.toggles.showCharsWithSpaces.label,    statusText: t.statusChars(m.charsWithSpaces),           value: String(m.charsWithSpaces) },
       { key: "charsWithoutSpaces", show: preset.showCharsWithoutSpaces, blockLabel: t.toggles.showCharsWithoutSpaces.label, statusText: t.statusCharsNoSpaces(m.charsWithoutSpaces), value: String(m.charsWithoutSpaces) },
-      { key: "pages",              show: preset.showPages,              blockLabel: t.toggles.showPages.label,              statusText: t.statusPages(m.pages),                     value: m.pages },
+      { key: "pages",              show: preset.showPages && preset.wordsPerPage > 0, blockLabel: t.toggles.showPages.label,        statusText: t.statusPages(m.pages),                     value: m.pages },
       { key: "lines",              show: preset.showLines,              blockLabel: t.toggles.showLines.label,              statusText: t.statusLines(m.lines),                     value: String(m.lines) },
       { key: "paragraphs",         show: preset.showParagraphs,         blockLabel: t.toggles.showParagraphs.label,         statusText: t.statusParas(m.paragraphs),                value: String(m.paragraphs) },
       { key: "markdownLinks",      show: preset.showMarkdownLinks,      blockLabel: t.toggles.showMarkdownLinks.label,      statusText: t.statusMdLinks(m.markdownLinks),           value: String(m.markdownLinks) },
@@ -884,13 +884,26 @@ class WordCountSettingTab extends PluginSettingTab {
 
     const wppInput = wppRow.createEl("input", { type: "number" });
     wppInput.value = String(preset.wordsPerPage);
-    wppInput.min = "1";
+    wppInput.min = "0";
     wppInput.addClass("wcp-wpp-input");
+    wppRow.createEl("span", { text: t.wppSuffix, cls: "wcp-wpp-suffix" });
+
+    // The "Pages" toggle chip and the words-per-page input turn red when pages
+    // are enabled but the per-page count is 0 (which would make the metric
+    // meaningless, so it is also hidden from the counter).
+    let pagesChip: HTMLElement | null = null;
+    const refreshPagesValidity = () => {
+      const invalid = preset.showPages && preset.wordsPerPage <= 0;
+      wppInput.toggleClass("wcp-invalid", invalid);
+      pagesChip?.toggleClass("wcp-invalid", invalid);
+    };
+
     wppInput.addEventListener("change", async () => {
       const n = parseInt(wppInput.value);
-      if (!isNaN(n) && n > 0) { preset.wordsPerPage = n; await this.save(); }
+      if (!isNaN(n) && n >= 0) { preset.wordsPerPage = n; }
+      refreshPagesValidity();
+      await this.save();
     });
-    wppRow.createEl("span", { text: t.wppSuffix, cls: "wcp-wpp-suffix" });
 
     // ── Status bar metrics ──────────────────────────────────────────────────
     this.sectionHeader(card, t.sectionStatusBar);
@@ -898,8 +911,12 @@ class WordCountSettingTab extends PluginSettingTab {
 
     const visGrid = card.createDiv({ cls: "wcp-toggle-grid" });
     for (const key of Object.keys(t.toggles) as (keyof typeof t.toggles)[]) {
-      this.renderToggleChip(visGrid, preset, key as keyof Preset, t.toggles[key].label, t.toggles[key].hint);
+      const chip = this.renderToggleChip(visGrid, preset, key as keyof Preset, t.toggles[key].label, t.toggles[key].hint,
+        key === "showPages" ? refreshPagesValidity : undefined);
+      if (key === "showPages") pagesChip = chip;
     }
+
+    refreshPagesValidity();
 
     // ── Word count options ──────────────────────────────────────────────────
     this.sectionHeader(card, t.sectionWordCountOptions);
@@ -972,7 +989,7 @@ class WordCountSettingTab extends PluginSettingTab {
     parent.createEl("p", { text, cls: "wcp-section-header" });
   }
 
-  renderToggleChip(parent: HTMLElement, preset: Preset, key: keyof Preset, label: string, hint?: string) {
+  renderToggleChip(parent: HTMLElement, preset: Preset, key: keyof Preset, label: string, hint?: string, onChange?: () => void): HTMLElement {
     const row = parent.createDiv({ cls: "wcp-toggle-chip" });
     if (hint) setTooltip(row, hint, { placement: "top" });
 
@@ -984,8 +1001,11 @@ class WordCountSettingTab extends PluginSettingTab {
     row.addEventListener("click", async () => {
       (preset[key] as boolean) = !(preset[key] as boolean);
       toggle.toggleClass("is-enabled", preset[key] as boolean);
+      onChange?.();
       await this.save();
     });
+
+    return row;
   }
 }
 

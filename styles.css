@@ -147,6 +147,12 @@
   border-color: var(--interactive-accent);
 }
 
+/* Invalid: pages enabled but words-per-page is 0 */
+.wcp-wpp-input.wcp-invalid,
+.wcp-wpp-input.wcp-invalid:focus {
+  border-color: var(--color-red);
+}
+
 .wcp-wpp-suffix {
   font-size: var(--font-small);
 }
@@ -219,6 +225,11 @@
 
 .wcp-toggle-chip:hover {
   background: var(--background-modifier-hover);
+}
+
+/* Invalid: "Pages" enabled while words-per-page is 0 */
+.wcp-toggle-chip.wcp-invalid {
+  border-color: var(--color-red);
 }
 
 .wcp-toggle-label {
