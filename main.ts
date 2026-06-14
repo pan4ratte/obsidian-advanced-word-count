@@ -16,11 +16,17 @@ interface ObsidianCommands {
 }
 interface InternalPlugin {
   enabled: boolean;
+  enable?: (save?: boolean) => Promise<void> | void;
+  disable?: (save?: boolean) => Promise<void> | void;
 }
+// Method names for toggling core plugins have differed across Obsidian
+// versions, so every entry point is treated as optional and probed at runtime.
 interface InternalPlugins {
   getPluginById(id: string): InternalPlugin | null;
-  enablePluginAndSave(id: string): Promise<void>;
-  disablePluginAndSave(id: string): Promise<void>;
+  enablePluginAndSave?(id: string): Promise<void>;
+  disablePluginAndSave?(id: string): Promise<void>;
+  enablePlugin?(id: string): Promise<void>;
+  disablePlugin?(id: string): Promise<void>;
   on(name: "change", callback: () => void): EventRef;
 }
 interface AppInternal extends App {
@@ -288,8 +294,18 @@ export default class WordCountPlugin extends Plugin {
     const internal = (this.app as AppInternal).internalPlugins;
     const core = internal?.getPluginById("word-count");
     if (!core) return;
-    if (hidden && core.enabled) await internal.disablePluginAndSave("word-count");
-    else if (!hidden && !core.enabled) await internal.enablePluginAndSave("word-count");
+    if (hidden === core.enabled) {
+      // Probe the available toggle API (it has changed across Obsidian versions).
+      if (hidden) {
+        if (internal.disablePluginAndSave) await internal.disablePluginAndSave("word-count");
+        else if (internal.disablePlugin) await internal.disablePlugin("word-count");
+        else await core.disable?.();
+      } else {
+        if (internal.enablePluginAndSave) await internal.enablePluginAndSave("word-count");
+        else if (internal.enablePlugin) await internal.enablePlugin("word-count");
+        else await core.enable?.();
+      }
+    }
   }
 
   /**
