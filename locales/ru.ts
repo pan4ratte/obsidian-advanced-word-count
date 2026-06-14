@@ -54,7 +54,7 @@ const ru = {
 
   // Preset card header
   badgeActive: "Активный",
-  btnSetActive: "Использовать пресет",
+  badgeInactive: "Неактивный",
   btnDeleteTooltip: "Удалить пресет",
   inputNamePlaceholder: "Введите имя пресета",
 

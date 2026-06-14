@@ -33,16 +33,32 @@
 }
 
 .wcp-active-badge {
-  font-size: var(--font-smallest);
-  font-weight: var(--font-bold);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: var(--interactive-accent);
   color: var(--text-on-accent);
   border-radius: 4px;
-  padding: 4px 8px;
-  white-space: nowrap;
+  padding: 5px;
   flex-shrink: 0;
+  transition: opacity 0.15s ease, background-color 0.15s ease;
+}
+
+.wcp-active-badge svg {
+  width: 15px;
+  height: 15px;
+}
+
+/* Inactive preset: faded and clickable to activate */
+.wcp-active-badge.is-inactive {
+  background: var(--background-modifier-border);
+  color: var(--text-muted);
+  opacity: 0.7;
+  cursor: pointer;
+}
+
+.wcp-active-badge.is-inactive:hover {
+  opacity: 1;
 }
 
 .wcp-name-input {

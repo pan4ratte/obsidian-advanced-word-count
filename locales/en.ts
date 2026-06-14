@@ -54,7 +54,7 @@ const en = {
 
   // Preset card header
   badgeActive: "Active",
-  btnSetActive: "Set as active preset",
+  badgeInactive: "Inactive",
   btnDeleteTooltip: "Delete preset",
   inputNamePlaceholder: "Enter preset name",
 

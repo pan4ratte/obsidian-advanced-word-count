@@ -838,7 +838,20 @@ class WordCountSettingTab extends PluginSettingTab {
     // ── Header ──────────────────────────────────────────────────────────────
     const header = card.createDiv({ cls: "wcp-preset-header" });
 
-    if (isActive) header.createEl("span", { text: t.badgeActive, cls: "wcp-active-badge" });
+    // Status badge — always shown as an icon. Active is highlighted; inactive is
+    // faded and clickable to make this preset active. The status text lives in
+    // the tooltip.
+    const badge = header.createEl("span", {
+      cls: `wcp-active-badge${isActive ? "" : " is-inactive"}`,
+    });
+    setIcon(badge, "whole-word");
+    setTooltip(badge, isActive ? t.badgeActive : t.badgeInactive, { placement: "top" });
+    if (!isActive) {
+      badge.addEventListener("click", async () => {
+        await this.plugin.activatePreset(preset.id);
+        this.display();
+      });
+    }
 
     const nameInput = header.createEl("input", { type: "text" });
     nameInput.value = preset.name;
@@ -848,14 +861,6 @@ class WordCountSettingTab extends PluginSettingTab {
       preset.name = nameInput.value.trim() || t.unnamedPreset;
       await this.save();
     });
-
-    if (!isActive) {
-      const actBtn = header.createEl("button", { text: t.btnSetActive, cls: "wcp-btn" });
-      actBtn.addEventListener("click", async () => {
-        await this.plugin.activatePreset(preset.id);
-        this.display();
-      });
-    }
 
     const delBtn = header.createEl("button");
     setIcon(delBtn, "trash-2");
