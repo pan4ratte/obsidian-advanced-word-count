@@ -395,9 +395,10 @@ export default class WordCountPlugin extends Plugin {
       s = s.replace(/%%[\s\S]*?%%/g, "").replace(/<!--[\s\S]*?-->/g, "");
     }
 
-    // HTML tags — strip the markup but keep the words/symbols inside the tags
+    // HTML tags — strip the markup but keep the words/symbols inside the tags.
+    // [^<>] (rather than [^>]) prevents quadratic backtracking on inputs like "<A<A<A…".
     if (preset.ignoreHtmlTags) {
-      s = s.replace(/<\/?[a-zA-Z][^>]*>/g, "");
+      s = s.replace(/<\/?[a-zA-Z][^<>]*>/g, "");
     }
 
     // Code blocks (always excluded)
