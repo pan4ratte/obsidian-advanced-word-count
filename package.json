@@ -1,7 +1,7 @@
 {
   "name": "advanced-word-count",
-  "version": "2.1.1",
-  "description": "Allows you to create complex word count presets that will be displayed in the status bar. Made with academic use cases in mind.",
+  "version": "3.0.0",
+  "description": "Allows you to create complex word count presets that will be displayed in the status bar or in the right pane. Made with academic use cases in mind.",
   "main": "main.js",
   "scripts": {
     "dev": "node esbuild.config.mjs",
@@ -18,6 +18,7 @@
     "builtin-modules": "^5.2.0",
     "esbuild": "^0.28.1",
     "eslint": "^10.4.1",
+    "eslint-plugin-obsidianmd": "^0.3.0",
     "obsidian": "latest",
     "tslib": "2.4.0",
     "typescript": "^5.9.3"

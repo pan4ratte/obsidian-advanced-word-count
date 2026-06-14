@@ -1,9 +1,9 @@
 {
   "id": "advanced-word-count",
   "name": "Advanced Word Count",
-  "version": "2.1.1",
-  "minAppVersion": "0.15.0",
-  "description": "Allows you to create complex word count presets that will be displayed in the status bar. Made with academic use cases in mind.",
+  "version": "3.0.0",
+  "minAppVersion": "1.7.2",
+  "description": "Allows you to create complex word count presets that will be displayed in the status bar or in the right pane. Made with academic use cases in mind.",
   "author": "pan4ratte",
   "authorUrl": "https://github.com/pan4ratte/",
   "isDesktopOnly": false

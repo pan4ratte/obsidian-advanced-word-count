@@ -174,6 +174,10 @@ function syncMetricLimit(preset: Preset, key: MetricKey) {
   }
 }
 
+// Wrap an async callback so it satisfies Obsidian's void-returning event/handler
+// types without leaving a floating promise.
+const handle = (fn: () => Promise<void>) => (): void => { void fn(); };
+
 const DEFAULT_SETTINGS: WordCountSettings = {
   activePresetId: "",
   presets: [],
@@ -232,13 +236,13 @@ export default class WordCountPlugin extends Plugin {
 
     // React to the core word counter being toggled from Obsidian's own settings
     this.registerEvent(
-      (this.app as AppInternal).internalPlugins.on("change", () => this.syncDefaultWordCountState())
+      (this.app as AppInternal).internalPlugins.on("change", () => { void this.syncDefaultWordCountState(); })
     );
 
     // Defer view/leaf work until the workspace layout is ready
     this.app.workspace.onLayoutReady(() => {
-      if (this.settings.hideDefaultWordCount) this.setDefaultWordCountHidden(true);
-      this.applyDisplayMethod();
+      if (this.settings.hideDefaultWordCount) void this.setDefaultWordCountHidden(true);
+      void this.applyDisplayMethod();
     });
 
     this.updateCount();
@@ -264,7 +268,7 @@ export default class WordCountPlugin extends Plugin {
       // If a single healthy tab already exists, reuse it (avoids flicker).
       const existing = workspace.getLeavesOfType(VIEW_TYPE_METRICS);
       if (existing.length === 1 && existing[0].view instanceof MetricsView) {
-        workspace.revealLeaf(existing[0]);
+        void workspace.revealLeaf(existing[0]);
         return;
       }
 
@@ -278,7 +282,7 @@ export default class WordCountPlugin extends Plugin {
       // active:false so we don't pull focus away from the editor (which would
       // stop the live count); revealLeaf still brings the pane into view.
       await right.setViewState({ type: VIEW_TYPE_METRICS, active: false });
-      workspace.revealLeaf(right);
+      void workspace.revealLeaf(right);
     } finally {
       this.activatingRightPane = false;
     }
@@ -339,7 +343,7 @@ export default class WordCountPlugin extends Plugin {
     const { presets } = this.settings;
     if (presets.length <= 1) return;
     const idx = presets.findIndex((p) => p.id === this.settings.activePresetId);
-    this.activatePreset(presets[(idx + 1) % presets.length].id);
+    void this.activatePreset(presets[(idx + 1) % presets.length].id);
   }
 
   // ── Commands ──────────────────────────────────────────────────────────────
@@ -412,8 +416,8 @@ export default class WordCountPlugin extends Plugin {
       s = s.replace(/\[([^\]]*)\]\([^)]*\)/g, "$1");
       s = s.replace(/\([^)]*\)\[([^\]]*)\]/g, "$1");
     } else {
-      s = s.replace(/\[([^\]]*)\]\(([^)]*)\)/g, (_, label, url) => `${label} ${url.trim()}`.trim());
-      s = s.replace(/\(([^)]*)\)\[([^\]]*)\]/g, (_, url, label) => `${label} ${url.trim()}`.trim());
+      s = s.replace(/\[([^\]]*)\]\(([^)]*)\)/g, (_: string, label: string, url: string) => `${label} ${url.trim()}`.trim());
+      s = s.replace(/\(([^)]*)\)\[([^\]]*)\]/g, (_: string, url: string, label: string) => `${label} ${url.trim()}`.trim());
     }
 
     // Wiki links
@@ -422,12 +426,12 @@ export default class WordCountPlugin extends Plugin {
       s = s.replace(/\[\[.*?\]\]/g, "");
     } else if (preset.countWikiLinkDisplayText) {
       // [[Page|Alias]] → "Alias", [[Page]] → "Page"
-      s = s.replace(/\[\[([^\]|]*)\|?([^\]]*)\]\]/g, (_, page, alias) =>
+      s = s.replace(/\[\[([^\]|]*)\|?([^\]]*)\]\]/g, (_: string, page: string, alias: string) =>
         (alias.trim() || page.trim()).replace(/#.*$/, "").trim()
       );
     } else {
       // Count every word inside: [[Page#Heading|Alias]] → "Page Heading Alias"
-      s = s.replace(/\[\[([^\]]*)\]\]/g, (_, inner) =>
+      s = s.replace(/\[\[([^\]]*)\]\]/g, (_: string, inner: string) =>
         inner.replace(/[|#]/g, " ").trim()
       );
     }
@@ -556,7 +560,8 @@ export default class WordCountPlugin extends Plugin {
   warnLevel(preset: Preset, m: Metrics, key: MetricKey): WarnLevel {
     const limit = preset.limits?.[key];
     if (!limit || limit <= 0) return "none";
-    const value = key === "pages" ? parseFloat(m.pages) : (m[key] as number);
+    const raw = m[key];
+    const value = typeof raw === "number" ? raw : parseFloat(raw);
     const ratio = value / limit;
     if (ratio >= 1) return "red";
     if (ratio >= 0.9) return "orange";
@@ -660,7 +665,8 @@ export default class WordCountPlugin extends Plugin {
   // ── Persistence ───────────────────────────────────────────────────────────
 
   async loadSettings() {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    const data = (await this.loadData()) as Partial<WordCountSettings> | null;
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, data);
     // Migrate presets saved before per-metric limits existed
     for (const p of this.settings.presets) {
       if (!p.limits) p.limits = {};
@@ -820,7 +826,7 @@ class WordCountSettingTab extends PluginSettingTab {
   display(): void {
     const { containerEl } = this;
     containerEl.empty();
-    containerEl.createEl("h2", { text: t.settingsHeading });
+    new Setting(containerEl).setName(t.settingsHeading).setHeading();
     containerEl.createEl("p", { text: t.settingsDescription, cls: "wcp-plugin-note" });
 
     // ── General ───────────────────────────────────────────────────────────────
@@ -935,27 +941,27 @@ class WordCountSettingTab extends PluginSettingTab {
     setIcon(badge, "whole-word");
     setTooltip(badge, isActive ? t.badgeActive : t.badgeInactive, { placement: "top" });
     if (!isActive) {
-      badge.addEventListener("click", async () => {
+      badge.addEventListener("click", handle(async () => {
         await this.plugin.activatePreset(preset.id);
         this.display();
-      });
+      }));
     }
 
     const nameInput = header.createEl("input", { type: "text" });
     nameInput.value = preset.name;
     nameInput.placeholder = t.inputNamePlaceholder;
     nameInput.addClass("wcp-name-input");
-    nameInput.addEventListener("change", async () => {
+    nameInput.addEventListener("change", handle(async () => {
       preset.name = nameInput.value.trim() || t.unnamedPreset;
       await this.save();
-    });
+    }));
 
     const delBtn = header.createEl("button");
     setIcon(delBtn, "trash-2");
     setTooltip(delBtn, t.btnDeleteTooltip, { placement: "top" });
     delBtn.addClass("wcp-btn", "wcp-btn-delete");
     delBtn.addEventListener("click", () => {
-      new DeleteConfirmModal(this.plugin.app, preset.name, async () => {
+      new DeleteConfirmModal(this.plugin.app, preset.name, handle(async () => {
         this.plugin.removePresetCommand(preset);
         this.plugin.settings.presets = this.plugin.settings.presets.filter((p) => p.id !== preset.id);
         if (this.plugin.settings.activePresetId === preset.id) {
@@ -963,7 +969,7 @@ class WordCountSettingTab extends PluginSettingTab {
         }
         await this.save();
         this.display();
-      }).open();
+      })).open();
     });
 
     // ── Words per page ──────────────────────────────────────────────────────
@@ -991,12 +997,12 @@ class WordCountSettingTab extends PluginSettingTab {
     let limitsContainer: HTMLElement | null = null;
     const refreshLimits = () => { if (limitsContainer) this.renderLimits(limitsContainer, preset); };
 
-    wppInput.addEventListener("change", async () => {
+    wppInput.addEventListener("change", handle(async () => {
       const n = parseInt(wppInput.value);
       if (!isNaN(n) && n >= 0) { preset.wordsPerPage = n; }
       refreshPagesValidity();
       await this.save();
-    });
+    }));
 
     // ── Status bar metrics ──────────────────────────────────────────────────
     this.sectionHeader(card, t.sectionStatusBar);
@@ -1004,7 +1010,7 @@ class WordCountSettingTab extends PluginSettingTab {
 
     const visGrid = card.createDiv({ cls: "wcp-toggle-grid" });
     for (const key of Object.keys(t.toggles) as (keyof typeof t.toggles)[]) {
-      const chip = this.renderToggleChip(visGrid, preset, key as keyof Preset, t.toggles[key].label, t.toggles[key].hint, () => {
+      const chip = this.renderToggleChip(visGrid, preset, key, t.toggles[key].label, t.toggles[key].hint, () => {
         if (key === "showPages") refreshPagesValidity();
         const metricKey = METRIC_ORDER.find((mk) => METRIC_SHOW_KEY[mk] === key);
         if (metricKey) syncMetricLimit(preset, metricKey);
@@ -1021,7 +1027,7 @@ class WordCountSettingTab extends PluginSettingTab {
 
     const wcGrid = card.createDiv({ cls: "wcp-toggle-grid-wide" });
     for (const key of Object.keys(t.wordCountOptions) as (keyof typeof t.wordCountOptions)[]) {
-      this.renderToggleChip(wcGrid, preset, key as keyof Preset, t.wordCountOptions[key].label, t.wordCountOptions[key].hint);
+      this.renderToggleChip(wcGrid, preset, key, t.wordCountOptions[key].label, t.wordCountOptions[key].hint);
     }
 
     // ── Limit warnings ────────────────────────────────────────────────────────
@@ -1045,13 +1051,13 @@ class WordCountSettingTab extends PluginSettingTab {
       select.createEl("option", { text: t.toggles[METRIC_SHOW_KEY[k] as keyof typeof t.toggles].label, value: k });
     }
     select.value = "";
-    select.addEventListener("change", async () => {
+    select.addEventListener("change", handle(async () => {
       const k = select.value as MetricKey;
       if (!k) return;
       preset.limits[k] = 0;
       await this.save();
       this.display();
-    });
+    }));
 
     // Existing limit rows
     for (const key of METRIC_ORDER) {
@@ -1096,12 +1102,12 @@ class WordCountSettingTab extends PluginSettingTab {
     const toggle = row.createDiv({ cls: "checkbox-container" });
     if (preset[key]) toggle.addClass("is-enabled");
 
-    row.addEventListener("click", async () => {
+    row.addEventListener("click", handle(async () => {
       (preset[key] as boolean) = !(preset[key] as boolean);
       toggle.toggleClass("is-enabled", preset[key] as boolean);
       onChange?.();
       await this.save();
-    });
+    }));
 
     return row;
   }
