@@ -39,6 +39,7 @@ interface Preset {
   ignoreWikiLinks: boolean;
   countCitekeysAsWords: boolean;
   ignoreComments: boolean;
+  ignoreHtmlTags: boolean;
 }
 
 interface WordCountSettings {
@@ -80,6 +81,7 @@ function defaultPreset(overrides: Partial<Preset> = {}): Preset {
     ignoreWikiLinks: false,
     countCitekeysAsWords: false,
     ignoreComments: true,
+    ignoreHtmlTags: false,
     ...overrides,
   };
 }
@@ -196,6 +198,11 @@ export default class WordCountPlugin extends Plugin {
     // Comments (stripped first so their content never leaks into counts)
     if (preset.ignoreComments) {
       s = s.replace(/%%[\s\S]*?%%/g, "").replace(/<!--[\s\S]*?-->/g, "");
+    }
+
+    // HTML tags — strip the markup but keep the words/symbols inside the tags
+    if (preset.ignoreHtmlTags) {
+      s = s.replace(/<\/?[a-zA-Z][^>]*>/g, "");
     }
 
     // Code blocks (always excluded)

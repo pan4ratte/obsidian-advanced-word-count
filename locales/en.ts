@@ -122,6 +122,11 @@ On: citekeys will be ignored`,
       hint: `Off: comments %% … %% and <!-- … --> text will be counted
 On: comments will be ignored`,
     },
+    ignoreHtmlTags: {
+      label: "Ignore HTML tags",
+      hint: `Off: HTML tags like <b> … </b> are counted
+On: tags are ignored, only words and symbols inside them are counted`,
+    },
   },
 } as const;
 
