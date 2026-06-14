@@ -4,7 +4,9 @@ English | [Русский](https://github.com/pan4ratte/obsidian-advanced-word-c
 
 This plugin allows you to create complex word count presets that are displayed in the status bar. You can cycle presets by clicking on the status bar or using command palette. The plugin is made with academic use cases in mind, so you can fine-tune counting of `[@citekeys]` and `[[wikilinks]]`.
 
-![](/media/plugin-settings-demo.png)
+<div align="center">
+  <img src="media/1-cover.png"width="100%" />
+</div>
 
 
 ## Features
