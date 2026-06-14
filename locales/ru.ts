@@ -52,7 +52,7 @@ const ru = {
   settingsLimitWarningsDisplayDesc: "Выберите, где будут показаны предупреждения о лимитах",
 
   // ── Right pane view ────────────────────────────────────────────────────────
-  viewTitle: "Счётчик слов",
+  viewTitle: "Advanced Word Count",
   viewNoFile: "Откройте заметку, чтобы увидеть метрики",
 
   // Preset card header

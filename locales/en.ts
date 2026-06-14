@@ -52,7 +52,7 @@ const en = {
   settingsLimitWarningsDisplayDesc: "Choose where limit warnings are shown",
 
   // ── Right pane view ────────────────────────────────────────────────────────
-  viewTitle: "Word count",
+  viewTitle: "Advanced Word Count",
   viewNoFile: "Open a note to see metrics",
 
   // Preset card header
