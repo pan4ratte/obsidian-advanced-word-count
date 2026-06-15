@@ -201,13 +201,10 @@ export default class WordCountPlugin extends Plugin {
   async onload() {
     await this.loadSettings();
 
-    // Ensure at least one preset exists and activePresetId is valid
-    if (this.settings.presets.length === 0) {
-      const first = defaultPreset({ name: t.defaultPresetName });
-      this.settings.presets.push(first);
-      this.settings.activePresetId = first.id;
-      await this.saveSettings();
-    } else if (!this.getActivePreset()) {
+    // Don't auto-create a preset on first run — the plugin starts with an empty
+    // preset list and the user adds their own. Only keep activePresetId valid
+    // when presets already exist (e.g. it points at a since-deleted preset).
+    if (this.settings.presets.length > 0 && !this.getActivePreset()) {
       this.settings.activePresetId = this.settings.presets[0].id;
       await this.saveSettings();
     }
@@ -928,6 +925,9 @@ class WordCountSettingTab extends PluginSettingTab {
             name: t.newPresetName(this.plugin.settings.presets.length + 1),
           });
           this.plugin.settings.presets.unshift(preset);
+          // If nothing is active (e.g. the very first preset on a fresh install),
+          // make this one active so counts show up immediately.
+          if (!this.plugin.getActivePreset()) this.plugin.settings.activePresetId = preset.id;
           await this.save();
           this.display();
         })
