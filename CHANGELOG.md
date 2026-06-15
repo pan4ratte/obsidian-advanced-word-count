@@ -1,15 +1,12 @@
 # Changelog
 
-## 3.1.0
+## 3.0.1
 
-### Major update
-
-
-
-### UI/UX enhancements and bug fixes
+### Hotfix release
 
 * Fixed a bug where the right pane tab was force-focused on Obsidian startup, overriding the last saved workspace state (especially inconvenient on mobile).
 * The plugin no longer creates a default preset on first launch.
+* Locales correction.
 
 
 ## 3.0.0

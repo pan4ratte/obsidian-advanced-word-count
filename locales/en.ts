@@ -67,14 +67,14 @@ const en = {
 
   // Section headers
   sectionStatusBar: "Counter metrics",
-  sectionStatusBarNote: "Choose, which metrics will appear in the counter",
+  sectionStatusBarNote: "Choose, which metrics will be displayed in the counter",
   sectionWordCountOptions: "Words and characters: advanced settings",
   sectionWordCountOptionsNote:
-    "Specify counting rules of formatting elements when words and characters are counted",
+    "Fine-tune counting rules of formatting elements when words and characters are counted",
 
   // Limit warnings
   limitsTitle: "Limit warnings",
-  limitsDesc: "Add a warning for any enabled metric: ≥90% of limit adds orange color and ≥100% adds red color",
+  limitsDesc: "Add a warning for any enabled metric: on ≥90% of limit it will be colored orange and on ≥100% colored red",
   limitSelectMetric: "Select a metric…",
   limitLabel: (name: string) => `Limit warning for: ${name}`,
   btnRemoveLimit: "Remove limit warning",
