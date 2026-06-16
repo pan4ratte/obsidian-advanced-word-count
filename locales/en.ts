@@ -18,6 +18,7 @@ const en = {
   statusChars: (n: number) => `Chars: ${n}`,
   statusCharsNoSpaces: (n: number) => `Chars (no spaces): ${n}`,
   statusPages: (n: string) => `Pages: ${n}`,
+  statusReadingTime: (n: string) => `Reading time: ${n} min`,
   statusLines: (n: number) => `Lines: ${n}`,
   statusParas: (n: number) => `Paras: ${n}`,
   statusMdLinks: (n: number) => `MD Links: ${n}`,
@@ -66,6 +67,13 @@ const en = {
   wppLabel: "Count",
   wppSuffix: "words as one page",
 
+  // Reading time speed selector
+  readingTimeUnit: "MIN.",
+  readingTimeLabel: "Calculate reading time for:",
+  readingSpeedAverage: "Average reader (250 WPM)",
+  readingSpeedFast: "Fast reader (400 WPM)",
+  readingSpeedComplex: "Complex text (150 WPM)",
+
   // Section headers
   sectionStatusBar: "Counter metrics",
   sectionStatusBarNote: "Choose, which metrics will be displayed in the counter",
@@ -106,6 +114,10 @@ const en = {
     showPages: {
       label: "Pages",
       hint: "Counts pages, based on the number of words per page, specified above",
+    },
+    showReadingTime: {
+      label: "Reading time",
+      hint: "Estimates reading time in minutes from the word count and the chosen reading speed",
     },
     showLines: {
       label: "Lines",

@@ -18,6 +18,7 @@ const ru = {
   statusChars: (n: number) => `Символов: ${n}`,
   statusCharsNoSpaces: (n: number) => `Символов (без пробелов): ${n}`,
   statusPages: (n: string) => `Страниц: ${n}`,
+  statusReadingTime: (n: string) => `Время чтения: ${n} мин`,
   statusLines: (n: number) => `Строк: ${n}`,
   statusParas: (n: number) => `Абзацев: ${n}`,
   statusMdLinks: (n: number) => `MD ссылок: ${n}`,
@@ -66,6 +67,13 @@ const ru = {
   wppLabel: "Считать",
   wppSuffix: "слов за одну страницу",
 
+  // Reading time speed selector
+  readingTimeUnit: "МИН.",
+  readingTimeLabel: "Рассчитать время чтения для:",
+  readingSpeedAverage: "Средний читатель (250 сл/мин)",
+  readingSpeedFast: "Быстрый читатель (400 сл/мин)",
+  readingSpeedComplex: "Сложный текст (150 сл/мин)",
+
   // Section headers
   sectionStatusBar: "Metrics",
   sectionStatusBarNote: "Выберите, какие метрики будут отображены в счётчике",
@@ -105,6 +113,10 @@ const ru = {
     showPages: {
       label: "Страницы",
       hint: "Считает страницы на основании количества слов на страницу, указанного выше",
+    },
+    showReadingTime: {
+      label: "Время чтения",
+      hint: "Оценивает время чтения в минутах на основе количества слов и выбранной скорости чтения",
     },
     showLines: {
       label: "Строки",

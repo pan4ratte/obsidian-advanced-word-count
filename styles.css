@@ -313,11 +313,25 @@
   transition: border-color 0.4s ease, border-width 0.4s ease;
 }
 
+.wcp-metric-value-line {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
 .wcp-metric-value {
   font-size: 1.6em;
   font-weight: var(--font-bold);
   line-height: 1.1;
   color: var(--text-normal);
+  transition: color 0.4s ease;
+}
+
+/* Unit shown after a value in the right pane (e.g. reading time "MIN.") */
+.wcp-metric-unit {
+  font-size: var(--font-ui-smaller);
+  font-weight: var(--font-bold);
+  color: var(--text-muted);
   transition: color 0.4s ease;
 }
 
@@ -341,6 +355,7 @@
 }
 
 .wcp-metric-block.wcp-limit-orange .wcp-metric-value,
+.wcp-metric-block.wcp-limit-orange .wcp-metric-unit,
 .wcp-metric-block.wcp-limit-orange .wcp-metric-label {
   color: var(--color-orange);
 }
@@ -351,6 +366,7 @@
 }
 
 .wcp-metric-block.wcp-limit-red .wcp-metric-value,
+.wcp-metric-block.wcp-limit-red .wcp-metric-unit,
 .wcp-metric-block.wcp-limit-red .wcp-metric-label {
   color: var(--color-red);
 }
@@ -361,6 +377,7 @@
 }
 
 .wcp-metric-block.wcp-limit-green .wcp-metric-value,
+.wcp-metric-block.wcp-limit-green .wcp-metric-unit,
 .wcp-metric-block.wcp-limit-green .wcp-metric-label {
   color: var(--text-success);
 }

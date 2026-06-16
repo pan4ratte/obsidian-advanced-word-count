@@ -44,11 +44,15 @@ export interface Preset {
   // Page
   wordsPerPage: number;
 
+  // Reading time: words-per-minute used to estimate the reading-time metric
+  readingWpm: number;
+
   // Metric visibility
   showWordsWithSpaces: boolean;    // space-separated word count
   showCharsWithSpaces: boolean;    // total characters including spaces and linebreaks
   showCharsWithoutSpaces: boolean; // total characters excluding all whitespace
   showPages: boolean;
+  showReadingTime: boolean;
   showLines: boolean;
   showParagraphs: boolean;
   showMarkdownLinks: boolean;
@@ -91,6 +95,7 @@ export interface Metrics {
   charsWithSpaces: number;
   charsWithoutSpaces: number;
   pages: string;
+  readingTime: string;
   lines: number;
   paragraphs: number;
   markdownLinks: number;
@@ -120,12 +125,15 @@ export interface MetricRow {
   blockLabel: string;
   statusText: string;
   value: string;
+  // Small unit shown after the value in the right pane (e.g. "MIN."); omitted for
+  // metrics that need no unit.
+  unit?: string;
   level: WarnLevel;
 }
 
 // Display order and the preset "show" flag that gates each metric
 export const METRIC_ORDER: MetricKey[] = [
-  "wordsWithSpaces", "charsWithSpaces", "charsWithoutSpaces", "pages",
+  "wordsWithSpaces", "charsWithSpaces", "charsWithoutSpaces", "pages", "readingTime",
   "lines", "paragraphs", "markdownLinks", "wikiLinks", "citekeys",
   "embeds", "tables", "tags", "footnotes",
 ];
@@ -134,6 +142,7 @@ export const METRIC_SHOW_KEY: Record<MetricKey, keyof Preset> = {
   charsWithSpaces: "showCharsWithSpaces",
   charsWithoutSpaces: "showCharsWithoutSpaces",
   pages: "showPages",
+  readingTime: "showReadingTime",
   lines: "showLines",
   paragraphs: "showParagraphs",
   markdownLinks: "showMarkdownLinks",
@@ -152,10 +161,12 @@ export function defaultPreset(overrides: Partial<Preset> = {}): Preset {
     id: crypto.randomUUID(),
     name: t.defaultPresetName,
     wordsPerPage: 250,
+    readingWpm: 250,
     showWordsWithSpaces: true,
     showCharsWithSpaces: false,
     showCharsWithoutSpaces: false,
     showPages: true,
+    showReadingTime: false,
     showLines: false,
     showParagraphs: false,
     showMarkdownLinks: false,
@@ -314,6 +325,11 @@ function countCharsWithoutSpaces(base: string): number {
   return substituteListMarkers(base, false).replace(/\s/g, "").length;
 }
 
+/** Estimated reading time in minutes (one decimal) for a word count at a given speed. */
+function computeReadingTime(words: number, wpm: number): string {
+  return (wpm > 0 ? words / wpm : 0).toFixed(1);
+}
+
 function countLines(text: string): number {
   return text ? text.split("\n").length : 0;
 }
@@ -415,6 +431,7 @@ export function computeMetrics(raw: string, preset: Preset): Metrics {
     charsWithSpaces: countCharsWithSpaces(base),
     charsWithoutSpaces: countCharsWithoutSpaces(base),
     pages: (wordsWithSpaces / preset.wordsPerPage).toFixed(1),
+    readingTime: computeReadingTime(wordsWithSpaces, preset.readingWpm),
     lines: countLines(raw),
     paragraphs: countParagraphs(raw),
     markdownLinks: countMarkdownLinks(raw),
@@ -461,11 +478,12 @@ function warnLevel(preset: Preset, m: Metrics, key: MetricKey): WarnLevel {
 
 /** Enabled metrics in display order, with status-bar text, block label/value and warning level. */
 export function metricRows(preset: Preset, m: Metrics): MetricRow[] {
-  const defs: { key: MetricKey; show: boolean; blockLabel: string; statusText: string; value: string }[] = [
+  const defs: { key: MetricKey; show: boolean; blockLabel: string; statusText: string; value: string; unit?: string }[] = [
     { key: "wordsWithSpaces",    show: preset.showWordsWithSpaces,    blockLabel: t.toggles.showWordsWithSpaces.label,    statusText: t.statusWords(m.wordsWithSpaces),           value: String(m.wordsWithSpaces) },
     { key: "charsWithSpaces",    show: preset.showCharsWithSpaces,    blockLabel: t.toggles.showCharsWithSpaces.label,    statusText: t.statusChars(m.charsWithSpaces),           value: String(m.charsWithSpaces) },
     { key: "charsWithoutSpaces", show: preset.showCharsWithoutSpaces, blockLabel: t.toggles.showCharsWithoutSpaces.label, statusText: t.statusCharsNoSpaces(m.charsWithoutSpaces), value: String(m.charsWithoutSpaces) },
     { key: "pages",              show: preset.showPages && preset.wordsPerPage > 0, blockLabel: t.toggles.showPages.label,        statusText: t.statusPages(m.pages),                     value: m.pages },
+    { key: "readingTime",        show: preset.showReadingTime,        blockLabel: t.toggles.showReadingTime.label,        statusText: t.statusReadingTime(m.readingTime),         value: m.readingTime, unit: t.readingTimeUnit },
     { key: "lines",              show: preset.showLines,              blockLabel: t.toggles.showLines.label,              statusText: t.statusLines(m.lines),                     value: String(m.lines) },
     { key: "paragraphs",         show: preset.showParagraphs,         blockLabel: t.toggles.showParagraphs.label,         statusText: t.statusParas(m.paragraphs),                value: String(m.paragraphs) },
     { key: "markdownLinks",      show: preset.showMarkdownLinks,      blockLabel: t.toggles.showMarkdownLinks.label,      statusText: t.statusMdLinks(m.markdownLinks),           value: String(m.markdownLinks) },
@@ -478,5 +496,5 @@ export function metricRows(preset: Preset, m: Metrics): MetricRow[] {
   ];
   return defs
     .filter((d) => d.show)
-    .map((d) => ({ key: d.key, blockLabel: d.blockLabel, statusText: d.statusText, value: d.value, level: warnLevel(preset, m, d.key) }));
+    .map((d) => ({ key: d.key, blockLabel: d.blockLabel, statusText: d.statusText, value: d.value, unit: d.unit, level: warnLevel(preset, m, d.key) }));
 }

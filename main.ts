@@ -286,6 +286,9 @@ export default class WordCountPlugin extends Plugin {
       // Code was always stripped before "Ignore code" became a toggle; default
       // existing presets to true so their counts don't change.
       if (p.ignoreCode === undefined) p.ignoreCode = true;
+      // Reading-time speed was added later; default existing presets to the
+      // average reader so the metric and its dropdown have a valid value.
+      if (p.readingWpm === undefined) p.readingWpm = 250;
       // Migrate presets saved before warning/goal rules existed: the old
       // `limits`/`stashedLimits` maps (warnings only) become warning rules.
       if (!Array.isArray(p.rules)) {

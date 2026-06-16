@@ -133,6 +133,14 @@ describe("structural metrics", () => {
     expect(count("one two three", { wordsPerPage: 2 }).pages).toBe("1.5");
   });
 
+  it("estimates reading time in minutes from the chosen reading speed", () => {
+    const words = Array(500).fill("a").join(" "); // 500 words
+    expect(count(words, { readingWpm: 250 }).readingTime).toBe("2.0"); // average
+    expect(count(words, { readingWpm: 400 }).readingTime).toBe("1.3"); // fast (1.25→1.3)
+    expect(count(words, { readingWpm: 150 }).readingTime).toBe("3.3"); // complex (3.33→3.3)
+    expect(count("").readingTime).toBe("0.0");
+  });
+
   it("counts lines", () => {
     expect(count("a\nb\nc").lines).toBe(3);
   });

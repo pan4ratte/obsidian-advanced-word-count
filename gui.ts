@@ -136,8 +136,12 @@ export class MetricsView extends ItemView {
     for (const row of rows) {
       const block = grid.createDiv({ cls: "wcp-metric-block" });
       this.setLevel(block, surfaceWarnLevel(this.plugin.settings.limitWarningsDisplayMethod, "rightPane", row.level));
-      const value = block.createEl("div", { cls: "wcp-metric-value" });
+      // Value and its optional unit (e.g. "MIN.") share a baseline-aligned line;
+      // the unit is a sibling so in-place value updates don't wipe it.
+      const valueLine = block.createDiv({ cls: "wcp-metric-value-line" });
+      const value = valueLine.createEl("div", { cls: "wcp-metric-value" });
       this.renderValue(value, row.value, "", false);
+      if (row.unit) valueLine.createEl("span", { text: row.unit, cls: "wcp-metric-unit" });
       block.createEl("div", { text: row.blockLabel, cls: "wcp-metric-label" });
       this.blockRefs.set(row.key, { block, value, text: row.value });
     }
@@ -327,6 +331,25 @@ export class WordCountSettingTab extends PluginSettingTab {
     wppInput.min = "0";
     wppInput.addClass("wcp-wpp-input");
     wppRow.createEl("span", { text: t.wppSuffix, cls: "wcp-wpp-suffix" });
+
+    // ── Reading time speed (its own row) ─────────────────────────────────────
+    const readingRow = card.createDiv({ cls: "wcp-wpp-row" });
+    readingRow.createEl("span", { text: t.readingTimeLabel, cls: "wcp-wpp-label" });
+    const readingSelect = readingRow.createEl("select", { cls: "dropdown" });
+    const readingSpeeds: { wpm: number; label: string }[] = [
+      { wpm: 250, label: t.readingSpeedAverage },
+      { wpm: 400, label: t.readingSpeedFast },
+      { wpm: 150, label: t.readingSpeedComplex },
+    ];
+    for (const { wpm, label } of readingSpeeds) {
+      readingSelect.createEl("option", { text: label, value: String(wpm) });
+    }
+    readingSelect.value = String(preset.readingWpm);
+    readingSelect.addEventListener("change", handle(async () => {
+      const wpm = parseInt(readingSelect.value, 10);
+      if (!isNaN(wpm) && wpm > 0) preset.readingWpm = wpm;
+      await this.save();
+    }));
 
     // The "Pages" toggle chip and the words-per-page input turn red when pages
     // are enabled but the per-page count is 0 (which would make the metric
