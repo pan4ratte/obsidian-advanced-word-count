@@ -1,4 +1,4 @@
-import { App, ItemView, Modal, PluginSettingTab, Setting, WorkspaceLeaf, ButtonComponent, ToggleComponent, setIcon, setTooltip } from "obsidian";
+import { App, ItemView, Modal, Platform, PluginSettingTab, Setting, WorkspaceLeaf, ButtonComponent, ToggleComponent, setIcon, setTooltip } from "obsidian";
 import { t } from "./locales";
 import type WordCountPlugin from "./main";
 import {
@@ -15,6 +15,8 @@ import {
   defaultPreset,
   metricRows,
   surfaceWarnLevel,
+  effectiveMetricOrder,
+  reorderMetrics,
 } from "./metrics";
 
 // Wrap an async callback so it satisfies Obsidian's void-returning event/handler
@@ -29,6 +31,8 @@ export class MetricsView extends ItemView {
   // update blocks in place so CSS color transitions can animate.
   private gridSig: string | null = null;
   private blockRefs: Map<MetricKey, { block: HTMLElement; value: HTMLElement; text: string }> = new Map();
+  // Metric currently being dragged for reorder (desktop only), or null.
+  private dragKey: MetricKey | null = null;
 
   constructor(leaf: WorkspaceLeaf, plugin: WordCountPlugin) {
     super(leaf);
@@ -144,7 +148,75 @@ export class MetricsView extends ItemView {
       if (row.unit) valueLine.createEl("span", { text: row.unit, cls: "wcp-metric-unit" });
       block.createEl("div", { text: row.blockLabel, cls: "wcp-metric-label" });
       this.blockRefs.set(row.key, { block, value, text: row.value });
+      // Drag-and-drop reordering — desktop only.
+      if (Platform.isDesktop) this.enableDragReorder(block, row.key, preset);
     }
+  }
+
+  // ── Drag-and-drop reordering (desktop) ──────────────────────────────────────
+
+  /** Whether to insert before or after the hovered block. Each block is a single
+   *  full-height drop zone: the first block places at the very start (it is the
+   *  only gap with no block above it), every other block places after itself. */
+  private dropPlace(block: HTMLElement): "before" | "after" {
+    const prev = block.previousElementSibling;
+    const isFirst = !(prev instanceof HTMLElement && prev.hasClass("wcp-metric-block"));
+    return isFirst ? "before" : "after";
+  }
+
+  /** Mark the drop target by lighting the hovered block's own bottom border — a
+   *  single consistent indicator for every block in both layouts. */
+  private showDropIndicator(block: HTMLElement) {
+    this.clearDropIndicators();
+    block.addClass("wcp-drop-bottom");
+  }
+
+  private clearDropIndicators() {
+    for (const { block } of this.blockRefs.values()) {
+      block.removeClass("wcp-drop-bottom");
+    }
+  }
+
+  private enableDragReorder(block: HTMLElement, key: MetricKey, preset: Preset) {
+    block.draggable = true;
+    block.addClass("wcp-draggable");
+
+    block.addEventListener("dragstart", (e) => {
+      this.dragKey = key;
+      block.addClass("wcp-dragging");
+      if (e.dataTransfer) {
+        e.dataTransfer.effectAllowed = "move";
+        e.dataTransfer.setData("text/plain", key); // required for a valid drag in some browsers
+      }
+    });
+
+    block.addEventListener("dragend", () => {
+      this.dragKey = null;
+      block.removeClass("wcp-dragging");
+      this.clearDropIndicators();
+    });
+
+    block.addEventListener("dragover", (e) => {
+      if (this.dragKey === null || this.dragKey === key) return;
+      e.preventDefault(); // allow the drop
+      if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
+      this.showDropIndicator(block);
+    });
+
+    block.addEventListener("dragleave", () => {
+      this.clearDropIndicators();
+    });
+
+    block.addEventListener("drop", (e) => {
+      e.preventDefault();
+      const dragged = this.dragKey;
+      this.dragKey = null;
+      this.clearDropIndicators();
+      if (dragged === null || dragged === key) return;
+      const place = this.dropPlace(block);
+      preset.metricOrder = reorderMetrics(effectiveMetricOrder(preset), dragged, key, place);
+      void this.plugin.saveSettings().then(() => this.plugin.updateCount());
+    });
   }
 }
 

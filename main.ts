@@ -9,6 +9,7 @@ import {
   WordCountSettings,
   Metrics,
   DEFAULT_SETTINGS,
+  METRIC_ORDER,
   computeMetrics,
   metricRows,
   surfaceWarnLevel,
@@ -289,6 +290,8 @@ export default class WordCountPlugin extends Plugin {
       // Reading-time speed was added later; default existing presets to the
       // average reader so the metric and its dropdown have a valid value.
       if (p.readingWpm === undefined) p.readingWpm = 250;
+      // Drag-and-drop ordering was added later; default to the canonical order.
+      if (!Array.isArray(p.metricOrder)) p.metricOrder = [...METRIC_ORDER];
       // Migrate presets saved before warning/goal rules existed: the old
       // `limits`/`stashedLimits` maps (warnings only) become warning rules.
       if (!Array.isArray(p.rules)) {

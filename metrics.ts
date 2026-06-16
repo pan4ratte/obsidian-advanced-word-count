@@ -78,6 +78,11 @@ export interface Preset {
   // goal). A rule only has a visible effect while its metric is enabled
   // (metricRows skips disabled metrics).
   rules: LimitRule[];
+
+  // User-defined display order of metrics (reordered by drag-and-drop in the
+  // right pane). Unknown or newly-added keys are reconciled by
+  // effectiveMetricOrder(), so a partial or stale list is safe.
+  metricOrder: MetricKey[];
 }
 
 export interface WordCountSettings {
@@ -184,6 +189,7 @@ export function defaultPreset(overrides: Partial<Preset> = {}): Preset {
     ignoreCode: true,
     ignoreHtmlTags: false,
     rules: [],
+    metricOrder: [...METRIC_ORDER],
     ...overrides,
   };
 }
@@ -444,6 +450,37 @@ export function computeMetrics(raw: string, preset: Preset): Metrics {
   };
 }
 
+// ── Metric ordering ─────────────────────────────────────────────────────────
+
+/**
+ * The preset's metric display order, reconciled against the known metrics:
+ * unknown keys are dropped, duplicates removed, and any metric missing from the
+ * stored list (e.g. one added in a later version) is appended in METRIC_ORDER
+ * sequence. Always returns every metric exactly once.
+ */
+export function effectiveMetricOrder(preset: Preset): MetricKey[] {
+  const known = new Set<MetricKey>(METRIC_ORDER);
+  const seen = new Set<MetricKey>();
+  const order: MetricKey[] = [];
+  for (const k of preset.metricOrder ?? []) {
+    if (known.has(k) && !seen.has(k)) { order.push(k); seen.add(k); }
+  }
+  for (const k of METRIC_ORDER) if (!seen.has(k)) order.push(k);
+  return order;
+}
+
+/** Move `dragged` to just before/after `target`, returning a new ordering. */
+export function reorderMetrics(
+  order: MetricKey[], dragged: MetricKey, target: MetricKey, place: "before" | "after"
+): MetricKey[] {
+  if (dragged === target) return order.slice();
+  const next = order.filter((k) => k !== dragged);
+  const ti = next.indexOf(target);
+  if (ti === -1) return order.slice();
+  next.splice(place === "before" ? ti : ti + 1, 0, dragged);
+  return next;
+}
+
 // ── Metric rows & warnings ──────────────────────────────────────────────────
 
 /** Adjust a metric's warning level for a given surface, honoring the limit-warnings display method. */
@@ -494,7 +531,9 @@ export function metricRows(preset: Preset, m: Metrics): MetricRow[] {
     { key: "tags",               show: preset.showTags,               blockLabel: t.toggles.showTags.label,               statusText: t.statusTags(m.tags),                       value: String(m.tags) },
     { key: "footnotes",          show: preset.showFootnotes,          blockLabel: t.toggles.showFootnotes.label,          statusText: t.statusFootnotes(m.footnotes),             value: String(m.footnotes) },
   ];
+  const order = effectiveMetricOrder(preset);
   return defs
     .filter((d) => d.show)
+    .sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key))
     .map((d) => ({ key: d.key, blockLabel: d.blockLabel, statusText: d.statusText, value: d.value, unit: d.unit, level: warnLevel(preset, m, d.key) }));
 }

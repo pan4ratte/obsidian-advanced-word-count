@@ -4,6 +4,9 @@ import {
   metricRows,
   surfaceWarnLevel,
   defaultPreset,
+  effectiveMetricOrder,
+  reorderMetrics,
+  METRIC_ORDER,
   Preset,
 } from "../metrics";
 
@@ -216,6 +219,13 @@ describe("metricRows", () => {
     expect(metricRows(preset, m).map((r) => r.key)).toEqual(["wordsWithSpaces", "pages"]);
   });
 
+  it("honors a preset's custom metric order", () => {
+    // Put pages before words; rows follow the stored order.
+    const preset = defaultPreset({ metricOrder: ["pages", "wordsWithSpaces", ...METRIC_ORDER] });
+    const m = computeMetrics("one two three", preset);
+    expect(metricRows(preset, m).map((r) => r.key)).toEqual(["pages", "wordsWithSpaces"]);
+  });
+
   it("flags warning levels at 90% (orange) and 100% (red) of a warning threshold", () => {
     const preset = defaultPreset({ rules: [{ metric: "wordsWithSpaces", threshold: 10, kind: "warning" }] });
     const level = (raw: string) =>
@@ -269,6 +279,30 @@ describe("metricRows", () => {
 
     expect(level("a b")).toBe("none");    // 1.0 pages
     expect(level("a b c")).toBe("green"); // 1.5 pages — exactly the goal
+  });
+});
+
+describe("metric ordering", () => {
+  it("appends unknown/missing metrics in canonical order and drops invalid keys", () => {
+    const preset = defaultPreset({ metricOrder: ["pages", "bogus" as never, "pages"] });
+    const order = effectiveMetricOrder(preset);
+    // "pages" first (deduped), invalid "bogus" gone, every other metric appended once.
+    expect(order[0]).toBe("pages");
+    expect(order).toEqual([...new Set(order)]);                 // no duplicates
+    expect([...order].sort()).toEqual([...METRIC_ORDER].sort()); // exactly the known metrics
+  });
+
+  it("falls back to the canonical order when none is stored", () => {
+    const preset = defaultPreset({ metricOrder: undefined as never });
+    expect(effectiveMetricOrder(preset)).toEqual([...METRIC_ORDER]);
+  });
+
+  it("moves a metric before or after a target", () => {
+    const order = ["a", "b", "c", "d"] as never[];
+    expect(reorderMetrics(order, "d" as never, "b" as never, "before")).toEqual(["a", "d", "b", "c"]);
+    expect(reorderMetrics(order, "a" as never, "c" as never, "after")).toEqual(["b", "c", "a", "d"]);
+    // Dropping onto itself is a no-op.
+    expect(reorderMetrics(order, "b" as never, "b" as never, "before")).toEqual(order);
   });
 });
 
