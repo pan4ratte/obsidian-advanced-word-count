@@ -17,7 +17,9 @@ Each separate preset can have its own list of metrics and methods of counting fo
 
 ### 2. View word counters in the right pane tab
 
-Counters can be viewed not only in the status bar, but also in the right pane tab. You can define whether counters are visible in both places or only one. Moreover, optionally for any chosen metric a limit warning can be set up. To do that, choose a metric in the preset and set a limit: when ≥90% of limit is reached, that metric is colored orange and when ≥100% is reached, it is colored red.
+* Counters can be viewed not only in the status bar, but also in the right pane tab. You can define whether counters are visible in both places or only one.
+* Moreover, for any chosen metric you can set up a limit warning and/or a goal: a warning colors the metric orange at ≥90% of the limit and red at ≥100%, while a goal colors it green at ≥100% (a metric can have both at once, and a goal can't be set higher than its warning).
+* You can also reorder the metrics in the right pane by dragging them — the new order is applied to the status bar as well (drag-and-drop on mobile devices is experimental for now).
 
 ### 3. Track many different counting metrics
 
@@ -30,12 +32,14 @@ Counters can be viewed not only in the status bar, but also in the right pane ta
 
 * Additional options:
 
-	* Lines (all lines, including blank lines)
+	* Lines (all lines, including blank ones)
 	* Paragraphs (blocks of text, empty lines are ignored)
+	* Reading time (estimated from a chosen reading speed)
 	* Markdown links `(url)[label]` and `[label](url)`
   * Embeds `![[note]]` or `![[file.pdf]]`
   * Complete (rendered) tables
   * Any `#tags` that are valid in Obsidian
+  * Footnotes — complete `[^1]` references and inline `^[…]`
 
 * Special "academic" options:
 
@@ -53,18 +57,8 @@ You can specify, how formatting elements will be counted:
 | **Count wikilinks display text** | `[[wiki\|label]]` → wiki and label will be counted 				  | only label will be counted  		  |
 | **Ignore citekeys** 			       | citekeys text will be counted 															  | citekeys will be ignored 				  |
 | **Ignore comments**			         | comments `%% … %%` and `<!-- … -->` text will be counted		  | comments will be ignored 	   		  |
+| **Ignore code**			             | inline code `` `…` `` and fenced code blocks will be counted  | code will be ignored 			   		  |
 | **Ignore HTML tags**		         | HTML tags like `<b> … </b>` etc. will be counted		          | HTML tags will be ignored 	   		|
-
-
-## Plugin use case
-
-Let's say, you have three different projects, on which you are working simultaneously: two academic papers for different journals with different formatting requirements/limits and you write posts for your Telegram channel.
-
-Journals have different page limits and use different fonts: that means that you will need two different presets and for each of them page count will be different. You can set it up with this plugin. For academic purposes you may want to count citekeys, e.g. number of references: you can set it up too.
-
-At the same time, Telegram has a strict character limit and you may want to count characters in your posts, but in such a way, that, for example, only display text of your links is counted (Telegram does the same). You can set it up with this plugin. Etc, etc…
-
-Without this plugin, it would be a nightmare to constantly change your preset settings and it would not be possible to adjust counters for academic purposes. Advanced Word Count plugin is a flexible tool, that makes your writing nightmares your sweet dreams :)
 
 
 ## Installation
@@ -88,6 +82,17 @@ If you want to test beta-versions of the plugin or use previous versions, you ca
 3. In the window that appears, paste the link to the `Advanced Word Count` plugin repository: [https://github.com/pan4ratte/obsidian-advanced-word-count](https://github.com/pan4ratte/obsidian-advanced-word-count)
 
 4. Under “Select a version” choose the desired version and click the “Add plugin” button. The plugin will be automatically installed and will be ready to use.
+
+
+## Plugin use case
+
+Let's say, you have three different projects, on which you are working simultaneously: two academic papers for different journals with different formatting requirements/limits and you write posts for your Telegram channel.
+
+Journals have different page limits and use different fonts: that means that you will need two different presets and for each of them page count will be different. You can set it up with this plugin. For academic purposes you may want to count citekeys, e.g. number of references: you can set it up too.
+
+At the same time, Telegram has a strict character limit and you may want to count characters in your posts, but in such a way, that, for example, only display text of your links is counted (Telegram does the same). You can set it up with this plugin. Etc, etc…
+
+Without this plugin, it would be a nightmare to constantly change your preset settings and it would not be possible to adjust counters for academic purposes. Advanced Word Count plugin is a flexible tool, that makes your writing nightmares your sweet dreams :)
 
 
 ## About the Author
