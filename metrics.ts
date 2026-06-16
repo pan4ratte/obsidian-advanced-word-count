@@ -64,6 +64,7 @@ export interface Preset {
   ignoreWikiLinks: boolean;
   countCitekeysAsWords: boolean;
   ignoreComments: boolean;
+  ignoreCode: boolean;
   ignoreHtmlTags: boolean;
 
   // Warning/goal rules. A metric may have at most one warning and one goal. A
@@ -165,6 +166,7 @@ export function defaultPreset(overrides: Partial<Preset> = {}): Preset {
     ignoreWikiLinks: false,
     countCitekeysAsWords: false,
     ignoreComments: true,
+    ignoreCode: true,
     ignoreHtmlTags: false,
     rules: [],
     ...overrides,
@@ -200,8 +202,10 @@ function preprocessBase(raw: string, preset: Preset): string {
     s = s.replace(/<\/?[a-zA-Z][^<>]*>/g, "");
   }
 
-  // Code blocks (always excluded)
-  s = s.replace(/```[\s\S]*?```/g, "").replace(/`[^`]*`/g, "");
+  // Code — fenced blocks and inline spans
+  if (preset.ignoreCode) {
+    s = s.replace(/```[\s\S]*?```/g, "").replace(/`[^`]*`/g, "");
+  }
 
   // Images (always excluded)
   s = s.replace(/!\[.*?\]\(.*?\)/g, "");

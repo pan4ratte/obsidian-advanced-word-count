@@ -362,7 +362,7 @@
 
 .wcp-metric-block.wcp-limit-green .wcp-metric-value,
 .wcp-metric-block.wcp-limit-green .wcp-metric-label {
-  color: var(--color-green);
+  color: var(--text-success);
 }
 
 /* Status bar segments */
@@ -375,7 +375,7 @@
 }
 
 .wcp-status-bar .wcp-limit-green {
-  color: var(--color-green);
+  color: var(--text-success);
 }
 
 /* Description and add buttons grouped in one container: note on top, the add

@@ -167,6 +167,11 @@ On: citekeys will be ignored`,
       hint: `Off: comments %% … %% and <!-- … --> text will be counted
 On: comments will be ignored`,
     },
+    ignoreCode: {
+      label: "Ignore code",
+      hint: `Off: inline code \`…\` and code blocks \`\`\` … \`\`\` are counted
+On: code is ignored`,
+    },
     ignoreHtmlTags: {
       label: "Ignore HTML tags",
       hint: `Off: HTML tags like <b> … </b> are counted

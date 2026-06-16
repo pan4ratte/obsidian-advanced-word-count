@@ -283,6 +283,9 @@ export default class WordCountPlugin extends Plugin {
     const data = (await this.loadData()) as Partial<WordCountSettings> | null;
     this.settings = Object.assign({}, DEFAULT_SETTINGS, data);
     for (const p of this.settings.presets) {
+      // Code was always stripped before "Ignore code" became a toggle; default
+      // existing presets to true so their counts don't change.
+      if (p.ignoreCode === undefined) p.ignoreCode = true;
       // Migrate presets saved before warning/goal rules existed: the old
       // `limits`/`stashedLimits` maps (warnings only) become warning rules.
       if (!Array.isArray(p.rules)) {

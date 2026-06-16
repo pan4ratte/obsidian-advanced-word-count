@@ -25,9 +25,13 @@ describe("word count (wordsWithSpaces)", () => {
     expect(count("---\ntitle: x\ntags: [a]\n---\nhello world").wordsWithSpaces).toBe(2);
   });
 
-  it("excludes fenced and inline code", () => {
+  it("excludes fenced and inline code by default", () => {
     expect(count("hello ```js\ncode here``` world").wordsWithSpaces).toBe(2);
     expect(count("hello `inline code` world").wordsWithSpaces).toBe(2);
+  });
+
+  it("counts code when ignoreCode is off", () => {
+    expect(count("alpha `beta` gamma", { ignoreCode: false }).wordsWithSpaces).toBe(3);
   });
 
   it("excludes images", () => {
