@@ -1,7 +1,7 @@
 {
   "name": "advanced-word-count",
-  "version": "3.0.1",
-  "description": "Allows you to create complex word count presets that will be displayed in the status bar or in the right pane. Made with academic use cases in mind.",
+  "version": "3.1.0",
+  "description": "Allows you to create complex word count presets that will be displayed in the status bar or in the right pane. Made for everyone, but with special care to academic use cases.",
   "main": "main.js",
   "scripts": {
     "dev": "node esbuild.config.mjs",
