@@ -418,7 +418,7 @@ function countFootnotes(text: string): number {
   // References: [^label] usages, excluding the bracket of a definition ([^label]:).
   const referenced = new Set<string>();
   for (const m of text.matchAll(/\[\^([^\]\s]+)\]/g)) {
-    if (text[m.index! + m[0].length] === ":") continue;
+    if (text[m.index + m[0].length] === ":") continue;
     referenced.add(m[1]);
   }
 
