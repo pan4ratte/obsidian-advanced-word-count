@@ -1,5 +1,37 @@
 # Changelog
 
+## 3.1.0
+
+### New features
+
+* **Set goals.** Add a goal to any enabled metric to track progress toward a target — the metric turns green once it reaches ≥100% of the goal.
+* **Goals and warnings together.** A metric can now carry both a goal and a warning at the same time; a goal cannot be set higher than its paired warning.
+* **Right pane metrics reordering.** Rearrange the metrics in the right pane by dragging them, and the new order is applied to the status bar as well. Mobile/touch devices support is experimental for now.
+
+### New metrics
+
+* **Footnotes.** Counts complete footnotes — both inline (`^[…]`) and reference/definition pairs (`[^1]` with a matching `[^1]: …`).
+* **Reading time.** Estimates reading time from the word count, with a per-preset selector: Average reader (250 WPM), Fast reader (400 WPM) or Complex text (150 WPM).
+
+### New advanced setting
+
+* **Ignore code.** Excludes both inline code and fenced code blocks from the word and character counts.
+
+### Improvements
+
+* **Better citekey counting.** Several `@keys` in a single `[bracket]` are now each counted, and Pandoc-style prefixes and locators (e.g. `[see @smith2020, p. 33]`) are recognised.
+
+### Bug fixes
+
+* Fixed task checkbox markers (`- [ ]` / `- [x]`) being miscounted in the word count.
+* Fixed task checkbox markers being miscounted in the characters-with-spaces metric.
+* Fixed embeds being counted as markdown links.
+
+### Other
+
+* Internal architecture rewritten and covered with an automated test suite.
+
+
 ## 3.0.1
 
 ### Hotfix release
