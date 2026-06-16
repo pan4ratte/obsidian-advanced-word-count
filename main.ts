@@ -5,6 +5,7 @@ import {
   AppInternal,
   WorkspaceInternal,
   Preset,
+  MetricKey,
   WordCountSettings,
   Metrics,
   DEFAULT_SETTINGS,
@@ -281,10 +282,20 @@ export default class WordCountPlugin extends Plugin {
   async loadSettings() {
     const data = (await this.loadData()) as Partial<WordCountSettings> | null;
     this.settings = Object.assign({}, DEFAULT_SETTINGS, data);
-    // Migrate presets saved before per-metric limits existed
     for (const p of this.settings.presets) {
-      if (!p.limits) p.limits = {};
-      if (!p.stashedLimits) p.stashedLimits = {};
+      // Migrate presets saved before warning/goal rules existed: the old
+      // `limits`/`stashedLimits` maps (warnings only) become warning rules.
+      if (!Array.isArray(p.rules)) {
+        const legacy = p as unknown as {
+          limits?: Partial<Record<MetricKey, number>>;
+          stashedLimits?: Partial<Record<MetricKey, number>>;
+        };
+        const merged = { ...(legacy.stashedLimits ?? {}), ...(legacy.limits ?? {}) };
+        p.rules = (Object.entries(merged) as [MetricKey, number][])
+          .map(([metric, threshold]) => ({ metric, threshold, kind: "warning" as const }));
+        delete legacy.limits;
+        delete legacy.stashedLimits;
+      }
     }
   }
 

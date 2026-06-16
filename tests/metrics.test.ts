@@ -138,14 +138,30 @@ describe("metricRows", () => {
     expect(metricRows(preset, m).map((r) => r.key)).toEqual(["wordsWithSpaces", "pages"]);
   });
 
-  it("flags warning levels at 90% (orange) and 100% (red) of a limit", () => {
-    const preset = defaultPreset({ limits: { wordsWithSpaces: 10 } });
+  it("flags warning levels at 90% (orange) and 100% (red) of a warning threshold", () => {
+    const preset = defaultPreset({ rules: [{ metric: "wordsWithSpaces", threshold: 10, kind: "warning" }] });
     const level = (raw: string) =>
       metricRows(preset, computeMetrics(raw, preset)).find((r) => r.key === "wordsWithSpaces")!.level;
 
     expect(level("a b c d e")).toBe("none");                  // 5/10
     expect(level("a b c d e f g h i")).toBe("orange");        // 9/10
     expect(level("a b c d e f g h i j")).toBe("red");         // 10/10
+  });
+
+  it("colors a goal green only once its threshold is reached", () => {
+    const preset = defaultPreset({ rules: [{ metric: "wordsWithSpaces", threshold: 5, kind: "goal" }] });
+    const level = (raw: string) =>
+      metricRows(preset, computeMetrics(raw, preset)).find((r) => r.key === "wordsWithSpaces")!.level;
+
+    expect(level("a b c")).toBe("none");          // 3/5 — goals stay neutral below 100%
+    expect(level("a b c d e")).toBe("green");     // 5/5
+    expect(level("a b c d e f")).toBe("green");   // 6/5
+  });
+
+  it("ignores a rule whose metric is not selected yet", () => {
+    const preset = defaultPreset({ rules: [{ metric: "", threshold: 5, kind: "goal" }] });
+    const rows = metricRows(preset, computeMetrics("a b c d e", preset));
+    expect(rows.every((r) => r.level === "none")).toBe(true);
   });
 });
 

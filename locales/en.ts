@@ -72,12 +72,15 @@ const en = {
   sectionWordCountOptionsNote:
     "Fine-tune counting rules of formatting elements when words and characters are counted",
 
-  // Limit warnings
-  limitsTitle: "Limit warnings",
-  limitsDesc: "Add a warning for any enabled metric: on ≥90% of limit it will be colored orange and on ≥100% colored red",
+  // Warnings & goals
+  limitsTitle: "Warnings and goals",
+  limitsDesc: "Warning colors a metric orange when ≥90% is reached and red at ≥100%. Goal colors a metric green at ≥100%",
+  warningsSubtitle: "Warnings",
+  goalsSubtitle: "Goals",
+  addWarning: "New warning",
+  addGoal: "New goal",
   limitSelectMetric: "Select a metric…",
-  limitLabel: (name: string) => `Limit warning for: ${name}`,
-  btnRemoveLimit: "Remove limit warning",
+  btnRemoveLimit: "Remove",
 
   // ── Delete confirmation modal ──────────────────────────────────────────────
   deleteConfirmTitle: "Delete preset",

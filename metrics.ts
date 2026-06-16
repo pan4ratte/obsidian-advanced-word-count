@@ -66,11 +66,11 @@ export interface Preset {
   ignoreComments: boolean;
   ignoreHtmlTags: boolean;
 
-  // Per-metric warning limits (metric key → threshold)
-  limits: Partial<Record<MetricKey, number>>;
-  // Limits of metrics that are currently disabled, preserved so they return
-  // when the metric is re-enabled.
-  stashedLimits: Partial<Record<MetricKey, number>>;
+  // Warning/goal rules. Each metric may appear in at most one rule. A warning
+  // colors its metric orange at ≥90% and red at ≥100% of the threshold; a goal
+  // colors it green at ≥100%. A rule only has a visible effect while its metric
+  // is enabled (metricRows skips disabled metrics).
+  rules: LimitRule[];
 }
 
 export interface WordCountSettings {
@@ -100,7 +100,16 @@ export interface Metrics {
 
 // Metric identifiers match the field names in Metrics
 export type MetricKey = keyof Metrics;
-export type WarnLevel = "none" | "orange" | "red";
+export type WarnLevel = "none" | "orange" | "red" | "green";
+
+export type LimitKind = "warning" | "goal";
+
+export interface LimitRule {
+  // "" while the rule has just been created and no metric is chosen yet.
+  metric: MetricKey | "";
+  threshold: number;
+  kind: LimitKind;
+}
 
 export interface MetricRow {
   key: MetricKey;
@@ -156,8 +165,7 @@ export function defaultPreset(overrides: Partial<Preset> = {}): Preset {
     countCitekeysAsWords: false,
     ignoreComments: true,
     ignoreHtmlTags: false,
-    limits: {},
-    stashedLimits: {},
+    rules: [],
     ...overrides,
   };
 }
@@ -171,26 +179,6 @@ export const DEFAULT_SETTINGS: WordCountSettings = {
   rightPaneLayout: "two",
   limitWarningsDisplayMethod: "both",
 };
-
-// When a metric is toggled, move its limit warning between the active `limits`
-// and the per-preset `stashedLimits` store so disabling/re-enabling a metric
-// hides/restores its warning without losing the configured threshold.
-export function syncMetricLimit(preset: Preset, key: MetricKey) {
-  const enabled = preset[METRIC_SHOW_KEY[key]] as boolean;
-  if (enabled) {
-    const stashed = preset.stashedLimits[key];
-    if (stashed !== undefined) {
-      preset.limits[key] = stashed;
-      delete preset.stashedLimits[key];
-    }
-  } else {
-    const active = preset.limits[key];
-    if (active !== undefined) {
-      preset.stashedLimits[key] = active;
-      delete preset.limits[key];
-    }
-  }
-}
 
 // ── Text pre-processing ───────────────────────────────────────────────────────
 
@@ -384,13 +372,17 @@ export function surfaceWarnLevel(method: DisplayMethod, surface: "statusBar" | "
   return show ? level : "none";
 }
 
-/** Warning level for a metric given its limit (90% → orange, 100%+ → red). */
+/**
+ * Warning level for a metric given its rule.
+ * Warning: 90% → orange, 100%+ → red. Goal: 100%+ → green.
+ */
 function warnLevel(preset: Preset, m: Metrics, key: MetricKey): WarnLevel {
-  const limit = preset.limits?.[key];
-  if (!limit || limit <= 0) return "none";
+  const rule = preset.rules.find((r) => r.metric === key);
+  if (!rule || !rule.threshold || rule.threshold <= 0) return "none";
   const raw = m[key];
   const value = typeof raw === "number" ? raw : parseFloat(raw);
-  const ratio = value / limit;
+  const ratio = value / rule.threshold;
+  if (rule.kind === "goal") return ratio >= 1 ? "green" : "none";
   if (ratio >= 1) return "red";
   if (ratio >= 0.9) return "orange";
   return "none";

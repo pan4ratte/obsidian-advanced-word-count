@@ -8,10 +8,11 @@ import {
   Preset,
   MetricKey,
   WarnLevel,
+  LimitKind,
+  LimitRule,
   METRIC_ORDER,
   METRIC_SHOW_KEY,
   defaultPreset,
-  syncMetricLimit,
   metricRows,
   surfaceWarnLevel,
 } from "./metrics";
@@ -43,6 +44,7 @@ export class MetricsView extends ItemView {
   private setLevel(block: HTMLElement, level: WarnLevel) {
     block.toggleClass("wcp-limit-orange", level === "orange");
     block.toggleClass("wcp-limit-red", level === "red");
+    block.toggleClass("wcp-limit-green", level === "green");
   }
 
   /** Subtle one-shot fade played when a character changes. */
@@ -336,11 +338,6 @@ export class WordCountSettingTab extends PluginSettingTab {
       pagesChip?.toggleClass("wcp-invalid", invalid);
     };
 
-    // Filled in below; toggling a metric must refresh the limit-warnings dropdown
-    // so newly enabled metrics become available there.
-    let limitsContainer: HTMLElement | null = null;
-    const refreshLimits = () => { if (limitsContainer) this.renderLimits(limitsContainer, preset); };
-
     wppInput.addEventListener("change", handle(async () => {
       const n = parseInt(wppInput.value);
       if (!isNaN(n) && n >= 0) { preset.wordsPerPage = n; }
@@ -356,9 +353,6 @@ export class WordCountSettingTab extends PluginSettingTab {
     for (const key of Object.keys(t.toggles) as (keyof typeof t.toggles)[]) {
       const chip = this.renderToggleChip(visGrid, preset, key, t.toggles[key].label, t.toggles[key].hint, () => {
         if (key === "showPages") refreshPagesValidity();
-        const metricKey = METRIC_ORDER.find((mk) => METRIC_SHOW_KEY[mk] === key);
-        if (metricKey) syncMetricLimit(preset, metricKey);
-        refreshLimits();
       });
       if (key === "showPages") pagesChip = chip;
     }
@@ -374,61 +368,81 @@ export class WordCountSettingTab extends PluginSettingTab {
       this.renderToggleChip(wcGrid, preset, key, t.wordCountOptions[key].label, t.wordCountOptions[key].hint);
     }
 
-    // ── Limit warnings ────────────────────────────────────────────────────────
-    limitsContainer = card.createDiv();
-    this.renderLimits(limitsContainer, preset);
+    // ── Warnings & goals ──────────────────────────────────────────────────────
+    this.renderLimits(card.createDiv(), preset);
   }
 
   renderLimits(container: HTMLElement, preset: Preset) {
     container.empty();
     this.sectionHeader(container, t.limitsTitle);
-    container.createEl("p", { text: t.limitsDesc, cls: "wcp-section-note" });
 
-    // Dropdown to add a limit for an enabled metric that doesn't have one yet
-    const enabledKeys = METRIC_ORDER.filter((k) => preset[METRIC_SHOW_KEY[k]]);
-    const available = enabledKeys.filter((k) => preset.limits[k] === undefined);
+    // Description and the add buttons share one container.
+    const head = container.createDiv({ cls: "wcp-limit-head" });
+    head.createEl("p", { text: t.limitsDesc, cls: "wcp-section-note" });
 
-    const addRow = container.createDiv({ cls: "wcp-limit-add" });
-    const select = addRow.createEl("select", { cls: "dropdown" });
-    select.createEl("option", { text: t.limitSelectMetric, value: "" });
-    for (const k of available) {
+    // Buttons to add a new (metric-less) rule of each kind.
+    const addRule = (kind: LimitKind) => handle(async () => {
+      preset.rules.push({ metric: "", threshold: 0, kind });
+      await this.save();
+      this.display();
+    });
+
+    const btnRow = head.createDiv({ cls: "wcp-limit-buttons" });
+    btnRow.createEl("button", { text: t.addWarning }).addEventListener("click", addRule("warning"));
+    btnRow.createEl("button", { text: t.addGoal }).addEventListener("click", addRule("goal"));
+
+    // A subsection (with its title) only appears once it has at least one rule.
+    this.renderRuleGroup(container, preset, "warning", t.warningsSubtitle);
+    this.renderRuleGroup(container, preset, "goal", t.goalsSubtitle);
+  }
+
+  private renderRuleGroup(container: HTMLElement, preset: Preset, kind: LimitKind, title: string) {
+    const rules = preset.rules.filter((r) => r.kind === kind);
+    if (rules.length === 0) return;
+    container.createEl("p", { text: title, cls: "wcp-limit-subhead" });
+    for (const rule of rules) this.renderRuleRow(container, preset, rule);
+  }
+
+  private renderRuleRow(container: HTMLElement, preset: Preset, rule: LimitRule) {
+    const row = container.createDiv({ cls: "wcp-limit-item" });
+
+    // Metric dropdown — offers metrics not already claimed by another rule.
+    const taken = new Set(preset.rules.filter((r) => r !== rule).map((r) => r.metric));
+    const select = row.createEl("select", { cls: "dropdown" });
+    if (rule.metric === "") select.createEl("option", { text: t.limitSelectMetric, value: "" });
+    for (const k of METRIC_ORDER) {
+      if (taken.has(k)) continue;
       select.createEl("option", { text: t.toggles[METRIC_SHOW_KEY[k] as keyof typeof t.toggles].label, value: k });
     }
-    select.value = "";
+    select.value = rule.metric;
     select.addEventListener("change", handle(async () => {
-      const k = select.value as MetricKey;
-      if (!k) return;
-      preset.limits[k] = 0;
+      rule.metric = select.value as MetricKey | "";
+      await this.save();
+      this.display(); // re-render so the chosen metric drops out of other dropdowns
+    }));
+
+    // Threshold
+    const input = row.createEl("input", { type: "number" });
+    input.min = "0";
+    input.value = String(rule.threshold);
+    input.addClass("wcp-limit-threshold");
+    input.addEventListener("change", handle(async () => {
+      const n = Number(input.value);
+      rule.threshold = isFinite(n) && n >= 0 ? n : 0;
+      input.value = String(rule.threshold);
+      await this.save();
+    }));
+
+    // Delete
+    const del = row.createEl("button");
+    setIcon(del, "trash-2");
+    setTooltip(del, t.btnRemoveLimit, { placement: "top" });
+    del.addClass("wcp-btn", "wcp-btn-delete");
+    del.addEventListener("click", handle(async () => {
+      preset.rules = preset.rules.filter((r) => r !== rule);
       await this.save();
       this.display();
     }));
-
-    // Existing limit rows
-    for (const key of METRIC_ORDER) {
-      const limit = preset.limits[key];
-      if (limit === undefined) continue;
-      const label = t.toggles[METRIC_SHOW_KEY[key] as keyof typeof t.toggles].label;
-      new Setting(container)
-        .setClass("wcp-limit-item")
-        .setName(t.limitLabel(label))
-        .addText((text) => {
-          text.inputEl.type = "number";
-          text.inputEl.min = "0";
-          text.setValue(String(limit));
-          text.onChange(async (v) => {
-            const n = Number(v);
-            preset.limits[key] = isFinite(n) && n >= 0 ? n : 0;
-            await this.save();
-          });
-        })
-        .addExtraButton((btn) =>
-          btn.setIcon("trash-2").setTooltip(t.btnRemoveLimit).onClick(async () => {
-            delete preset.limits[key];
-            await this.save();
-            this.display();
-          })
-        );
-    }
   }
 
   // ── UI helpers ────────────────────────────────────────────────────────────
