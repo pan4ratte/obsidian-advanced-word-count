@@ -235,11 +235,18 @@ function preprocessBase(raw: string, preset: Preset): string {
     );
   }
 
-  // Citekeys — strip of keep as word token
+  // Citekeys — a citation bracket may wrap a prefix/locator around its @keys,
+  // e.g. [see @smith2020, p. 33; also @jones2019]. Markdown links and wikilinks
+  // were already resolved above, so a remaining bracket containing an @ is a
+  // citation. The prefix/locator prose is always counted as words; the @key
+  // tokens are dropped ("Ignore citekeys") or kept.
+  const citation = /\[([^\]]*@[^\]]*)\]/g;
   if (preset.countCitekeysAsWords) {
-    s = s.replace(/\[@[^\]]*\]/g, "");
+    // Drop each @key along with an adjacent separator / "-" marker, leaving the
+    // surrounding prefix and locator text to be counted.
+    s = s.replace(citation, (_: string, inner: string) => inner.replace(/[-;,]?\s*@[^\s;,\]]+/g, ""));
   } else {
-    s = s.replace(/\[@([^\]]+)\]/g, "$1");
+    s = s.replace(citation, "$1");
   }
 
   // Strip inline Markdown decoration (headings, bold, italic, strike, quotes, pipes)
@@ -320,9 +327,15 @@ function countWikiLinks(text: string): number {
 }
 
 function countCitekeys(text: string): number {
-  // A citation bracket starts with "[@" but may bundle several keys, e.g.
-  // [@smith2020; @jones2019] — count every @key inside such brackets.
-  const brackets = text.match(/\[@[^\]]{1,300}\]/g) ?? [];
+  // Pandoc citations live in square brackets, may carry a prefix and/or locator,
+  // and can bundle several keys, e.g. [see @smith2020, p. 33; also @jones2019]
+  // or the suppressed-author form [-@smith2020]. Strip wikilinks and markdown
+  // links first so their contents aren't mistaken for citations, then count
+  // every @key inside any remaining bracket.
+  const cleaned = text
+    .replace(/!?\[\[[^\]]*\]\]/g, "")     // wikilinks / embeds
+    .replace(/\[[^\]]*\]\([^)]*\)/g, ""); // markdown links
+  const brackets = cleaned.match(/\[[^\]]{1,300}\]/g) ?? [];
   let count = 0;
   for (const b of brackets) {
     count += (b.match(/@[^\s;,\]]+/g) ?? []).length;

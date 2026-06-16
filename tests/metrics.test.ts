@@ -81,6 +81,17 @@ describe("citekeys", () => {
   it("strips the citekey when countCitekeysAsWords is on", () => {
     expect(count("see [@smith2020] here", { countCitekeysAsWords: true }).wordsWithSpaces).toBe(2);
   });
+
+  it("keeps prefix/locator prose but drops the keys when ignoring citekeys", () => {
+    // "see" + "p. 33" counted (3 tokens), @smith2020 dropped.
+    expect(count("[see @smith2020, p. 33]", { countCitekeysAsWords: true }).wordsWithSpaces).toBe(3);
+    // "see" + "also" counted, both keys dropped.
+    expect(count("[see @a; also @b]", { countCitekeysAsWords: true }).wordsWithSpaces).toBe(2);
+  });
+
+  it("keeps the keys as words when not ignoring citekeys", () => {
+    expect(count("[see @smith2020, p. 33]").wordsWithSpaces).toBe(4);
+  });
 });
 
 describe("character counts", () => {
@@ -118,12 +129,18 @@ describe("structural metrics", () => {
     expect(count("text [docs](url) and ![alt](img.png)").markdownLinks).toBe(1);
   });
 
-  it("counts each @key, including several bundled in one citation bracket", () => {
+  it("counts each @key, including prefixes and several bundled in one bracket", () => {
     expect(count("[@smith2020]").citekeys).toBe(1);
     expect(count("[@smith2020; @jones2019]").citekeys).toBe(2);
     expect(count("text [@a; @b; @c] more").citekeys).toBe(3);
     // Locator text after a key isn't mistaken for another key.
     expect(count("[@smith2020, p. 33]").citekeys).toBe(1);
+    // Pandoc prefixes and the suppressed-author form.
+    expect(count("[see @smith2020]").citekeys).toBe(1);
+    expect(count("[see @smith2020, p. 33; also @jones2019]").citekeys).toBe(2);
+    expect(count("[-@smith2020]").citekeys).toBe(1);
+    // Wikilinks and markdown links are not citations even if they contain "@".
+    expect(count("[[@wiki]] and [mail @me](http://x.com)").citekeys).toBe(0);
   });
 
   it("counts wiki links but not embeds", () => {
