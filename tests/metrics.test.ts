@@ -46,6 +46,19 @@ describe("word count (wordsWithSpaces)", () => {
   it("keeps comment text when ignoreComments is off", () => {
     expect(count("hello %%two words%% end", { ignoreComments: false }).wordsWithSpaces).toBe(4);
   });
+
+  it("does not count task checkbox markers, checked or unchecked", () => {
+    // The marker contributes no words, so toggling a box never changes the count.
+    expect(count("- [ ] task one").wordsWithSpaces).toBe(2);
+    expect(count("- [x] task one").wordsWithSpaces).toBe(2);
+    expect(count("- [X] task one").wordsWithSpaces).toBe(2);
+    expect(count("- task one").wordsWithSpaces).toBe(2);
+    // Empty boxes count as zero words.
+    expect(count("- [ ]").wordsWithSpaces).toBe(0);
+    expect(count("- [x]").wordsWithSpaces).toBe(0);
+    // Nested / multi-line task lists.
+    expect(count("a\n  - [ ] item\n  - [x] done").wordsWithSpaces).toBe(3);
+  });
 });
 
 describe("markdown links", () => {

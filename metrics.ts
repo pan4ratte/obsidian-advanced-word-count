@@ -271,6 +271,11 @@ function preprocessText(raw: string, preset: Preset): string {
   let s = preprocessBase(raw, preset);
 
   s = s
+    // Task checkbox markers must go first and as a whole: otherwise the bullet
+    // strip below leaves "[ ]"/"[x]" behind, which split into phantom words and
+    // make the count change when a box is checked. (Char counts handle this via
+    // substituteListMarkers.)
+    .replace(/^[ \t]*- \[[ xX]\] ?/gm, "")
     .replace(/[-*+]\s/g, "")
     .replace(/\d+\.\s/g, "");
 
