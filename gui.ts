@@ -403,11 +403,27 @@ export class WordCountSettingTab extends PluginSettingTab {
     for (const rule of rules) this.renderRuleRow(container, preset, rule);
   }
 
+  /** The other-kind rule sharing this rule's metric, if any (warning ↔ goal). */
+  private pairedRule(preset: Preset, rule: LimitRule): LimitRule | undefined {
+    if (rule.metric === "") return undefined;
+    return preset.rules.find((r) => r !== rule && r.metric === rule.metric && r.kind !== rule.kind);
+  }
+
+  /** Keep the invariant warning.threshold ≥ goal.threshold for a metric's pair. */
+  private clampToPair(rule: LimitRule, paired: LimitRule | undefined) {
+    if (!paired || paired.threshold <= 0) return;
+    if (rule.kind === "warning" && rule.threshold < paired.threshold) rule.threshold = paired.threshold;
+    if (rule.kind === "goal" && rule.threshold > paired.threshold) rule.threshold = paired.threshold;
+  }
+
   private renderRuleRow(container: HTMLElement, preset: Preset, rule: LimitRule) {
     const row = container.createDiv({ cls: "wcp-limit-item" });
 
-    // Metric dropdown — offers metrics not already claimed by another rule.
-    const taken = new Set(preset.rules.filter((r) => r !== rule).map((r) => r.metric));
+    // Metric dropdown — offers metrics not already claimed by another rule of the
+    // same kind (a metric may still carry one warning and one goal at once).
+    const taken = new Set(
+      preset.rules.filter((r) => r !== rule && r.kind === rule.kind).map((r) => r.metric)
+    );
     const select = row.createEl("select", { cls: "dropdown" });
     if (rule.metric === "") select.createEl("option", { text: t.limitSelectMetric, value: "" });
     for (const k of METRIC_ORDER) {
@@ -417,20 +433,32 @@ export class WordCountSettingTab extends PluginSettingTab {
     select.value = rule.metric;
     select.addEventListener("change", handle(async () => {
       rule.metric = select.value as MetricKey | "";
+      // Only pages keeps a decimal threshold; any other metric is whole-number.
+      if (rule.metric !== "pages") rule.threshold = Math.round(rule.threshold);
+      this.clampToPair(rule, this.pairedRule(preset, rule));
       await this.save();
       this.display(); // re-render so the chosen metric drops out of other dropdowns
     }));
 
-    // Threshold
+    // Threshold — bounded so a warning can't drop below its goal (and vice versa).
+    // Pages may use one decimal place (e.g. 1.5); every other metric is integer.
+    const allowsDecimal = rule.metric === "pages";
+    const paired = this.pairedRule(preset, rule);
     const input = row.createEl("input", { type: "number" });
-    input.min = "0";
+    input.step = allowsDecimal ? "0.1" : "1";
+    input.min = rule.kind === "warning" && paired && paired.threshold > 0 ? String(paired.threshold) : "0";
+    if (rule.kind === "goal" && paired && paired.threshold > 0) input.max = String(paired.threshold);
     input.value = String(rule.threshold);
     input.addClass("wcp-limit-threshold");
     input.addEventListener("change", handle(async () => {
-      const n = Number(input.value);
-      rule.threshold = isFinite(n) && n >= 0 ? n : 0;
+      let n = Number(input.value);
+      if (!isFinite(n) || n < 0) n = 0;
+      // Round to one decimal for pages, to a whole number otherwise.
+      rule.threshold = allowsDecimal ? Math.round(n * 10) / 10 : Math.round(n);
+      this.clampToPair(rule, paired);
       input.value = String(rule.threshold);
       await this.save();
+      if (paired) this.display(); // refresh the paired input's min/max hint
     }));
 
     // Delete

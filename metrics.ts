@@ -66,10 +66,11 @@ export interface Preset {
   ignoreComments: boolean;
   ignoreHtmlTags: boolean;
 
-  // Warning/goal rules. Each metric may appear in at most one rule. A warning
-  // colors its metric orange at ≥90% and red at ≥100% of the threshold; a goal
-  // colors it green at ≥100%. A rule only has a visible effect while its metric
-  // is enabled (metricRows skips disabled metrics).
+  // Warning/goal rules. A metric may have at most one warning and one goal. A
+  // warning colors its metric orange at ≥90% and red at ≥100% of the threshold;
+  // a goal colors it green at ≥100% (and a warning can't be set below its paired
+  // goal). A rule only has a visible effect while its metric is enabled
+  // (metricRows skips disabled metrics).
   rules: LimitRule[];
 }
 
@@ -373,18 +374,25 @@ export function surfaceWarnLevel(method: DisplayMethod, surface: "statusBar" | "
 }
 
 /**
- * Warning level for a metric given its rule.
- * Warning: 90% → orange, 100%+ → red. Goal: 100%+ → green.
+ * Warning level for a metric, combining its (optional) warning and goal rules.
+ * Warning: 90% → orange, 100%+ → red. Goal: 100%+ → green. A metric may have one
+ * of each; since a warning can't be below its goal, the warning zone (orange/red
+ * as you approach/exceed the cap) takes precedence over the goal's green.
  */
 function warnLevel(preset: Preset, m: Metrics, key: MetricKey): WarnLevel {
-  const rule = preset.rules.find((r) => r.metric === key);
-  if (!rule || !rule.threshold || rule.threshold <= 0) return "none";
   const raw = m[key];
   const value = typeof raw === "number" ? raw : parseFloat(raw);
-  const ratio = value / rule.threshold;
-  if (rule.kind === "goal") return ratio >= 1 ? "green" : "none";
-  if (ratio >= 1) return "red";
-  if (ratio >= 0.9) return "orange";
+
+  const warning = preset.rules.find((r) => r.metric === key && r.kind === "warning");
+  if (warning && warning.threshold > 0) {
+    const ratio = value / warning.threshold;
+    if (ratio >= 1) return "red";
+    if (ratio >= 0.9) return "orange";
+  }
+
+  const goal = preset.rules.find((r) => r.metric === key && r.kind === "goal");
+  if (goal && goal.threshold > 0 && value / goal.threshold >= 1) return "green";
+
   return "none";
 }
 

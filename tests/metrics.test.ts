@@ -163,6 +163,35 @@ describe("metricRows", () => {
     const rows = metricRows(preset, computeMetrics("a b c d e", preset));
     expect(rows.every((r) => r.level === "none")).toBe(true);
   });
+
+  it("combines a goal and a warning on the same metric, warning zone winning over green", () => {
+    const preset = defaultPreset({
+      rules: [
+        { metric: "wordsWithSpaces", threshold: 10, kind: "goal" },
+        { metric: "wordsWithSpaces", threshold: 20, kind: "warning" },
+      ],
+    });
+    const words = (n: number) => Array(n).fill("a").join(" ");
+    const level = (n: number) =>
+      metricRows(preset, computeMetrics(words(n), preset)).find((r) => r.key === "wordsWithSpaces")!.level;
+
+    expect(level(5)).toBe("none");    // below goal
+    expect(level(10)).toBe("green");  // goal reached, well below warning
+    expect(level(15)).toBe("green");  // still below 90% of warning
+    expect(level(18)).toBe("orange"); // ≥90% of warning — warning wins over green
+    expect(level(20)).toBe("red");    // ≥warning
+    expect(level(25)).toBe("red");
+  });
+
+  it("supports a fractional pages threshold", () => {
+    // wordsPerPage 2 → N words = N/2 pages, so 3 words = 1.5 pages.
+    const preset = defaultPreset({ wordsPerPage: 2, rules: [{ metric: "pages", threshold: 1.5, kind: "goal" }] });
+    const level = (raw: string) =>
+      metricRows(preset, computeMetrics(raw, preset)).find((r) => r.key === "pages")!.level;
+
+    expect(level("a b")).toBe("none");    // 1.0 pages
+    expect(level("a b c")).toBe("green"); // 1.5 pages — exactly the goal
+  });
 });
 
 describe("surfaceWarnLevel", () => {
