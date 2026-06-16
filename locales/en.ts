@@ -31,18 +31,18 @@ const en = {
 
   // ── Settings page ──────────────────────────────────────────────────────────
   settingsHeading: "Advanced Word Count settings",
-  settingsDescription: "This plugin allows you to create complex word count presets that are displayed in the status bar. Cycle presets by clicking on the status bar or using command palette. The plugin is made with academic use cases in mind, so you can fine-tune counting of [@citekeys] and [[wikilinks]].",
+  settingsDescription: "This plugin allows you to create complex word counting presets for the status bar and right pane tab, cycle them with one click, set goals and limit warnings ставить and more. Plugin was created in the academic context and you can fine-tune [@citekeys], [[wikilinks]], footnotes and other fomatting elements counting methods.",
   settingsSectionGeneral: "General",
   settingsSectionPresets: "Presets",
   settingsPresetsName: "Create preset",
-  settingsPresetsDesc: "Use presets to set individual mertics for different writing purposes",
-  settingsAddPreset: "Add preset",
+  settingsPresetsDesc: "Allow to create individual metric sets for different writing purposes",
+  settingsAddPreset: "New preset",
   settingsSeparatorName: "Status bar metrics separator",
   settingsSeparatorDesc: "Specify the look of metrics separator by typing anything",
   settingsHideDefaultName: "Hide default Obsidian word counter",
   settingsHideDefaultDesc: "Disables Obsidian word count core plugin",
   settingsDisplayMethodName: "Counters display method",
-  settingsDisplayMethodDesc: "Choose where the enabled metrics are shown",
+  settingsDisplayMethodDesc: "Choose where your counter presets are displayed",
   displayMethodStatusBar: "Status bar",
   displayMethodRightPane: "Right pane",
   displayMethodBoth: "Status bar + Right pane",
@@ -51,7 +51,7 @@ const en = {
   rightPaneLayoutOne: "One column",
   rightPaneLayoutTwo: "Two columns",
   settingsLimitWarningsDisplayName: "Limit warnings display method",
-  settingsLimitWarningsDisplayDesc: "Choose where limit warnings are shown",
+  settingsLimitWarningsDisplayDesc: "Choose where limit warnings are visible",
 
   // ── Right pane view ────────────────────────────────────────────────────────
   viewTitle: "Advanced Word Count",
