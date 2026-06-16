@@ -350,6 +350,10 @@
 
 .wcp-draggable {
   cursor: grab;
+  /* Stop touch long-press from selecting text or raising the OS callout menu */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .wcp-metric-block.wcp-dragging {

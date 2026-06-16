@@ -148,12 +148,14 @@ export class MetricsView extends ItemView {
       if (row.unit) valueLine.createEl("span", { text: row.unit, cls: "wcp-metric-unit" });
       block.createEl("div", { text: row.blockLabel, cls: "wcp-metric-label" });
       this.blockRefs.set(row.key, { block, value, text: row.value });
-      // Drag-and-drop reordering — desktop only.
+      // Drag-and-drop reordering: native HTML5 DnD on desktop, touch (long-press)
+      // on mobile/tablet, where drag events don't fire.
       if (Platform.isDesktop) this.enableDragReorder(block, row.key, preset);
+      else this.enableTouchReorder(block, row.key, preset);
     }
   }
 
-  // ── Drag-and-drop reordering (desktop) ──────────────────────────────────────
+  // ── Metric reordering ───────────────────────────────────────────────────────
 
   /** Whether to insert before or after the hovered block. Each block is a single
    *  full-height drop zone: the first block places at the very start (it is the
@@ -162,6 +164,27 @@ export class MetricsView extends ItemView {
     const prev = block.previousElementSibling;
     const isFirst = !(prev instanceof HTMLElement && prev.hasClass("wcp-metric-block"));
     return isFirst ? "before" : "after";
+  }
+
+  /** The metric block under a viewport point, scoped to this view (so points over
+   *  another pane or a popout window are ignored). */
+  private blockFromPoint(x: number, y: number): HTMLElement | null {
+    const el = this.contentEl.ownerDocument.elementFromPoint(x, y);
+    const block = el instanceof Element ? el.closest(".wcp-metric-block") : null;
+    return block instanceof HTMLElement && this.contentEl.contains(block) ? block : null;
+  }
+
+  private keyForBlock(block: HTMLElement): MetricKey | null {
+    for (const [key, ref] of this.blockRefs) if (ref.block === block) return key;
+    return null;
+  }
+
+  /** Apply a reorder onto the target block and persist it. Shared by both inputs. */
+  private commitReorder(preset: Preset, dragged: MetricKey, targetBlock: HTMLElement, targetKey: MetricKey) {
+    if (dragged === targetKey) return;
+    const place = this.dropPlace(targetBlock);
+    preset.metricOrder = reorderMetrics(effectiveMetricOrder(preset), dragged, targetKey, place);
+    void this.plugin.saveSettings().then(() => this.plugin.updateCount());
   }
 
   /** Mark the drop target by lighting the hovered block's own bottom border — a
@@ -177,6 +200,7 @@ export class MetricsView extends ItemView {
     }
   }
 
+  /** Desktop: native HTML5 drag-and-drop. */
   private enableDragReorder(block: HTMLElement, key: MetricKey, preset: Preset) {
     block.draggable = true;
     block.addClass("wcp-draggable");
@@ -212,11 +236,81 @@ export class MetricsView extends ItemView {
       const dragged = this.dragKey;
       this.dragKey = null;
       this.clearDropIndicators();
-      if (dragged === null || dragged === key) return;
-      const place = this.dropPlace(block);
-      preset.metricOrder = reorderMetrics(effectiveMetricOrder(preset), dragged, key, place);
-      void this.plugin.saveSettings().then(() => this.plugin.updateCount());
+      if (dragged === null) return;
+      this.commitReorder(preset, dragged, block, key);
     });
+  }
+
+  /**
+   * Mobile/tablet: touch reordering. A long press picks a block up (touch events
+   * stick to the original target, so the source block's handlers track the whole
+   * gesture); moving the finger highlights the block underneath; releasing drops.
+   * Before the long press fires, vertical movement is treated as a scroll and
+   * cancels the pickup, so the list still scrolls normally.
+   */
+  private enableTouchReorder(block: HTMLElement, key: MetricKey, preset: Preset) {
+    block.addClass("wcp-draggable");
+
+    const HOLD_MS = 350;        // press duration that starts a drag
+    const SCROLL_SLOP_PX = 10;  // pre-drag movement tolerated before it counts as a scroll
+    let holdTimer: number | null = null;
+    let startX = 0, startY = 0;
+    let dragging = false;
+
+    const cancelHold = () => {
+      if (holdTimer !== null) { window.clearTimeout(holdTimer); holdTimer = null; }
+    };
+
+    const endDrag = () => {
+      cancelHold();
+      if (!dragging) return;
+      dragging = false;
+      this.dragKey = null;
+      block.removeClass("wcp-dragging");
+      this.clearDropIndicators();
+    };
+
+    block.addEventListener("touchstart", (e) => {
+      if (e.touches.length !== 1) { endDrag(); return; }
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      cancelHold();
+      holdTimer = window.setTimeout(() => {
+        holdTimer = null;
+        dragging = true;
+        this.dragKey = key;
+        block.addClass("wcp-dragging");
+        this.showDropIndicator(block);
+      }, HOLD_MS);
+    }, { passive: true });
+
+    block.addEventListener("touchmove", (e) => {
+      const touch = e.touches[0];
+      if (!dragging) {
+        // Still waiting on the long press — a real move means the user is scrolling.
+        if (Math.abs(touch.clientX - startX) > SCROLL_SLOP_PX || Math.abs(touch.clientY - startY) > SCROLL_SLOP_PX) {
+          cancelHold();
+        }
+        return;
+      }
+      e.preventDefault(); // suppress scrolling while dragging
+      const target = this.blockFromPoint(touch.clientX, touch.clientY);
+      if (target) this.showDropIndicator(target);
+      else this.clearDropIndicators();
+    }, { passive: false });
+
+    const onEnd = (e: TouchEvent) => {
+      const dragged = this.dragKey;
+      const wasDragging = dragging;
+      const touch = e.changedTouches[0];
+      endDrag();
+      if (!wasDragging || dragged === null || !touch) return;
+      const target = this.blockFromPoint(touch.clientX, touch.clientY);
+      const targetKey = target ? this.keyForBlock(target) : null;
+      if (target && targetKey !== null) this.commitReorder(preset, dragged, target, targetKey);
+    };
+    block.addEventListener("touchend", onEnd);
+    block.addEventListener("touchcancel", onEnd);
   }
 }
 
