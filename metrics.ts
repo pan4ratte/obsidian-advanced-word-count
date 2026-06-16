@@ -292,10 +292,13 @@ function countWordsWithSpaces(preprocessed: string): number {
 }
 
 function substituteListMarkers(base: string, countSpaces: boolean): string {
-  const u = countSpaces ? "\x01\x02"      : "\x01";        // unordered / checkbox
+  const u = countSpaces ? "\x01\x02"      : "\x01";        // unordered
   const n = countSpaces ? "\x01\x02\x03"  : "\x01\x02";   // numbered
   return base
-    .replace(/^- \[[ x]\] /gm, u)   // checkbox
+    // A task checkbox ("- [ ] " or "- [x] ") is a structural marker, not typed
+    // content, so it collapses to a single space: one character in
+    // chars-with-spaces, and none in chars-without-spaces (the space is stripped).
+    .replace(/^- \[[ xX]\] /gm, " ")  // checkbox → single space
     .replace(/^[*\-+] /gm,     u)   // unordered
     .replace(/^\d+\. /gm,      n)   // numbered (dot)
     .replace(/^\d+\) /gm,      n);  // numbered (paren)

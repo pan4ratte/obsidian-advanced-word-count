@@ -118,6 +118,14 @@ describe("character counts", () => {
     expect(count("<b>hi</b>").charsWithSpaces).toBe(9);
     expect(count("<b>hi</b>", { ignoreHtmlTags: true }).charsWithSpaces).toBe(2);
   });
+
+  it("counts a task checkbox marker as a single space", () => {
+    // The marker collapses to one space, so "- [ ] a" is counted like " a".
+    expect(count("- [ ] a").charsWithSpaces).toBe(2);
+    expect(count("- [x] a").charsWithSpaces).toBe(2);
+    // Being whitespace, the marker adds nothing to chars-without-spaces.
+    expect(count("- [ ] a").charsWithoutSpaces).toBe(1);
+  });
 });
 
 describe("structural metrics", () => {
