@@ -158,6 +158,26 @@ describe("structural metrics", () => {
   it("counts tags, excluding purely numeric ones and mid-word hashes", () => {
     expect(count("#todo #project/work #123 word#notag").tags).toBe(2);
   });
+
+  it("counts only complete footnotes", () => {
+    // Reference + matching definition = one complete footnote.
+    expect(count("text[^1] more\n\n[^1]: the definition").footnotes).toBe(1);
+    // A reference repeated for the same label still counts once.
+    expect(count("a[^1] b[^1]\n\n[^1]: def").footnotes).toBe(1);
+    // Two distinct complete footnotes.
+    expect(count("a[^1] b[^2]\n\n[^1]: one\n[^2]: two").footnotes).toBe(2);
+    // Inline footnotes are self-contained and always complete.
+    expect(count("an inline ^[footnote here] yes").footnotes).toBe(1);
+  });
+
+  it("ignores incomplete footnotes (orphan reference or definition)", () => {
+    // Reference with no definition.
+    expect(count("text[^1] with no definition").footnotes).toBe(0);
+    // Definition with no reference.
+    expect(count("[^1]: orphan definition").footnotes).toBe(0);
+    // Only the matched label counts; the orphan reference does not.
+    expect(count("a[^1] b[^2]\n\n[^1]: only one defined").footnotes).toBe(1);
+  });
 });
 
 describe("metricRows", () => {

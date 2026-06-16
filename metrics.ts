@@ -57,6 +57,7 @@ export interface Preset {
   showEmbeds: boolean;
   showTables: boolean;
   showTags: boolean;
+  showFootnotes: boolean;
 
   // Word count inclusions / exclusions (shared by both word and char metrics)
   countMdLinksAsWords: boolean;
@@ -98,6 +99,7 @@ export interface Metrics {
   embeds: number;
   tables: number;
   tags: number;
+  footnotes: number;
 }
 
 // Metric identifiers match the field names in Metrics
@@ -125,7 +127,7 @@ export interface MetricRow {
 export const METRIC_ORDER: MetricKey[] = [
   "wordsWithSpaces", "charsWithSpaces", "charsWithoutSpaces", "pages",
   "lines", "paragraphs", "markdownLinks", "wikiLinks", "citekeys",
-  "embeds", "tables", "tags",
+  "embeds", "tables", "tags", "footnotes",
 ];
 export const METRIC_SHOW_KEY: Record<MetricKey, keyof Preset> = {
   wordsWithSpaces: "showWordsWithSpaces",
@@ -140,6 +142,7 @@ export const METRIC_SHOW_KEY: Record<MetricKey, keyof Preset> = {
   embeds: "showEmbeds",
   tables: "showTables",
   tags: "showTags",
+  footnotes: "showFootnotes",
 };
 
 // ── Defaults ──────────────────────────────────────────────────────────────────
@@ -161,6 +164,7 @@ export function defaultPreset(overrides: Partial<Preset> = {}): Preset {
     showEmbeds: false,
     showTables: false,
     showTags: false,
+    showFootnotes: false,
     countMdLinksAsWords: false,
     countWikiLinkDisplayText: false,
     ignoreWikiLinks: false,
@@ -367,6 +371,32 @@ function countTags(text: string): number {
   return matches.filter((m) => /[^\p{N}]/u.test(m.slice(1))).length;
 }
 
+/**
+ * Counts only complete footnotes. Inline footnotes (^[text]) are self-contained
+ * and always complete. Reference/definition footnotes ([^label] in the text plus
+ * a [^label]: definition line) count once per label only when both halves exist —
+ * an orphan reference or an orphan definition is not counted.
+ */
+function countFootnotes(text: string): number {
+  // Inline footnotes are always complete.
+  const inline = (text.match(/\^\[[^\]]+\]/g) ?? []).length;
+
+  // Definitions: [^label]: at the start of a line.
+  const defined = new Set<string>();
+  for (const m of text.matchAll(/^[ \t]*\[\^([^\]\s]+)\]:/gm)) defined.add(m[1]);
+
+  // References: [^label] usages, excluding the bracket of a definition ([^label]:).
+  const referenced = new Set<string>();
+  for (const m of text.matchAll(/\[\^([^\]\s]+)\]/g)) {
+    if (text[m.index! + m[0].length] === ":") continue;
+    referenced.add(m[1]);
+  }
+
+  let complete = 0;
+  for (const label of referenced) if (defined.has(label)) complete++;
+  return inline + complete;
+}
+
 export function computeMetrics(raw: string, preset: Preset): Metrics {
   const base = preprocessBase(raw, preset);
   const preprocessed = preprocessText(raw, preset);
@@ -385,6 +415,7 @@ export function computeMetrics(raw: string, preset: Preset): Metrics {
     embeds: countEmbeds(raw),
     tables: countTables(raw),
     tags: countTags(raw),
+    footnotes: countFootnotes(raw),
   };
 }
 
@@ -435,6 +466,7 @@ export function metricRows(preset: Preset, m: Metrics): MetricRow[] {
     { key: "embeds",             show: preset.showEmbeds,             blockLabel: t.toggles.showEmbeds.label,             statusText: t.statusEmbeds(m.embeds),                   value: String(m.embeds) },
     { key: "tables",             show: preset.showTables,             blockLabel: t.toggles.showTables.label,             statusText: t.statusTables(m.tables),                   value: String(m.tables) },
     { key: "tags",               show: preset.showTags,               blockLabel: t.toggles.showTags.label,               statusText: t.statusTags(m.tags),                       value: String(m.tags) },
+    { key: "footnotes",          show: preset.showFootnotes,          blockLabel: t.toggles.showFootnotes.label,          statusText: t.statusFootnotes(m.footnotes),             value: String(m.footnotes) },
   ];
   return defs
     .filter((d) => d.show)

@@ -26,6 +26,7 @@ const en = {
   statusEmbeds: (n: number) => `Embeds: ${n}`,
   statusTables: (n: number) => `Tables: ${n}`,
   statusTags: (n: number) => `Tags: ${n}`,
+  statusFootnotes: (n: number) => `Footnotes: ${n}`,
 
   // ── Settings page ──────────────────────────────────────────────────────────
   settingsHeading: "Advanced Word Count settings",
@@ -137,6 +138,10 @@ const en = {
     showTags: {
       label: "Tags",
       hint: "Counts #tags",
+    },
+    showFootnotes: {
+      label: "Footnotes",
+      hint: "Counts only complete footnotes ([^1] with a [^1]: definition, or inline ^[…])",
     },
   },
 

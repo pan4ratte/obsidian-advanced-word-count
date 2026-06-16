@@ -26,6 +26,7 @@ const ru = {
   statusEmbeds: (n: number) => `Вложений: ${n}`,
   statusTables: (n: number) => `Таблиц: ${n}`,
   statusTags: (n: number) => `Тегов: ${n}`,
+  statusFootnotes: (n: number) => `Сносок: ${n}`,
 
   // ── Settings page ──────────────────────────────────────────────────────────
   settingsHeading: "Настройки Advanced Word Count",
@@ -136,6 +137,10 @@ const ru = {
     showTags: {
       label: "Теги",
       hint: "Считает #теги",
+    },
+    showFootnotes: {
+      label: "Сноски",
+      hint: "Считает только полные сноски ([^1] с определением [^1]: или строчные ^[…])",
     },
   },
 
