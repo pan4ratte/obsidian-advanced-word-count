@@ -118,6 +118,14 @@ describe("structural metrics", () => {
     expect(count("text [docs](url) and ![alt](img.png)").markdownLinks).toBe(1);
   });
 
+  it("counts each @key, including several bundled in one citation bracket", () => {
+    expect(count("[@smith2020]").citekeys).toBe(1);
+    expect(count("[@smith2020; @jones2019]").citekeys).toBe(2);
+    expect(count("text [@a; @b; @c] more").citekeys).toBe(3);
+    // Locator text after a key isn't mistaken for another key.
+    expect(count("[@smith2020, p. 33]").citekeys).toBe(1);
+  });
+
   it("counts wiki links but not embeds", () => {
     expect(count("[[A]] and ![[B]]").wikiLinks).toBe(1);
   });

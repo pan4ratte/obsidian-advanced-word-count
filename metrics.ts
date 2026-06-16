@@ -320,7 +320,14 @@ function countWikiLinks(text: string): number {
 }
 
 function countCitekeys(text: string): number {
-  return (text.match(/\[@[^\]]{1,100}\]/g) ?? []).length;
+  // A citation bracket starts with "[@" but may bundle several keys, e.g.
+  // [@smith2020; @jones2019] — count every @key inside such brackets.
+  const brackets = text.match(/\[@[^\]]{1,300}\]/g) ?? [];
+  let count = 0;
+  for (const b of brackets) {
+    count += (b.match(/@[^\s;,\]]+/g) ?? []).length;
+  }
+  return count;
 }
 
 function countEmbeds(text: string): number {

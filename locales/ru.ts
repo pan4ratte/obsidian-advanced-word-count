@@ -66,11 +66,10 @@ const ru = {
   wppSuffix: "слов за одну страницу",
 
   // Section headers
-  sectionStatusBar: "Счётчики в строке состояния",
-  sectionStatusBarNote: "Выберите, какие метрики будут отображены в строке состояния",
+  sectionStatusBar: "Metrics",
+  sectionStatusBarNote: "Выберите, какие метрики будут отображены в счётчике",
   sectionWordCountOptions: "Слова и символы: расширенные настройки",
-  sectionWordCountOptionsNote:
-    "Настройте правила подсчёта элементов форматирования при подсчёте слов и символов",
+  sectionWordCountOptionsNote:"Настройте правила подсчёта элементов форматирования при подсчёте слов и символов",
 
   // Warnings & goals
   limitsTitle: "Предупреждения и цели",
