@@ -183,6 +183,15 @@ describe("structural metrics", () => {
     expect(count("[[A]] and ![[B]]").embeds).toBe(1);
   });
 
+  it("counts markdown image embeds, including file:/// and angle-bracketed URLs", () => {
+    expect(count("![alt](img.png)").embeds).toBe(1);
+    expect(count("![cover.jpg](<file:///C:\\Users\\user\\Desktop\\cover.jpg>)").embeds).toBe(1);
+    // Wiki and markdown embeds combine without double-counting.
+    expect(count("![[B]] and ![alt](img.png)").embeds).toBe(2);
+    // A plain markdown link (no leading !) is not an embed.
+    expect(count("[docs](https://x.com)").embeds).toBe(0);
+  });
+
   it("counts complete markdown tables", () => {
     expect(count("| H1 | H2 |\n| --- | --- |\n| a | b |").tables).toBe(1);
   });

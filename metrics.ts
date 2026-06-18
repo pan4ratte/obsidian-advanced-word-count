@@ -378,7 +378,13 @@ function countCitekeys(text: string): number {
 }
 
 function countEmbeds(text: string): number {
-  return (text.match(/!\[\[[^\]]{0,500}\]\]/g) ?? []).length;
+  // Obsidian wiki embeds (![[...]]) plus Markdown image embeds (![alt](url),
+  // including file:/// and angle-bracketed URLs). Both render inline as embedded
+  // content. The wiki form can't also satisfy the markdown pattern (no "](" ),
+  // so the two counts never overlap.
+  const wiki = (text.match(/!\[\[[^\]]{0,500}\]\]/g) ?? []).length;
+  const markdown = (text.match(/!\[[^\]]{0,500}\]\([^)]{0,2000}\)/g) ?? []).length;
+  return wiki + markdown;
 }
 
 /** Counts complete Markdown tables (a header row followed by a delimiter row). */

@@ -141,7 +141,7 @@ const en = {
     },
     showEmbeds: {
       label: "Embeds",
-      hint: "Counts ![[...]] embeds",
+      hint: "Counts ![[...]] and ![](...) embeds",
     },
     showTables: {
       label: "Tables",
