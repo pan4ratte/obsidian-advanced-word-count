@@ -268,7 +268,7 @@ export default class WordCountPlugin extends Plugin {
     this.statusBarItem.empty();
     if (!preset || !metrics) return;
 
-    const rows = metricRows(preset, metrics);
+    const rows = metricRows(preset, metrics, this.extensions, this.lastExtMetrics);
     if (rows.length === 0) {
       this.statusBarItem.setText(t.statusNoMetrics);
     } else {

@@ -97,6 +97,45 @@ const en = {
   deleteConfirmYes: "Yes, delete",
   deleteConfirmNo: "Cancel",
 
+  // ── Extensions ─────────────────────────────────────────────────────────────
+  settingsAddExtensionsName: "Add extensions",
+  settingsAddExtensionsDesc:
+    "Browse community extensions that add new metrics or advanced settings, then connect them to your presets below",
+  settingsBrowseExtensions: "Browse extensions",
+
+  // Browse modal
+  extModalTitle: "Browse extensions",
+  extSearchPlaceholder: "Search extensions…",
+  extLoading: "Loading extensions…",
+  extLoadError: "Couldn't load extensions. Check your connection and try again.",
+  extRetry: "Retry",
+  extNoResults: "No extensions match your search",
+  extEmptyCatalogue: "No extensions are available yet",
+  extInstall: "Install",
+  extInstalling: "Installing…",
+  extInstalled: "Installed",
+  extUpdate: "Update",
+  extTypeMetric: "Metric",
+  extTypeSetting: "Setting",
+  extUninstall: "Uninstall",
+  extByAuthor: (author: string) => `by ${author}`,
+  extInstalledNotice: (name: string) => `Installed "${name}"`,
+  extInstallFailed: (msg: string) => `Install failed: ${msg}`,
+  extUninstalledNotice: (name: string) => `Uninstalled "${name}"`,
+  extUninstallFailed: (msg: string) => `Uninstall failed: ${msg}`,
+
+  // Browse modal — install-state filter chips
+  extFilterAll: "All",
+  extFilterInstalled: "Installed",
+  extFilterNotInstalled: "Not installed",
+
+  // Per-preset connect
+  sectionConnectExtensions: "Connect extensions",
+  sectionConnectExtensionsNote: "Enable installed extensions for this preset",
+  connectExtensionPlaceholder: "Connect an extension…",
+  connectNoneInstalled: 'No extensions installed yet — use "Add extensions" above',
+  connectRemoveTooltip: "Disconnect from this preset",
+
   // ── Status bar metric toggles ──────────────────────────────────────────────
   toggles: {
     showWordsWithSpaces: {

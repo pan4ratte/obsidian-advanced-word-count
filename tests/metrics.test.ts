@@ -295,7 +295,7 @@ describe("metricRows", () => {
 
 describe("metric ordering", () => {
   it("appends unknown/missing metrics in canonical order and drops invalid keys", () => {
-    const preset = defaultPreset({ metricOrder: ["pages", "bogus" as never, "pages"] });
+    const preset = defaultPreset({ metricOrder: ["pages", "bogus", "pages"] });
     const order = effectiveMetricOrder(preset);
     // "pages" first (deduped), invalid "bogus" gone, every other metric appended once.
     expect(order[0]).toBe("pages");
@@ -309,11 +309,26 @@ describe("metric ordering", () => {
   });
 
   it("moves a metric before or after a target", () => {
-    const order = ["a", "b", "c", "d"] as never[];
-    expect(reorderMetrics(order, "d" as never, "b" as never, "before")).toEqual(["a", "d", "b", "c"]);
-    expect(reorderMetrics(order, "a" as never, "c" as never, "after")).toEqual(["b", "c", "a", "d"]);
+    const order = ["a", "b", "c", "d"];
+    expect(reorderMetrics(order, "d", "b", "before")).toEqual(["a", "d", "b", "c"]);
+    expect(reorderMetrics(order, "a", "c", "after")).toEqual(["b", "c", "a", "d"]);
     // Dropping onto itself is a no-op.
-    expect(reorderMetrics(order, "b" as never, "b" as never, "before")).toEqual(order);
+    expect(reorderMetrics(order, "b", "b", "before")).toEqual(order);
+  });
+
+  it("includes enabled extension metrics in the order, after built-ins", () => {
+    const reg = new ExtensionRegistry();
+    reg.set([
+      {
+        id: "x-metric", name: "X", description: "", author: "t", version: "1.0.0",
+        type: "metric", label: "X", count: { pattern: "x", flags: "g" },
+      },
+    ]);
+    const on = effectiveMetricOrder(defaultPreset({ extMetrics: { "x-metric": true } }), reg);
+    expect(on[on.length - 1]).toBe("x-metric"); // appended after built-ins
+    expect(on.filter((k) => k === "x-metric")).toHaveLength(1);
+    // A disabled extension metric is not part of the order.
+    expect(effectiveMetricOrder(defaultPreset(), reg)).not.toContain("x-metric");
   });
 });
 
@@ -396,6 +411,35 @@ describe("extensions integration", () => {
     // Denominator extension disabled → resolves to 0 → ratio is 0.
     const onlyRatio = defaultPreset({ extMetrics: { "words-per-sentence": true } });
     expect(computeFull("a b. c d.", onlyRatio, reg).ext["words-per-sentence"]).toBe(0);
+  });
+
+  it("metricRows lists enabled extension metrics after built-ins", () => {
+    const reg = registry();
+    const preset = defaultPreset({ extMetrics: { "sentence-count": true } });
+    const full = computeFull("One. Two!", preset, reg);
+    const keys = metricRows(preset, full.values, reg, full.ext).map((r) => r.key);
+    expect(keys).toEqual(["wordsWithSpaces", "pages", "sentence-count"]);
+  });
+
+  it("metricRows honors a stored order that places an extension metric first", () => {
+    const reg = registry();
+    const preset = defaultPreset({
+      extMetrics: { "sentence-count": true },
+      metricOrder: ["sentence-count", ...METRIC_ORDER],
+    });
+    const full = computeFull("One. Two!", preset, reg);
+    expect(metricRows(preset, full.values, reg, full.ext)[0].key).toBe("sentence-count");
+  });
+
+  it("metricRows carries a warning level on an extension metric row", () => {
+    const reg = registry();
+    const preset = defaultPreset({
+      extMetrics: { "sentence-count": true },
+      rules: [{ metric: "sentence-count", threshold: 2, kind: "warning" }],
+    });
+    const full = computeFull("One. Two!", preset, reg); // 2 sentences → 100% → red
+    const row = metricRows(preset, full.values, reg, full.ext).find((r) => r.key === "sentence-count");
+    expect(row?.level).toBe("red");
   });
 });
 

@@ -96,6 +96,45 @@ const ru = {
   deleteConfirmYes: "Да, удалить",
   deleteConfirmNo: "Отменить",
 
+  // ── Extensions ─────────────────────────────────────────────────────────────
+  settingsAddExtensionsName: "Добавить расширения",
+  settingsAddExtensionsDesc:
+    "Просматривайте расширения сообщества, добавляющие новые счётчики или настройки, и подключайте их к пресетам ниже",
+  settingsBrowseExtensions: "Обзор расширений",
+
+  // Browse modal
+  extModalTitle: "Обзор расширений",
+  extSearchPlaceholder: "Поиск расширений…",
+  extLoading: "Загрузка расширений…",
+  extLoadError: "Не удалось загрузить расширения. Проверьте подключение и попробуйте снова.",
+  extRetry: "Повторить",
+  extNoResults: "Нет расширений по вашему запросу",
+  extEmptyCatalogue: "Пока нет доступных расширений",
+  extInstall: "Установить",
+  extInstalling: "Установка…",
+  extInstalled: "Установлено",
+  extUpdate: "Обновить",
+  extTypeMetric: "Счётчик",
+  extTypeSetting: "Настройка",
+  extUninstall: "Удалить",
+  extByAuthor: (author: string) => `автор: ${author}`,
+  extInstalledNotice: (name: string) => `Установлено «${name}»`,
+  extInstallFailed: (msg: string) => `Ошибка установки: ${msg}`,
+  extUninstalledNotice: (name: string) => `Удалено «${name}»`,
+  extUninstallFailed: (msg: string) => `Ошибка удаления: ${msg}`,
+
+  // Browse modal — install-state filter chips
+  extFilterAll: "Все",
+  extFilterInstalled: "Установленные",
+  extFilterNotInstalled: "Не установленные",
+
+  // Per-preset connect
+  sectionConnectExtensions: "Подключить расширения",
+  sectionConnectExtensionsNote: "Включите установленные расширения для этого пресета",
+  connectExtensionPlaceholder: "Подключить расширение…",
+  connectNoneInstalled: "Расширения ещё не установлены — используйте «Добавить расширения» выше",
+  connectRemoveTooltip: "Отключить от пресета",
+
   // ── Status bar metric toggles ──────────────────────────────────────────────
   toggles: {
     showWordsWithSpaces: {

@@ -476,3 +476,142 @@
   gap: 8px;
   margin-top: 20px;
 }
+
+/* ── Extension browser modal ─────────────────────────────────────────────────── */
+
+.wcp-ext-search {
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+/* Install-state filter chips */
+.wcp-ext-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.wcp-ext-filter {
+  font-size: var(--font-ui-smaller);
+  padding: 4px 12px;
+  border-radius: var(--radius-l);
+  border: 1px solid var(--background-modifier-border);
+  background: var(--interactive-normal);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.wcp-ext-filter:hover {
+  background: var(--interactive-hover);
+}
+
+.wcp-ext-filter.is-active {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border-color: var(--interactive-accent);
+}
+
+.wcp-ext-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 55vh;
+  overflow-y: auto;
+}
+
+.wcp-ext-status {
+  color: var(--text-muted);
+  text-align: center;
+  padding: 24px 8px;
+}
+
+.wcp-ext-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  background-color: var(--background-secondary);
+}
+
+.wcp-ext-card-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.wcp-ext-name {
+  font-weight: var(--font-semibold);
+  font-size: var(--font-ui-medium);
+  color: var(--text-normal);
+}
+
+.wcp-ext-version {
+  margin-left: auto;
+  font-size: var(--font-smaller);
+  color: var(--text-muted);
+}
+
+/* Type badge (Metric / Setting) — shared by the modal cards and the connect chips */
+.wcp-ext-type {
+  font-size: var(--font-smallest);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--background-modifier-border);
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.wcp-ext-type-metric {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
+.wcp-ext-desc {
+  margin: 0;
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+}
+
+.wcp-ext-author {
+  font-size: var(--font-smallest);
+  color: var(--text-faint);
+}
+
+/* Card action buttons (Install / Update / Uninstall) */
+.wcp-ext-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.wcp-ext-actions button {
+  cursor: pointer;
+}
+
+.wcp-ext-actions button:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+/* ── Connect extensions (per preset) ─────────────────────────────────────────── */
+
+.wcp-ext-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: var(--radius-l);
+  background-color: var(--setting-items-background);
+  border: 1px solid var(--background-modifier-border);
+}
+
+.wcp-ext-chip .wcp-toggle-label {
+  flex: 1;
+  min-width: 0;
+  pointer-events: auto;
+}

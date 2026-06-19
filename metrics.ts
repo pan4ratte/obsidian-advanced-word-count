@@ -81,9 +81,10 @@ export interface Preset {
   rules: LimitRule[];
 
   // User-defined display order of metrics (reordered by drag-and-drop in the
-  // right pane). Unknown or newly-added keys are reconciled by
-  // effectiveMetricOrder(), so a partial or stale list is safe.
-  metricOrder: MetricKey[];
+  // right pane). Holds built-in MetricKeys and extension metric ids. Unknown or
+  // newly-added keys are reconciled by effectiveMetricOrder(), so a partial or
+  // stale list is safe.
+  metricOrder: string[];
 
   // Per-preset enable flags for installed extensions, keyed by extension id. The
   // set of extensions isn't known at compile time, so these are loose maps rather
@@ -145,7 +146,8 @@ export interface LimitRule {
 }
 
 export interface MetricRow {
-  key: MetricKey;
+  // Built-in MetricKey or an extension metric id.
+  key: string;
   blockLabel: string;
   statusText: string;
   value: string;
@@ -528,24 +530,33 @@ export function computeMetrics(raw: string, preset: Preset, registry?: Extension
 /**
  * The preset's metric display order, reconciled against the known metrics:
  * unknown keys are dropped, duplicates removed, and any metric missing from the
- * stored list (e.g. one added in a later version) is appended in METRIC_ORDER
- * sequence. Always returns every metric exactly once.
+ * stored list (e.g. one added in a later version, or a newly-enabled extension)
+ * is appended — built-ins first in METRIC_ORDER sequence, then enabled extension
+ * metrics. With a registry, the "known" set includes the preset's enabled
+ * extension metrics so they take part in ordering and drag-reorder.
  */
-export function effectiveMetricOrder(preset: Preset): MetricKey[] {
-  const known = new Set<MetricKey>(METRIC_ORDER);
-  const seen = new Set<MetricKey>();
-  const order: MetricKey[] = [];
+export function effectiveMetricOrder(preset: Preset, registry?: ExtensionRegistry): string[] {
+  const extIds = registry
+    ? registry.metricList().filter((d) => registry.metricEnabled(preset, d.id)).map((d) => d.id)
+    : [];
+  const known = new Set<string>();
+  for (const k of METRIC_ORDER) known.add(k);
+  for (const id of extIds) known.add(id);
+
+  const seen = new Set<string>();
+  const order: string[] = [];
   for (const k of preset.metricOrder ?? []) {
     if (known.has(k) && !seen.has(k)) { order.push(k); seen.add(k); }
   }
-  for (const k of METRIC_ORDER) if (!seen.has(k)) order.push(k);
+  for (const k of METRIC_ORDER) if (!seen.has(k)) { order.push(k); seen.add(k); }
+  for (const id of extIds) if (!seen.has(id)) { order.push(id); seen.add(id); }
   return order;
 }
 
 /** Move `dragged` to just before/after `target`, returning a new ordering. */
 export function reorderMetrics(
-  order: MetricKey[], dragged: MetricKey, target: MetricKey, place: "before" | "after"
-): MetricKey[] {
+  order: string[], dragged: string, target: string, place: "before" | "after"
+): string[] {
   if (dragged === target) return order.slice();
   const next = order.filter((k) => k !== dragged);
   const ti = next.indexOf(target);
@@ -594,8 +605,14 @@ function warnLevel(preset: Preset, m: Metrics, key: MetricKey): WarnLevel {
   return ruleLevel(preset, value, key);
 }
 
-/** Enabled metrics in display order, with status-bar text, block label/value and warning level. */
-export function metricRows(preset: Preset, m: Metrics): MetricRow[] {
+/**
+ * Enabled metrics in display order — built-in metrics plus, when a registry and
+ * the computed extension values are supplied, the enabled extension metrics. Each
+ * row carries status-bar text, block label/value and warning level.
+ */
+export function metricRows(
+  preset: Preset, m: Metrics, registry?: ExtensionRegistry, ext?: Record<string, number>
+): MetricRow[] {
   const defs: { key: MetricKey; show: boolean; blockLabel: string; statusText: string; value: string; unit?: string }[] = [
     { key: "wordsWithSpaces",    show: preset.showWordsWithSpaces,    blockLabel: t.toggles.showWordsWithSpaces.label,    statusText: t.statusWords(m.wordsWithSpaces),           value: String(m.wordsWithSpaces) },
     { key: "charsWithSpaces",    show: preset.showCharsWithSpaces,    blockLabel: t.toggles.showCharsWithSpaces.label,    statusText: t.statusChars(m.charsWithSpaces),           value: String(m.charsWithSpaces) },
@@ -612,9 +629,14 @@ export function metricRows(preset: Preset, m: Metrics): MetricRow[] {
     { key: "tags",               show: preset.showTags,               blockLabel: t.toggles.showTags.label,               statusText: t.statusTags(m.tags),                       value: String(m.tags) },
     { key: "footnotes",          show: preset.showFootnotes,          blockLabel: t.toggles.showFootnotes.label,          statusText: t.statusFootnotes(m.footnotes),             value: String(m.footnotes) },
   ];
-  const order = effectiveMetricOrder(preset);
-  return defs
+  const builtinRows: MetricRow[] = defs
     .filter((d) => d.show)
-    .sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key))
     .map((d) => ({ key: d.key, blockLabel: d.blockLabel, statusText: d.statusText, value: d.value, unit: d.unit, level: warnLevel(preset, m, d.key) }));
+
+  const extRows: MetricRow[] = registry && ext
+    ? registry.metricRows(preset, ext).map((r) => ({ key: r.id, blockLabel: r.label, statusText: r.statusText, value: r.value, unit: r.unit, level: r.level }))
+    : [];
+
+  const order = effectiveMetricOrder(preset, registry);
+  return builtinRows.concat(extRows).sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
 }

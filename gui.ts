@@ -1,4 +1,4 @@
-import { App, ItemView, Modal, Platform, PluginSettingTab, Setting, WorkspaceLeaf, ButtonComponent, ToggleComponent, setIcon, setTooltip } from "obsidian";
+import { App, ItemView, Modal, Notice, Platform, PluginSettingTab, Setting, WorkspaceLeaf, ButtonComponent, ToggleComponent, setIcon, setTooltip } from "obsidian";
 import { t } from "./locales";
 import type WordCountPlugin from "./main";
 import {
@@ -6,7 +6,6 @@ import {
   DisplayMethod,
   RightPaneLayout,
   Preset,
-  MetricKey,
   WarnLevel,
   LimitKind,
   LimitRule,
@@ -18,6 +17,7 @@ import {
   effectiveMetricOrder,
   reorderMetrics,
 } from "./metrics";
+import { Extension, ExtensionIndexEntry, compareVersions } from "./extensions";
 
 // Wrap an async callback so it satisfies Obsidian's void-returning event/handler
 // types without leaving a floating promise.
@@ -30,9 +30,10 @@ export class MetricsView extends ItemView {
   // Signature of the currently rendered structure; while it stays the same we
   // update blocks in place so CSS color transitions can animate.
   private gridSig: string | null = null;
-  private blockRefs: Map<MetricKey, { block: HTMLElement; value: HTMLElement; text: string }> = new Map();
+  // Keyed by metric id (built-in MetricKey or extension metric id).
+  private blockRefs: Map<string, { block: HTMLElement; value: HTMLElement; text: string }> = new Map();
   // Metric currently being dragged for reorder (desktop only), or null.
-  private dragKey: MetricKey | null = null;
+  private dragKey: string | null = null;
 
   constructor(leaf: WorkspaceLeaf, plugin: WordCountPlugin) {
     super(leaf);
@@ -79,7 +80,7 @@ export class MetricsView extends ItemView {
   render() {
     const preset = this.plugin.getActivePreset();
     const metrics = preset ? this.plugin.lastMetrics : null;
-    const rows = preset && metrics ? metricRows(preset, metrics) : [];
+    const rows = preset && metrics ? metricRows(preset, metrics, this.plugin.extensions, this.plugin.lastExtMetrics) : [];
     const layout = this.plugin.settings.rightPaneLayout;
     const multiPreset = this.plugin.settings.presets.length > 1;
 
@@ -174,16 +175,16 @@ export class MetricsView extends ItemView {
     return block instanceof HTMLElement && this.contentEl.contains(block) ? block : null;
   }
 
-  private keyForBlock(block: HTMLElement): MetricKey | null {
+  private keyForBlock(block: HTMLElement): string | null {
     for (const [key, ref] of this.blockRefs) if (ref.block === block) return key;
     return null;
   }
 
   /** Apply a reorder onto the target block and persist it. Shared by both inputs. */
-  private commitReorder(preset: Preset, dragged: MetricKey, targetBlock: HTMLElement, targetKey: MetricKey) {
+  private commitReorder(preset: Preset, dragged: string, targetBlock: HTMLElement, targetKey: string) {
     if (dragged === targetKey) return;
     const place = this.dropPlace(targetBlock);
-    preset.metricOrder = reorderMetrics(effectiveMetricOrder(preset), dragged, targetKey, place);
+    preset.metricOrder = reorderMetrics(effectiveMetricOrder(preset, this.plugin.extensions), dragged, targetKey, place);
     void this.plugin.saveSettings().then(() => this.plugin.updateCount());
   }
 
@@ -201,7 +202,7 @@ export class MetricsView extends ItemView {
   }
 
   /** Desktop: native HTML5 drag-and-drop. */
-  private enableDragReorder(block: HTMLElement, key: MetricKey, preset: Preset) {
+  private enableDragReorder(block: HTMLElement, key: string, preset: Preset) {
     block.draggable = true;
     block.addClass("wcp-draggable");
 
@@ -248,7 +249,7 @@ export class MetricsView extends ItemView {
    * Before the long press fires, vertical movement is treated as a scroll and
    * cancels the pickup, so the list still scrolls normally.
    */
-  private enableTouchReorder(block: HTMLElement, key: MetricKey, preset: Preset) {
+  private enableTouchReorder(block: HTMLElement, key: string, preset: Preset) {
     block.addClass("wcp-draggable");
 
     const HOLD_MS = 350;        // press duration that starts a drag
@@ -436,6 +437,17 @@ export class WordCountSettingTab extends PluginSettingTab {
         })
       );
 
+    new Setting(containerEl)
+      .setName(t.settingsAddExtensionsName)
+      .setDesc(t.settingsAddExtensionsDesc)
+      .addButton((btn: ButtonComponent) =>
+        btn.setButtonText(t.settingsBrowseExtensions).onClick(() => {
+          // Re-render the settings page after an install so newly downloaded
+          // extensions appear in each preset's "Connect extensions" dropdown.
+          new ExtensionBrowserModal(this.plugin, () => this.display()).open();
+        })
+      );
+
     for (const preset of this.plugin.settings.presets) {
       this.renderPreset(containerEl, preset);
     }
@@ -559,6 +571,78 @@ export class WordCountSettingTab extends PluginSettingTab {
 
     // ── Warnings & goals ──────────────────────────────────────────────────────
     this.renderLimits(card.createDiv(), preset);
+
+    // ── Connect extensions ────────────────────────────────────────────────────
+    this.renderConnectExtensions(card.createDiv(), preset);
+  }
+
+  /**
+   * Per-preset extension connections. Installed extensions are enabled for a
+   * preset by writing `true` into its extMetrics/extSettings map; the dropdown
+   * offers the not-yet-connected ones, and connected extensions show as chips that
+   * can be disconnected (removing the flag reverts to the extension's default).
+   */
+  renderConnectExtensions(container: HTMLElement, preset: Preset) {
+    this.sectionHeader(container, t.sectionConnectExtensions);
+    container.createEl("p", { text: t.sectionConnectExtensionsNote, cls: "wcp-section-note" });
+
+    const installed: Extension[] = [
+      ...this.plugin.extensions.metricList(),
+      ...this.plugin.extensions.settingList(),
+    ];
+    if (installed.length === 0) {
+      container.createEl("p", { text: t.connectNoneInstalled, cls: "wcp-section-note" });
+      return;
+    }
+
+    const mapFor = (def: Extension) => (def.type === "metric" ? preset.extMetrics : preset.extSettings);
+    const isConnected = (def: Extension) => mapFor(def)?.[def.id] === true;
+    const typeLabel = (def: Extension) => (def.type === "metric" ? t.extTypeMetric : t.extTypeSetting);
+
+    // Connected extensions, shown as removable chips.
+    const connected = installed.filter(isConnected);
+    if (connected.length > 0) {
+      const grid = container.createDiv({ cls: "wcp-toggle-grid" });
+      for (const def of connected) {
+        const chip = grid.createDiv({ cls: "wcp-ext-chip" });
+        chip.createEl("span", { text: def.label, cls: "wcp-toggle-label" });
+        chip.createEl("span", { text: typeLabel(def), cls: `wcp-ext-type wcp-ext-type-${def.type}` });
+        const rm = chip.createEl("button");
+        setIcon(rm, "x");
+        setTooltip(rm, t.connectRemoveTooltip, { placement: "top" });
+        rm.addClass("wcp-btn", "wcp-btn-delete");
+        rm.addEventListener("click", handle(async () => {
+          const map = mapFor(def);
+          if (map) delete map[def.id];
+          await this.save();
+          this.display();
+        }));
+      }
+    }
+
+    // Dropdown of installed-but-not-connected extensions.
+    const available = installed.filter((def) => !isConnected(def));
+    const row = container.createDiv({ cls: "wcp-wpp-row" });
+    const select = row.createEl("select", { cls: "dropdown" });
+    select.createEl("option", { text: t.connectExtensionPlaceholder, value: "" });
+    for (const def of available) {
+      select.createEl("option", { text: `${def.label} (${typeLabel(def)})`, value: def.id });
+    }
+    select.disabled = available.length === 0;
+    select.value = "";
+    select.addEventListener("change", handle(async () => {
+      const def = installed.find((d) => d.id === select.value);
+      if (!def) return;
+      if (def.type === "metric") {
+        if (!preset.extMetrics) preset.extMetrics = {};
+        preset.extMetrics[def.id] = true;
+      } else {
+        if (!preset.extSettings) preset.extSettings = {};
+        preset.extSettings[def.id] = true;
+      }
+      await this.save();
+      this.display();
+    }));
   }
 
   renderLimits(container: HTMLElement, preset: Preset) {
@@ -605,6 +689,12 @@ export class WordCountSettingTab extends PluginSettingTab {
     if (rule.kind === "goal" && rule.threshold > paired.threshold) rule.threshold = paired.threshold;
   }
 
+  /** Whether a metric's threshold may use a decimal place: pages, or a ratio
+   *  extension metric (which produces fractional values). */
+  private allowsDecimalThreshold(metric: string): boolean {
+    return metric === "pages" || this.plugin.extensions.getMetric(metric)?.count.mode === "ratio";
+  }
+
   private renderRuleRow(container: HTMLElement, preset: Preset, rule: LimitRule) {
     const row = container.createDiv({ cls: "wcp-limit-item" });
 
@@ -619,19 +709,25 @@ export class WordCountSettingTab extends PluginSettingTab {
       if (taken.has(k)) continue;
       select.createEl("option", { text: t.toggles[METRIC_SHOW_KEY[k] as keyof typeof t.toggles].label, value: k });
     }
+    // Installed extension metrics can carry warnings/goals too.
+    for (const def of this.plugin.extensions.metricList()) {
+      if (taken.has(def.id)) continue;
+      select.createEl("option", { text: def.label, value: def.id });
+    }
     select.value = rule.metric;
     select.addEventListener("change", handle(async () => {
       rule.metric = select.value;
-      // Only pages keeps a decimal threshold; any other metric is whole-number.
-      if (rule.metric !== "pages") rule.threshold = Math.round(rule.threshold);
+      // Whole-number thresholds, except for decimal metrics (pages, ratio extensions).
+      if (!this.allowsDecimalThreshold(rule.metric)) rule.threshold = Math.round(rule.threshold);
       this.clampToPair(rule, this.pairedRule(preset, rule));
       await this.save();
       this.display(); // re-render so the chosen metric drops out of other dropdowns
     }));
 
     // Threshold — bounded so a warning can't drop below its goal (and vice versa).
-    // Pages may use one decimal place (e.g. 1.5); every other metric is integer.
-    const allowsDecimal = rule.metric === "pages";
+    // Decimal metrics (pages, ratio extensions) allow one decimal place; the rest
+    // are integer.
+    const allowsDecimal = this.allowsDecimalThreshold(rule.metric);
     const paired = this.pairedRule(preset, rule);
     const input = row.createEl("input", { type: "number" });
     input.step = allowsDecimal ? "0.1" : "1";
@@ -716,6 +812,187 @@ export class DeleteConfirmModal extends Modal {
       this.onConfirm();
       this.close();
     });
+  }
+
+  onClose() {
+    this.contentEl.empty();
+  }
+}
+
+// ── Extension browser modal ───────────────────────────────────────────────────
+
+type InstallFilter = "all" | "installed" | "not-installed";
+
+export class ExtensionBrowserModal extends Modal {
+  private plugin: WordCountPlugin;
+  // Called after an install/uninstall so the settings page behind the modal can refresh.
+  private onChanged: () => void;
+  private entries: ExtensionIndexEntry[] = [];
+  private filter = "";
+  private installFilter: InstallFilter = "all";
+  private chipsEl: HTMLElement;
+  private listEl: HTMLElement;
+  private state: "loading" | "ready" | "error" = "loading";
+
+  constructor(plugin: WordCountPlugin, onChanged: () => void) {
+    super(plugin.app);
+    this.plugin = plugin;
+    this.onChanged = onChanged;
+  }
+
+  onOpen() {
+    const { contentEl } = this;
+    contentEl.addClass("wcp-ext-modal");
+    contentEl.createEl("h3", { text: t.extModalTitle });
+
+    const search = contentEl.createEl("input", { type: "text", cls: "wcp-ext-search" });
+    search.placeholder = t.extSearchPlaceholder;
+    search.addEventListener("input", () => {
+      this.filter = search.value.trim().toLowerCase();
+      this.renderList();
+    });
+
+    this.chipsEl = contentEl.createDiv({ cls: "wcp-ext-filters" });
+    this.renderChips();
+
+    this.listEl = contentEl.createDiv({ cls: "wcp-ext-list" });
+    this.renderList();
+    void this.load();
+  }
+
+  /** Install-state filter chips: All / Installed / Not installed. */
+  private renderChips() {
+    this.chipsEl.empty();
+    const chips: { value: InstallFilter; label: string }[] = [
+      { value: "all", label: t.extFilterAll },
+      { value: "installed", label: t.extFilterInstalled },
+      { value: "not-installed", label: t.extFilterNotInstalled },
+    ];
+    for (const { value, label } of chips) {
+      const chip = this.chipsEl.createEl("button", { text: label, cls: "wcp-ext-filter" });
+      if (this.installFilter === value) chip.addClass("is-active");
+      chip.addEventListener("click", () => {
+        this.installFilter = value;
+        this.renderChips();
+        this.renderList();
+      });
+    }
+  }
+
+  /** Fetch the catalogue index, updating the list through its load states. */
+  private async load() {
+    this.state = "loading";
+    this.renderList();
+    try {
+      this.entries = await this.plugin.extensionManager.fetchIndex();
+      this.state = "ready";
+    } catch {
+      this.state = "error";
+    }
+    this.renderList();
+  }
+
+  private renderList() {
+    const list = this.listEl;
+    list.empty();
+
+    if (this.state === "loading") {
+      list.createEl("p", { text: t.extLoading, cls: "wcp-ext-status" });
+      return;
+    }
+    if (this.state === "error") {
+      list.createEl("p", { text: t.extLoadError, cls: "wcp-ext-status" });
+      const retry = list.createEl("button", { text: t.extRetry });
+      retry.addClass("mod-cta");
+      retry.addEventListener("click", () => void this.load());
+      return;
+    }
+    if (this.entries.length === 0) {
+      list.createEl("p", { text: t.extEmptyCatalogue, cls: "wcp-ext-status" });
+      return;
+    }
+
+    const f = this.filter;
+    const matchesSearch = (e: ExtensionIndexEntry) =>
+      !f ||
+      e.name.toLowerCase().includes(f) ||
+      e.description.toLowerCase().includes(f) ||
+      e.author.toLowerCase().includes(f) ||
+      e.id.toLowerCase().includes(f);
+    const matchesState = (e: ExtensionIndexEntry) => {
+      if (this.installFilter === "all") return true;
+      const installed = this.plugin.extensionManager.isInstalled(e.id);
+      return this.installFilter === "installed" ? installed : !installed;
+    };
+
+    const shown = this.entries.filter((e) => matchesSearch(e) && matchesState(e));
+    if (shown.length === 0) {
+      list.createEl("p", { text: t.extNoResults, cls: "wcp-ext-status" });
+      return;
+    }
+
+    for (const entry of shown) this.renderCard(list, entry);
+  }
+
+  private renderCard(parent: HTMLElement, entry: ExtensionIndexEntry) {
+    const card = parent.createDiv({ cls: "wcp-ext-card" });
+
+    const head = card.createDiv({ cls: "wcp-ext-card-head" });
+    head.createEl("span", { text: entry.name, cls: "wcp-ext-name" });
+    head.createEl("span", {
+      text: entry.type === "metric" ? t.extTypeMetric : t.extTypeSetting,
+      cls: `wcp-ext-type wcp-ext-type-${entry.type}`,
+    });
+    head.createEl("span", { text: `v${entry.version}`, cls: "wcp-ext-version" });
+
+    card.createEl("p", { text: entry.description, cls: "wcp-ext-desc" });
+    card.createEl("span", { text: t.extByAuthor(entry.author), cls: "wcp-ext-author" });
+
+    const installedVer = this.plugin.extensionManager.installedVersion(entry.id);
+    const installed = installedVer !== null;
+    const updatable = installedVer !== null && compareVersions(entry.version, installedVer) > 0;
+    const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
+
+    const actions = card.createDiv({ cls: "wcp-ext-actions" });
+
+    // Install (not installed) or Update (newer version available).
+    if (!installed || updatable) {
+      const primary = actions.createEl("button", { cls: "wcp-ext-install" });
+      primary.setText(updatable ? t.extUpdate : t.extInstall);
+      primary.addClass("mod-cta");
+      primary.addEventListener("click", handle(async () => {
+        primary.disabled = true;
+        primary.setText(t.extInstalling);
+        try {
+          await this.plugin.extensionManager.installFromIndex(entry);
+          new Notice(t.extInstalledNotice(entry.name));
+          this.onChanged();
+          this.renderList(); // rebuild so install states refresh
+        } catch (e) {
+          new Notice(t.extInstallFailed(message(e)));
+          this.renderList();
+        }
+      }));
+    }
+
+    // Uninstall (anything currently installed).
+    if (installed) {
+      const uninstall = actions.createEl("button", { cls: "wcp-ext-uninstall" });
+      uninstall.setText(t.extUninstall);
+      uninstall.addClass("mod-warning");
+      uninstall.addEventListener("click", handle(async () => {
+        uninstall.disabled = true;
+        try {
+          await this.plugin.extensionManager.uninstall(entry.id);
+          new Notice(t.extUninstalledNotice(entry.name));
+          this.onChanged();
+          this.renderList();
+        } catch (e) {
+          new Notice(t.extUninstallFailed(message(e)));
+          this.renderList();
+        }
+      }));
+    }
   }
 
   onClose() {
