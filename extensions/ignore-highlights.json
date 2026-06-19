@@ -1,0 +1,17 @@
+{
+  "id": "ignore-highlights",
+  "name": "Ignore highlights",
+  "description": "Removes ==highlighted== spans before counting so highlighted text is excluded from word and character counts.",
+  "author": "pan4ratte",
+  "version": "1.0.0",
+  "type": "setting",
+  "label": "Ignore highlights",
+  "hint": "Off: highlighted ==text== is counted\nOn: highlighted text is ignored",
+  "defaultEnabled": false,
+  "transform": {
+    "pattern": "==[^=]+==",
+    "flags": "g",
+    "replacement": "",
+    "stage": "pre"
+  }
+}

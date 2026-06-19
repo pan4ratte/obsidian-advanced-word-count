@@ -1,0 +1,76 @@
+{
+  "extensions": [
+    {
+      "id": "sentence-count",
+      "name": "Sentence count",
+      "description": "Counts sentences by their terminating punctuation (. ! ?).",
+      "author": "pan4ratte",
+      "version": "1.0.0",
+      "type": "metric",
+      "path": "sentence-count.json"
+    },
+    {
+      "id": "emoji-count",
+      "name": "Emoji count",
+      "description": "Counts emoji and pictographic characters.",
+      "author": "pan4ratte",
+      "version": "1.0.0",
+      "type": "metric",
+      "path": "emoji-count.json"
+    },
+    {
+      "id": "footnote-count",
+      "name": "Footnote count",
+      "description": "Counts complete footnotes (paired reference + definition, plus inline).",
+      "author": "pan4ratte",
+      "version": "1.0.0",
+      "type": "metric",
+      "path": "footnote-count.json"
+    },
+    {
+      "id": "unique-tags",
+      "name": "Distinct tags",
+      "description": "Counts how many different #tags appear, ignoring repeats.",
+      "author": "pan4ratte",
+      "version": "1.0.0",
+      "type": "metric",
+      "path": "unique-tags.json"
+    },
+    {
+      "id": "avg-word-length",
+      "name": "Average word length",
+      "description": "Average characters per word (chars without spaces ÷ words).",
+      "author": "pan4ratte",
+      "version": "1.0.0",
+      "type": "metric",
+      "path": "avg-word-length.json"
+    },
+    {
+      "id": "links-per-page",
+      "name": "Links per page",
+      "description": "Average Markdown links per page (links ÷ pages).",
+      "author": "pan4ratte",
+      "version": "1.0.0",
+      "type": "metric",
+      "path": "links-per-page.json"
+    },
+    {
+      "id": "words-per-sentence",
+      "name": "Words per sentence",
+      "description": "Average words per sentence (words ÷ sentences; needs Sentence count).",
+      "author": "pan4ratte",
+      "version": "1.0.0",
+      "type": "metric",
+      "path": "words-per-sentence.json"
+    },
+    {
+      "id": "ignore-highlights",
+      "name": "Ignore highlights",
+      "description": "Excludes ==highlighted== spans from word and character counts.",
+      "author": "pan4ratte",
+      "version": "1.0.0",
+      "type": "setting",
+      "path": "ignore-highlights.json"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "id": "words-per-sentence",
+  "name": "Words per sentence",
+  "description": "Average number of words per sentence (words ÷ sentences). Requires the \"Sentence count\" extension (sentence-count) to be installed and enabled — it supplies the denominator.",
+  "author": "pan4ratte",
+  "version": "1.0.0",
+  "type": "metric",
+  "label": "Words per sentence",
+  "hint": "Words divided by sentences. Needs the Sentence count extension enabled.",
+  "statusLabel": "Words/sentence",
+  "defaultEnabled": false,
+  "count": {
+    "mode": "ratio",
+    "numerator": "wordsWithSpaces",
+    "denominator": "sentence-count",
+    "decimals": 1
+  }
+}

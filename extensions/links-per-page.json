@@ -1,0 +1,18 @@
+{
+  "id": "links-per-page",
+  "name": "Links per page",
+  "description": "Average number of Markdown links per page (Markdown links ÷ pages). Demonstrates the \"ratio\" mode.",
+  "author": "pan4ratte",
+  "version": "1.0.0",
+  "type": "metric",
+  "label": "Links per page",
+  "hint": "Markdown links divided by the number of pages",
+  "statusLabel": "Links/page",
+  "defaultEnabled": false,
+  "count": {
+    "mode": "ratio",
+    "numerator": "markdownLinks",
+    "denominator": "pages",
+    "decimals": 1
+  }
+}

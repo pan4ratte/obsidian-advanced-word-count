@@ -621,7 +621,7 @@ export class WordCountSettingTab extends PluginSettingTab {
     }
     select.value = rule.metric;
     select.addEventListener("change", handle(async () => {
-      rule.metric = select.value as MetricKey | "";
+      rule.metric = select.value;
       // Only pages keeps a decimal threshold; any other metric is whole-number.
       if (rule.metric !== "pages") rule.threshold = Math.round(rule.threshold);
       this.clampToPair(rule, this.pairedRule(preset, rule));

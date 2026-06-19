@@ -1,0 +1,18 @@
+{
+  "id": "sentence-count",
+  "name": "Sentence count",
+  "description": "Counts sentences by their terminating punctuation (. ! ?). Consecutive terminators (e.g. \"?!\") count as one sentence.",
+  "author": "pan4ratte",
+  "version": "1.0.0",
+  "type": "metric",
+  "label": "Sentences",
+  "hint": "Counts sentence-ending punctuation runs (. ! ?)",
+  "statusLabel": "Sentences",
+  "defaultEnabled": false,
+  "count": {
+    "pattern": "[.!?]+(?=\\s|$)",
+    "flags": "g",
+    "mode": "matches",
+    "source": "preprocessed"
+  }
+}

@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   computeMetrics,
+  computeFull,
   metricRows,
   surfaceWarnLevel,
   defaultPreset,
@@ -9,6 +10,7 @@ import {
   METRIC_ORDER,
   Preset,
 } from "../metrics";
+import { ExtensionRegistry } from "../extensions";
 
 // Helper: build a preset with overrides and count one input string.
 const count = (raw: string, overrides: Partial<Preset> = {}) =>
@@ -312,6 +314,88 @@ describe("metric ordering", () => {
     expect(reorderMetrics(order, "a" as never, "c" as never, "after")).toEqual(["b", "c", "a", "d"]);
     // Dropping onto itself is a no-op.
     expect(reorderMetrics(order, "b" as never, "b" as never, "before")).toEqual(order);
+  });
+});
+
+describe("extensions integration", () => {
+  // A registry with one setting extension (strip highlights) and one metric
+  // extension (count sentences on preprocessed text).
+  const registry = () => {
+    const reg = new ExtensionRegistry();
+    reg.set([
+      {
+        id: "ignore-highlights", name: "Ignore highlights", description: "", author: "t",
+        version: "1.0.0", type: "setting", label: "Ignore highlights",
+        transform: { pattern: "==[^=]+==", flags: "g", replacement: "" },
+      },
+      {
+        id: "sentence-count", name: "Sentence count", description: "", author: "t",
+        version: "1.0.0", type: "metric", label: "Sentences",
+        count: { pattern: "[.!?]+(?=\\s|$)", flags: "g", source: "preprocessed" },
+      },
+    ]);
+    return reg;
+  };
+
+  it("applies an enabled setting transform to word/char counts", () => {
+    const reg = registry();
+    const raw = "keep ==hidden words here== keep";
+    // Off: highlighted words are still counted (5 words).
+    expect(computeMetrics(raw, defaultPreset(), reg).wordsWithSpaces).toBe(5);
+    // On: the highlighted span is stripped before counting (2 words).
+    const preset = defaultPreset({ extSettings: { "ignore-highlights": true } });
+    expect(computeMetrics(raw, preset, reg).wordsWithSpaces).toBe(2);
+  });
+
+  it("computeFull returns enabled extension metric values", () => {
+    const reg = registry();
+    const preset = defaultPreset({ extMetrics: { "sentence-count": true } });
+    const full = computeFull("One. Two! Three?", preset, reg);
+    expect(full.ext["sentence-count"]).toBe(3);
+    // Built-in metrics are unaffected and still present.
+    expect(full.values.wordsWithSpaces).toBe(3);
+  });
+
+  it("does not compute disabled extension metrics", () => {
+    const reg = registry();
+    const full = computeFull("One. Two.", defaultPreset(), reg);
+    expect(full.ext["sentence-count"]).toBeUndefined();
+  });
+
+  it("computes a ratio metric from built-in values", () => {
+    const reg = new ExtensionRegistry();
+    reg.set([
+      {
+        id: "avg-word-length", name: "Avg word length", description: "", author: "t",
+        version: "1.0.0", type: "metric", label: "Avg word length",
+        count: { mode: "ratio", numerator: "charsWithoutSpaces", denominator: "wordsWithSpaces", decimals: 1 },
+      },
+    ]);
+    const preset = defaultPreset({ extMetrics: { "avg-word-length": true } });
+    // "alpha beta" → 9 chars without spaces ÷ 2 words = 4.5
+    expect(computeFull("alpha beta", preset, reg).ext["avg-word-length"]).toBe(4.5);
+  });
+
+  it("computes a ratio that references another extension metric", () => {
+    const reg = new ExtensionRegistry();
+    reg.set([
+      {
+        id: "sentence-count", name: "Sentence count", description: "", author: "t",
+        version: "1.0.0", type: "metric", label: "Sentences",
+        count: { mode: "split", source: "preprocessed", separator: "[.!?]+(?=\\s|$)" },
+      },
+      {
+        id: "words-per-sentence", name: "Words per sentence", description: "", author: "t",
+        version: "1.0.0", type: "metric", label: "Words per sentence",
+        count: { mode: "ratio", numerator: "wordsWithSpaces", denominator: "sentence-count", decimals: 1 },
+      },
+    ]);
+    // "a b. c d." → 4 words ÷ 2 sentences = 2.0
+    const both = defaultPreset({ extMetrics: { "sentence-count": true, "words-per-sentence": true } });
+    expect(computeFull("a b. c d.", both, reg).ext["words-per-sentence"]).toBe(2);
+    // Denominator extension disabled → resolves to 0 → ratio is 0.
+    const onlyRatio = defaultPreset({ extMetrics: { "words-per-sentence": true } });
+    expect(computeFull("a b. c d.", onlyRatio, reg).ext["words-per-sentence"]).toBe(0);
   });
 });
 

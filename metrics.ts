@@ -1,5 +1,6 @@
 import { App, EventRef, Workspace } from "obsidian";
 import { t } from "./locales";
+import type { ExtensionRegistry } from "./extensions";
 
 export const VIEW_TYPE_METRICS = "advanced-word-count-view";
 
@@ -83,6 +84,13 @@ export interface Preset {
   // right pane). Unknown or newly-added keys are reconciled by
   // effectiveMetricOrder(), so a partial or stale list is safe.
   metricOrder: MetricKey[];
+
+  // Per-preset enable flags for installed extensions, keyed by extension id. The
+  // set of extensions isn't known at compile time, so these are loose maps rather
+  // than typed fields; an id that's absent here falls back to the extension's own
+  // `defaultEnabled`. See extensions.ts.
+  extMetrics?: Record<string, boolean>;
+  extSettings?: Record<string, boolean>;
 }
 
 export interface WordCountSettings {
@@ -93,6 +101,15 @@ export interface WordCountSettings {
   displayMethod: DisplayMethod;
   rightPaneLayout: RightPaneLayout;
   limitWarningsDisplayMethod: DisplayMethod;
+
+  // ── Extensions ──────────────────────────────────────────────────────────────
+  // Validated definitions of every installed community extension. They live in
+  // data.json and are re-registered into the live ExtensionRegistry on load. Typed
+  // as unknown[] here to avoid a metrics.ts → extensions.ts runtime import cycle;
+  // ExtensionManager reads/writes them as Extension[].
+  installedExtensions: unknown[];
+  // Base URL of the repo's extensions folder (raw GitHub), ending with "/".
+  extensionRepoUrl: string;
 }
 
 export interface Metrics {
@@ -119,8 +136,10 @@ export type WarnLevel = "none" | "orange" | "red" | "green";
 export type LimitKind = "warning" | "goal";
 
 export interface LimitRule {
-  // "" while the rule has just been created and no metric is chosen yet.
-  metric: MetricKey | "";
+  // A built-in MetricKey, an extension metric id, or "" while the rule has just
+  // been created and no metric is chosen yet. Typed as string (rather than
+  // `MetricKey | ""`) so extension metrics can carry warnings/goals too.
+  metric: string;
   threshold: number;
   kind: LimitKind;
 }
@@ -190,9 +209,16 @@ export function defaultPreset(overrides: Partial<Preset> = {}): Preset {
     ignoreHtmlTags: false,
     rules: [],
     metricOrder: [...METRIC_ORDER],
+    extMetrics: {},
+    extSettings: {},
     ...overrides,
   };
 }
+
+// Default base URL for downloading community extensions (the repo's /extensions
+// folder, served raw). Overridable per-vault via settings.extensionRepoUrl.
+export const DEFAULT_EXTENSION_REPO_URL =
+  "https://raw.githubusercontent.com/pan4ratte/obsidian-advanced-word-count/main/extensions/";
 
 export const DEFAULT_SETTINGS: WordCountSettings = {
   activePresetId: "",
@@ -202,15 +228,21 @@ export const DEFAULT_SETTINGS: WordCountSettings = {
   displayMethod: "statusBar",
   rightPaneLayout: "two",
   limitWarningsDisplayMethod: "both",
+  installedExtensions: [],
+  extensionRepoUrl: DEFAULT_EXTENSION_REPO_URL,
 };
 
 // ── Text pre-processing ───────────────────────────────────────────────────────
 
-function preprocessBase(raw: string, preset: Preset): string {
+function preprocessBase(raw: string, preset: Preset, registry?: ExtensionRegistry): string {
   let s = raw;
 
   // Frontmatter
   s = s.replace(/^---[\s\S]*?---\n?/, "");
+
+  // Extension "pre" transforms run on near-raw text (frontmatter already gone) so
+  // a setting extension can act before the built-in stripping below.
+  if (registry) s = registry.applySettings(s, preset, "pre");
 
   // Comments (stripped first so their content never leaks into counts)
   if (preset.ignoreComments) {
@@ -280,12 +312,15 @@ function preprocessBase(raw: string, preset: Preset): string {
     .replace(/>\s/g, "")
     .replace(/\|/g, "");
 
+  // Extension "post" transforms run after the built-in stripping.
+  if (registry) s = registry.applySettings(s, preset, "post");
+
   return s;
 }
 
-function preprocessText(raw: string, preset: Preset): string {
+function preprocessText(raw: string, preset: Preset, registry?: ExtensionRegistry): string {
   // Build the base (no list markers yet), then strip them for word counting.
-  let s = preprocessBase(raw, preset);
+  let s = preprocessBase(raw, preset, registry);
 
   s = s
     // Task checkbox markers must go first and as a whole: otherwise the bullet
@@ -433,12 +468,23 @@ function countFootnotes(text: string): number {
   return inline + complete;
 }
 
-export function computeMetrics(raw: string, preset: Preset): Metrics {
-  const base = preprocessBase(raw, preset);
-  const preprocessed = preprocessText(raw, preset);
+/** Built-in metric values plus the enabled extension metric values. */
+export interface FullMetrics {
+  values: Metrics;
+  ext: Record<string, number>;
+}
+
+/**
+ * Compute every metric in one preprocessing pass. The optional registry both
+ * feeds setting-extension transforms into preprocessing and supplies the
+ * extension metric values; without it the result is the built-ins alone.
+ */
+export function computeFull(raw: string, preset: Preset, registry?: ExtensionRegistry): FullMetrics {
+  const base = preprocessBase(raw, preset, registry);
+  const preprocessed = preprocessText(raw, preset, registry);
   const wordsWithSpaces = countWordsWithSpaces(preprocessed);
 
-  return {
+  const values: Metrics = {
     wordsWithSpaces,
     charsWithSpaces: countCharsWithSpaces(base),
     charsWithoutSpaces: countCharsWithoutSpaces(base),
@@ -454,6 +500,27 @@ export function computeMetrics(raw: string, preset: Preset): Metrics {
     tags: countTags(raw),
     footnotes: countFootnotes(raw),
   };
+
+  const ext = registry ? registry.computeMetrics(preset, raw, preprocessed) : {};
+
+  // Second pass: ratio metrics derive from other metrics, so they run once the
+  // built-in values and the text-based extension values are known.
+  if (registry && registry.hasRatios()) {
+    const numeric: Record<string, number> = {};
+    for (const key of METRIC_ORDER) {
+      const v = values[key];
+      numeric[key] = typeof v === "number" ? v : parseFloat(v);
+    }
+    for (const id of Object.keys(ext)) numeric[id] = ext[id];
+    const ratios = registry.computeRatios(preset, numeric);
+    for (const id of Object.keys(ratios)) ext[id] = ratios[id];
+  }
+
+  return { values, ext };
+}
+
+export function computeMetrics(raw: string, preset: Preset, registry?: ExtensionRegistry): Metrics {
+  return computeFull(raw, preset, registry).values;
 }
 
 // ── Metric ordering ─────────────────────────────────────────────────────────
@@ -502,21 +569,29 @@ export function surfaceWarnLevel(method: DisplayMethod, surface: "statusBar" | "
  * of each; since a warning can't be below its goal, the warning zone (orange/red
  * as you approach/exceed the cap) takes precedence over the goal's green.
  */
-function warnLevel(preset: Preset, m: Metrics, key: MetricKey): WarnLevel {
-  const raw = m[key];
-  const value = typeof raw === "number" ? raw : parseFloat(raw);
-
-  const warning = preset.rules.find((r) => r.metric === key && r.kind === "warning");
+/**
+ * Warning level for a numeric value against a metric's (optional) warning and goal
+ * rules. Keyed by metric id (built-in MetricKey or extension id) so both built-in
+ * and extension metrics share one rule engine.
+ */
+export function ruleLevel(preset: Preset, value: number, metric: string): WarnLevel {
+  const warning = preset.rules.find((r) => r.metric === metric && r.kind === "warning");
   if (warning && warning.threshold > 0) {
     const ratio = value / warning.threshold;
     if (ratio >= 1) return "red";
     if (ratio >= 0.9) return "orange";
   }
 
-  const goal = preset.rules.find((r) => r.metric === key && r.kind === "goal");
+  const goal = preset.rules.find((r) => r.metric === metric && r.kind === "goal");
   if (goal && goal.threshold > 0 && value / goal.threshold >= 1) return "green";
 
   return "none";
+}
+
+function warnLevel(preset: Preset, m: Metrics, key: MetricKey): WarnLevel {
+  const raw = m[key];
+  const value = typeof raw === "number" ? raw : parseFloat(raw);
+  return ruleLevel(preset, value, key);
 }
 
 /** Enabled metrics in display order, with status-bar text, block label/value and warning level. */

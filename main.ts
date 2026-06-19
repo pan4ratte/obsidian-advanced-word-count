@@ -9,11 +9,14 @@ import {
   WordCountSettings,
   Metrics,
   DEFAULT_SETTINGS,
+  DEFAULT_EXTENSION_REPO_URL,
   METRIC_ORDER,
-  computeMetrics,
+  computeFull,
   metricRows,
   surfaceWarnLevel,
 } from "./metrics";
+import { ExtensionRegistry } from "./extensions";
+import { ExtensionManager } from "./extension-manager";
 import { MetricsView, WordCountSettingTab } from "./gui";
 
 // ── Plugin ────────────────────────────────────────────────────────────────────
@@ -22,12 +25,22 @@ export default class WordCountPlugin extends Plugin {
   settings: WordCountSettings;
   statusBarItem: HTMLElement;
   lastMetrics: Metrics | null = null;
+  // Enabled extension-metric values for the current note, keyed by extension id.
+  // Computed alongside lastMetrics; consumed by the (forthcoming) extension UI.
+  lastExtMetrics: Record<string, number> = {};
+  // Live registry of installed extensions and the manager that loads/installs them.
+  readonly extensions: ExtensionRegistry = new ExtensionRegistry();
+  readonly extensionManager: ExtensionManager = new ExtensionManager(this, this.extensions);
   private settingTab: WordCountSettingTab;
   private registeredCommandIds: Set<string> = new Set();
   private activatingRightPane = false;
 
   async onload() {
     await this.loadSettings();
+
+    // Register installed extensions before the first count so their metrics and
+    // setting transforms are live immediately.
+    this.extensionManager.load();
 
     // Don't auto-create a preset on first run — the plugin starts with an empty
     // preset list and the user adds their own. Only keep activePresetId valid
@@ -233,11 +246,14 @@ export default class WordCountPlugin extends Plugin {
     if (preset && view) {
       const selection = view.editor.getSelection();
       const raw = selection.length > 0 ? selection : view.getViewData();
-      this.lastMetrics = computeMetrics(raw, preset);
+      const full = computeFull(raw, preset, this.extensions);
+      this.lastMetrics = full.values;
+      this.lastExtMetrics = full.ext;
     } else if (this.app.workspace.getLeavesOfType("markdown").length === 0) {
       // No notes open at all — clear. If a note is still open but focus moved to
       // another pane (e.g. our own right pane), keep the last computed metrics.
       this.lastMetrics = null;
+      this.lastExtMetrics = {};
     }
 
     this.renderStatusBar(preset, this.lastMetrics);
@@ -292,6 +308,10 @@ export default class WordCountPlugin extends Plugin {
       if (p.readingWpm === undefined) p.readingWpm = 250;
       // Drag-and-drop ordering was added later; default to the canonical order.
       if (!Array.isArray(p.metricOrder)) p.metricOrder = [...METRIC_ORDER];
+      // Extension enable-flag maps were added later; ensure they exist so the
+      // registry can write into them.
+      if (!p.extMetrics || typeof p.extMetrics !== "object") p.extMetrics = {};
+      if (!p.extSettings || typeof p.extSettings !== "object") p.extSettings = {};
       // Migrate presets saved before warning/goal rules existed: the old
       // `limits`/`stashedLimits` maps (warnings only) become warning rules.
       if (!Array.isArray(p.rules)) {
@@ -305,6 +325,13 @@ export default class WordCountPlugin extends Plugin {
         delete legacy.limits;
         delete legacy.stashedLimits;
       }
+    }
+
+    // Extension settings were added later; backfill so the manager has somewhere
+    // to read/write installed definitions and the download source.
+    if (!Array.isArray(this.settings.installedExtensions)) this.settings.installedExtensions = [];
+    if (typeof this.settings.extensionRepoUrl !== "string" || this.settings.extensionRepoUrl.length === 0) {
+      this.settings.extensionRepoUrl = DEFAULT_EXTENSION_REPO_URL;
     }
   }
 

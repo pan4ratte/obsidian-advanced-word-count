@@ -1,0 +1,18 @@
+{
+  "id": "avg-word-length",
+  "name": "Average word length",
+  "description": "Average number of characters per word (characters without spaces ÷ words). Demonstrates the \"ratio\" mode using two built-in metrics.",
+  "author": "pan4ratte",
+  "version": "1.0.0",
+  "type": "metric",
+  "label": "Avg word length",
+  "hint": "Characters (without spaces) divided by the number of words",
+  "statusLabel": "Avg word length",
+  "defaultEnabled": false,
+  "count": {
+    "mode": "ratio",
+    "numerator": "charsWithoutSpaces",
+    "denominator": "wordsWithSpaces",
+    "decimals": 1
+  }
+}

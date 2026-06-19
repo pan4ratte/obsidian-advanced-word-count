@@ -1,0 +1,18 @@
+{
+  "id": "emoji-count",
+  "name": "Emoji count",
+  "description": "Counts emoji and other pictographic characters in the note.",
+  "author": "pan4ratte",
+  "version": "1.0.0",
+  "type": "metric",
+  "label": "Emoji",
+  "hint": "Counts emoji / pictographic characters",
+  "statusLabel": "Emoji",
+  "defaultEnabled": false,
+  "count": {
+    "pattern": "\\p{Extended_Pictographic}",
+    "flags": "gu",
+    "mode": "matches",
+    "source": "raw"
+  }
+}

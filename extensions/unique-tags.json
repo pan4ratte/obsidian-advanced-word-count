@@ -1,0 +1,19 @@
+{
+  "id": "unique-tags",
+  "name": "Distinct tags",
+  "description": "Counts how many *different* #tags appear, ignoring repeats and purely numeric tags. Demonstrates the \"captureUnique\" mode with an exclude filter.",
+  "author": "pan4ratte",
+  "version": "1.0.0",
+  "type": "metric",
+  "label": "Distinct tags",
+  "hint": "Counts distinct #tags (repeats counted once, numeric-only tags ignored)",
+  "statusLabel": "Distinct tags",
+  "defaultEnabled": false,
+  "count": {
+    "mode": "captureUnique",
+    "source": "raw",
+    "pattern": "(?<![\\p{L}\\p{N}_#])#([\\p{L}\\p{N}_/-]+)",
+    "flags": "gu",
+    "exclude": "^#\\d+$"
+  }
+}

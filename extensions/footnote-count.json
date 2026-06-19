@@ -1,0 +1,19 @@
+{
+  "id": "footnote-count",
+  "name": "Footnote count",
+  "description": "Counts complete footnotes: a reference [^1] paired with its definition [^1]:, plus self-contained inline footnotes ^[…]. Demonstrates the \"intersect\" mode.",
+  "author": "pan4ratte",
+  "version": "1.0.0",
+  "type": "metric",
+  "label": "Footnotes",
+  "hint": "Counts only complete footnotes (a [^1] reference with its [^1]: definition, or inline ^[…])",
+  "statusLabel": "Footnotes",
+  "defaultEnabled": false,
+  "count": {
+    "mode": "intersect",
+    "source": "raw",
+    "primary": { "pattern": "\\[\\^([^\\]\\s]+)\\](?!:)", "flags": "g" },
+    "secondary": { "pattern": "^[ \\t]*\\[\\^([^\\]\\s]+)\\]:", "flags": "gm" },
+    "extra": { "pattern": "\\^\\[[^\\]]+\\]", "flags": "g" }
+  }
+}
