@@ -19,13 +19,16 @@
       "path": "emoji-count.json"
     },
     {
-      "id": "footnote-count",
-      "name": "Footnote count",
-      "description": "Counts complete footnotes (paired reference + definition, plus inline).",
+      "id": "reference-links",
+      "name": "Resolved reference links",
+      "description": "Counts reference-style links that have a matching [id]: definition.",
       "author": "pan4ratte",
       "updated": "2026-06-20",
+      "i18n": {
+        "ru": { "name": "Ссылки ссылочного стиля", "description": "Считает ссылки ссылочного стиля с определением [id]:." }
+      },
       "type": "metric",
-      "path": "footnote-count.json"
+      "path": "reference-links.json"
     },
     {
       "id": "unique-tags",

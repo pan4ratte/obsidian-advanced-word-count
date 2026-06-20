@@ -1,0 +1,29 @@
+{
+  "id": "reference-links",
+  "name": "Resolved reference links",
+  "description": "Counts Markdown reference-style links whose id has a matching definition — [text][id] paired with a [id]: url line. Orphan reference links (no definition) aren't counted. Demonstrates the \"intersect\" mode.",
+  "author": "pan4ratte",
+  "updated": "2026-06-20",
+  "type": "metric",
+  "label": "Reference links",
+  "title": "Reference links",
+  "hint": "Counts reference-style links that have a matching [id]: definition",
+  "statusLabel": "Ref links",
+  "defaultEnabled": false,
+  "i18n": {
+    "ru": {
+      "name": "Ссылки ссылочного стиля",
+      "description": "Считает Markdown-ссылки ссылочного стиля, у которых есть определение — [text][id] и строка [id]: url. Ссылки без определения не считаются.",
+      "title": "Ссылочные ссылки",
+      "label": "Ссылочные ссылки",
+      "hint": "Считает ссылки ссылочного стиля с определением [id]:",
+      "statusLabel": "Ссылок"
+    }
+  },
+  "count": {
+    "mode": "intersect",
+    "source": "raw",
+    "primary": { "pattern": "(?<!!)\\[[^\\]]*\\]\\[([^\\]]+)\\]", "flags": "g" },
+    "secondary": { "pattern": "^[ \\t]*\\[(?!\\^)([^\\]]+)\\]:", "flags": "gm" }
+  }
+}

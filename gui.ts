@@ -850,8 +850,10 @@ export class ExtensionBrowserModal extends Modal {
 
   onOpen() {
     const { contentEl } = this;
-    contentEl.addClass("wcp-ext-modal");
-    contentEl.createEl("h3", { text: t.extModalTitle });
+    // The inset padding lives on the outer .modal element, not .modal-content, so
+    // scope the override there.
+    this.modalEl.addClass("wcp-ext-modal");
+    contentEl.createEl("h3", { text: t.extModalTitle, cls: "wcp-ext-title" });
 
     const search = contentEl.createEl("input", { type: "text", cls: "wcp-ext-search" });
     search.placeholder = t.extSearchPlaceholder;
@@ -945,15 +947,15 @@ export class ExtensionBrowserModal extends Modal {
   private renderCard(parent: HTMLElement, entry: ExtensionIndexEntry) {
     const card = parent.createDiv({ cls: "wcp-ext-card" });
 
-    const head = card.createDiv({ cls: "wcp-ext-card-head" });
+    // Left: name + type icon, author beneath, then the description.
+    const main = card.createDiv({ cls: "wcp-ext-card-main" });
+    const head = main.createDiv({ cls: "wcp-ext-card-head" });
     head.createEl("span", { text: this.plugin.extensions.loc(entry, "name") ?? entry.name, cls: "wcp-ext-name" });
-    head.createEl("span", {
-      text: entry.type === "metric" ? t.extTypeMetric : t.extTypeSetting,
-      cls: `wcp-ext-type wcp-ext-type-${entry.type}`,
-    });
-
-    card.createEl("p", { text: this.plugin.extensions.loc(entry, "description") ?? entry.description, cls: "wcp-ext-desc" });
-    card.createEl("span", { text: t.extByAuthor(entry.author), cls: "wcp-ext-author" });
+    const icon = head.createSpan({ cls: "wcp-ext-type-icon" });
+    setIcon(icon, entry.type === "metric" ? "whole-word" : "sliders-horizontal");
+    setTooltip(icon, entry.type === "metric" ? t.extTypeMetric : t.extTypeSetting, { placement: "top" });
+    main.createEl("span", { text: t.extByAuthor(entry.author), cls: "wcp-ext-author" });
+    main.createEl("p", { text: this.plugin.extensions.loc(entry, "description") ?? entry.description, cls: "wcp-ext-desc" });
 
     const installed = this.plugin.extensionManager.isInstalled(entry.id);
     const installedDate = this.plugin.extensionManager.installedDate(entry.id);
@@ -962,16 +964,18 @@ export class ExtensionBrowserModal extends Modal {
     const updatable = installed && !!entry.updated && !!installedDate && entry.updated > installedDate;
     const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
+    // Right: action buttons (neutral by default, accent/red only on hover).
     const actions = card.createDiv({ cls: "wcp-ext-actions" });
 
-    // Install (not installed) or Update (catalogue copy is newer).
+    // Install (not installed) or Update (catalogue copy is newer). Icon-only; the
+    // label lives in the tooltip.
     if (!installed || updatable) {
       const primary = actions.createEl("button", { cls: "wcp-ext-install" });
-      primary.setText(updatable ? t.extUpdate : t.extInstall);
-      primary.addClass("mod-cta");
+      setIcon(primary, updatable ? "refresh-cw" : "download");
+      setTooltip(primary, updatable ? t.extUpdate : t.extInstall, { placement: "top" });
       primary.addEventListener("click", handle(async () => {
         primary.disabled = true;
-        primary.setText(t.extInstalling);
+        setTooltip(primary, t.extInstalling, { placement: "top" });
         try {
           await this.plugin.extensionManager.installFromIndex(entry);
           new Notice(t.extInstalledNotice(entry.name));
@@ -984,11 +988,11 @@ export class ExtensionBrowserModal extends Modal {
       }));
     }
 
-    // Uninstall (anything currently installed).
+    // Uninstall (anything currently installed). Trash icon; label in the tooltip.
     if (installed) {
       const uninstall = actions.createEl("button", { cls: "wcp-ext-uninstall" });
-      uninstall.setText(t.extUninstall);
-      uninstall.addClass("mod-warning");
+      setIcon(uninstall, "trash-2");
+      setTooltip(uninstall, t.extUninstall, { placement: "top" });
       uninstall.addEventListener("click", handle(async () => {
         uninstall.disabled = true;
         try {

@@ -83,6 +83,12 @@ describe("shipped extensions behave", () => {
     expect(reg.computeRatios(enableAll(), { citekeys: 6, pages: 2 })["citations-per-page"]).toBe(3);
   });
 
+  it("counts only resolved reference-style links (intersect)", () => {
+    // [docs][ref] is defined; [missing][nope] is an orphan; image refs are excluded.
+    const text = "See [docs][ref] and [missing][nope], plus ![pic][img].\n\n[ref]: https://example.com";
+    expect(metricsOf(text)["reference-links"]).toBe(1);
+  });
+
   it("ignore-math strips inline and block math from word counts", () => {
     expect(wordsOf("a $x + y$ b $$z = 1$$ c")).toBe(3); // a, b, c
     expect(wordsOf("let $a$ be")).toBe(2); // let, be

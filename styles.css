@@ -479,37 +479,55 @@
 
 /* ── Extension browser modal ─────────────────────────────────────────────────── */
 
+/* Remove the padding on the outer .modal element for this modal instance only.
+   Matches whether the class sits on .modal itself or on its .modal-content child,
+   so it works regardless of which element carries it. Specificity (0,2,0) beats
+   the base .modal rule. */
+.modal.wcp-ext-modal,
+.modal:has(.wcp-ext-modal) {
+  padding-right: 16px;
+  padding-left: 24px;
+}
+
+/* Modal title ("Browse extensions"). The `.wcp-ext-modal h3` selector also matches
+   before main.js is rebuilt (when the h3 has no class yet). */
+.wcp-ext-title,
+.wcp-ext-modal h3 {
+  margin: 0 0 12px;
+}
+
 .wcp-ext-search {
   width: 100%;
   margin-bottom: 12px;
 }
 
-/* Install-state filter chips */
+/* Install-state filter pills */
 .wcp-ext-filters {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 4px;
   margin-bottom: 12px;
 }
 
 .wcp-ext-filter {
   font-size: var(--font-ui-smaller);
   padding: 4px 12px;
-  border-radius: var(--radius-l);
-  border: 1px solid var(--background-modifier-border);
-  background: var(--interactive-normal);
+  border: none;
+  border-radius: 2em;
+  background: var(--background-modifier-hover);
   color: var(--text-muted);
+  box-shadow: none;
   cursor: pointer;
 }
 
 .wcp-ext-filter:hover {
-  background: var(--interactive-hover);
+  background: var(--background-modifier-active-hover);
+  color: var(--text-normal);
 }
 
 .wcp-ext-filter.is-active {
   background: var(--interactive-accent);
   color: var(--text-on-accent);
-  border-color: var(--interactive-accent);
 }
 
 .wcp-ext-list {
@@ -517,7 +535,6 @@
   flex-direction: column;
   gap: 8px;
   max-height: 55vh;
-  overflow-y: auto;
 }
 
 .wcp-ext-status {
@@ -526,20 +543,39 @@
   padding: 24px 8px;
 }
 
+/* Each extension is a card row: text on the left, actions on the right. */
 .wcp-ext-card {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 12px;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
   border: 1px solid var(--background-modifier-border);
   border-radius: var(--radius-m);
   background-color: var(--background-secondary);
 }
 
+.wcp-ext-card-main {
+  flex: 1;
+  min-width: 0;
+}
+
 .wcp-ext-card-head {
   display: flex;
-  align-items: baseline;
-  gap: 8px;
+  align-items: center;
+  gap: 6px;
+}
+
+.wcp-ext-type-icon {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.wcp-ext-type-icon svg {
+  width: 16px;
+  height: 16px;
 }
 
 .wcp-ext-name {
@@ -548,44 +584,51 @@
   color: var(--text-normal);
 }
 
-/* Type badge (Metric / Setting) shown on each browse-modal card */
-.wcp-ext-type {
-  margin-left: auto;
-  font-size: var(--font-smallest);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 1px 6px;
-  border-radius: 4px;
-  background: var(--background-modifier-border);
-  color: var(--text-muted);
-  flex-shrink: 0;
-}
-
-.wcp-ext-type-metric {
-  background: var(--interactive-accent);
-  color: var(--text-on-accent);
-}
-
-.wcp-ext-desc {
-  margin: 0;
-  font-size: var(--font-ui-smaller);
-  color: var(--text-muted);
-}
-
 .wcp-ext-author {
+  display: block;
   font-size: var(--font-smallest);
   color: var(--text-faint);
 }
 
-/* Card action buttons (Install / Update / Uninstall) */
+.wcp-ext-desc {
+  margin: 4px 0 0;
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+}
+
+/* Action buttons: neutral by default, colored only on hover. Pinned to the
+   bottom-right of the card. */
 .wcp-ext-actions {
   display: flex;
   gap: 8px;
-  margin-top: 4px;
+  flex-shrink: 0;
+  align-self: flex-end;
 }
 
 .wcp-ext-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  background: var(--interactive-normal);
+  color: var(--text-normal);
+  box-shadow: none;
   cursor: pointer;
+}
+
+.wcp-ext-actions button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.wcp-ext-install:hover {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
+.wcp-ext-uninstall:hover {
+  background: var(--background-modifier-error);
+  color: var(--text-on-accent);
 }
 
 .wcp-ext-actions button:disabled {

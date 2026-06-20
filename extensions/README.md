@@ -128,26 +128,27 @@ Example — `sentence-count.json` (a `split` on sentence terminators):
 }
 ```
 
-Example — `footnote-count.json` (an `intersect` recreating the built-in footnote logic):
+Example — `reference-links.json` (an `intersect` counting resolved reference-style links):
 
 ```json
 {
-  "id": "footnote-count",
-  "name": "Footnote count",
+  "id": "reference-links",
+  "name": "Resolved reference links",
   "type": "metric",
-  "label": "Footnotes",
+  "label": "Reference links",
   "count": {
     "mode": "intersect",
-    "primary":   { "pattern": "\\[\\^([^\\]\\s]+)\\](?!:)", "flags": "g" },
-    "secondary": { "pattern": "^[ \\t]*\\[\\^([^\\]\\s]+)\\]:", "flags": "gm" },
-    "extra":     { "pattern": "\\^\\[[^\\]]+\\]", "flags": "g" }
+    "primary":   { "pattern": "(?<!!)\\[[^\\]]*\\]\\[([^\\]]+)\\]", "flags": "g" },
+    "secondary": { "pattern": "^[ \\t]*\\[(?!\\^)([^\\]]+)\\]:", "flags": "gm" }
   }
 }
 ```
 
-`intersect` collects capture group 1 of `primary` and of `secondary` into two sets
-and counts the keys in both (so an orphan reference or definition doesn't count);
-`extra` plain matches are added on (here, self-contained inline footnotes).
+`intersect` collects capture group 1 of `primary` (the `[text][id]` usages) and of
+`secondary` (the `[id]: url` definitions) into two sets and counts the keys in both,
+so a reference link with no matching definition doesn't count. An optional `extra`
+field adds plain matches on top (for self-contained constructs — e.g. inline
+footnotes when modelling footnotes this way).
 
 Example — `avg-word-length.json` (a `ratio` of two built-in metrics):
 
