@@ -170,6 +170,33 @@
       "version": "1.0.0",
       "type": "setting",
       "path": "ignore-dataview-fields.json"
+    },
+    {
+      "id": "tables",
+      "name": "Table count",
+      "description": "Counts complete Markdown tables (header + delimiter row).",
+      "author": "pan4ratte",
+      "version": "1.0.0",
+      "type": "metric",
+      "path": "tables.json"
+    },
+    {
+      "id": "tags",
+      "name": "Tag count",
+      "description": "Counts Obsidian #tags, ignoring numeric-only tags.",
+      "author": "pan4ratte",
+      "version": "1.0.0",
+      "type": "metric",
+      "path": "tags.json"
+    },
+    {
+      "id": "ignore-code",
+      "name": "Ignore code",
+      "description": "Excludes fenced and inline code from word and character counts.",
+      "author": "pan4ratte",
+      "version": "1.0.0",
+      "type": "setting",
+      "path": "ignore-code.json"
     }
   ]
 }

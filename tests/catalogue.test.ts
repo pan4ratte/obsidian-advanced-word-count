@@ -111,4 +111,23 @@ describe("shipped extensions behave", () => {
   it("ignore-dataview-fields strips inline fields", () => {
     expect(wordsOf("text [rating:: 5] end")).toBe(2); // text, end
   });
+
+  // ── Extracted from the former built-ins ──────────────────────────────────────
+
+  it("counts complete tables (former built-in metric)", () => {
+    expect(metricsOf("| H1 | H2 |\n| --- | --- |\n| a | b |")["tables"]).toBe(1);
+    // A table without leading/trailing pipes still counts.
+    expect(metricsOf("H1 | H2\n--- | ---\na | b")["tables"]).toBe(1);
+    // A plain pipe line that isn't a table doesn't count.
+    expect(metricsOf("a | b | c\njust text")["tables"]).toBe(0);
+  });
+
+  it("counts #tags, excluding numeric-only tags and mid-word hashes (former built-in)", () => {
+    expect(metricsOf("#todo #project/work #123 word#notag")["tags"]).toBe(2);
+  });
+
+  it("ignore-code strips fenced and inline code (former built-in setting)", () => {
+    expect(wordsOf("hello ```js\ncode here``` world")).toBe(2); // hello, world
+    expect(wordsOf("alpha `beta` gamma")).toBe(2);              // alpha, gamma
+  });
 });

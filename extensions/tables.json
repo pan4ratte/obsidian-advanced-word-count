@@ -1,0 +1,18 @@
+{
+  "id": "tables",
+  "name": "Table count",
+  "description": "Counts complete Markdown tables (a header row followed by a |---|---| delimiter row).",
+  "author": "pan4ratte",
+  "version": "1.0.0",
+  "type": "metric",
+  "label": "Tables",
+  "hint": "Counts complete tables (header row + delimiter row)",
+  "statusLabel": "Tables",
+  "defaultEnabled": false,
+  "count": {
+    "mode": "matches",
+    "source": "raw",
+    "pattern": "^[^\\n]*\\|[^\\n]*\\n(?=[ \\t\\r|:-]*\\|)(?=[ \\t\\r|:-]*-)[ \\t\\r|:-]+$",
+    "flags": "gm"
+  }
+}

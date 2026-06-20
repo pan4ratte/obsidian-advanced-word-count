@@ -25,8 +25,6 @@ const en = {
   statusWikiLinks: (n: number) => `Wikilinks: ${n}`,
   statusCitekeys: (n: number) => `Citekeys: ${n}`,
   statusEmbeds: (n: number) => `Embeds: ${n}`,
-  statusTables: (n: number) => `Tables: ${n}`,
-  statusTags: (n: number) => `Tags: ${n}`,
   statusFootnotes: (n: number) => `Footnotes: ${n}`,
 
   // ── Settings page ──────────────────────────────────────────────────────────
@@ -182,14 +180,6 @@ const en = {
       label: "Embeds",
       hint: "Counts ![[...]] and ![](...) embeds",
     },
-    showTables: {
-      label: "Tables",
-      hint: "Counts complete tables",
-    },
-    showTags: {
-      label: "Tags",
-      hint: "Counts #tags",
-    },
     showFootnotes: {
       label: "Footnotes",
       hint: "Counts only complete footnotes ([^1] with a [^1]: definition, or inline ^[…])",
@@ -222,11 +212,6 @@ On: citekeys will be ignored`,
       label: "Ignore comments",
       hint: `Off: comments %% … %% and <!-- … --> text will be counted
 On: comments will be ignored`,
-    },
-    ignoreCode: {
-      label: "Ignore code",
-      hint: `Off: inline code \`…\` and code blocks \`\`\` … \`\`\` are counted
-On: code is ignored`,
     },
     ignoreHtmlTags: {
       label: "Ignore HTML tags",

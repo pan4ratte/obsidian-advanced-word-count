@@ -1,0 +1,17 @@
+{
+  "id": "ignore-code",
+  "name": "Ignore code",
+  "description": "Excludes fenced code blocks (``` … ```) and inline code (`…`) from word and character counts.",
+  "author": "pan4ratte",
+  "version": "1.0.0",
+  "type": "setting",
+  "label": "Ignore code",
+  "hint": "Off: inline code `…` and code blocks ``` … ``` are counted\nOn: code is ignored",
+  "defaultEnabled": false,
+  "transform": {
+    "pattern": "```[\\s\\S]*?```|`[^`]*`",
+    "flags": "g",
+    "replacement": "",
+    "stage": "pre"
+  }
+}

@@ -60,8 +60,6 @@ export interface Preset {
   showWikiLinks: boolean;
   showCitekeys: boolean;
   showEmbeds: boolean;
-  showTables: boolean;
-  showTags: boolean;
   showFootnotes: boolean;
 
   // Word count inclusions / exclusions (shared by both word and char metrics)
@@ -70,7 +68,6 @@ export interface Preset {
   ignoreWikiLinks: boolean;
   countCitekeysAsWords: boolean;
   ignoreComments: boolean;
-  ignoreCode: boolean;
   ignoreHtmlTags: boolean;
 
   // Warning/goal rules. A metric may have at most one warning and one goal. A
@@ -125,8 +122,6 @@ export interface Metrics {
   wikiLinks: number;
   citekeys: number;
   embeds: number;
-  tables: number;
-  tags: number;
   footnotes: number;
 }
 
@@ -161,7 +156,7 @@ export interface MetricRow {
 export const METRIC_ORDER: MetricKey[] = [
   "wordsWithSpaces", "charsWithSpaces", "charsWithoutSpaces", "pages", "readingTime",
   "lines", "paragraphs", "markdownLinks", "wikiLinks", "citekeys",
-  "embeds", "tables", "tags", "footnotes",
+  "embeds", "footnotes",
 ];
 export const METRIC_SHOW_KEY: Record<MetricKey, keyof Preset> = {
   wordsWithSpaces: "showWordsWithSpaces",
@@ -175,8 +170,6 @@ export const METRIC_SHOW_KEY: Record<MetricKey, keyof Preset> = {
   wikiLinks: "showWikiLinks",
   citekeys: "showCitekeys",
   embeds: "showEmbeds",
-  tables: "showTables",
-  tags: "showTags",
   footnotes: "showFootnotes",
 };
 
@@ -199,15 +192,12 @@ export function defaultPreset(overrides: Partial<Preset> = {}): Preset {
     showWikiLinks: false,
     showCitekeys: false,
     showEmbeds: false,
-    showTables: false,
-    showTags: false,
     showFootnotes: false,
     countMdLinksAsWords: false,
     countWikiLinkDisplayText: false,
     ignoreWikiLinks: false,
     countCitekeysAsWords: false,
     ignoreComments: true,
-    ignoreCode: true,
     ignoreHtmlTags: false,
     rules: [],
     metricOrder: [...METRIC_ORDER],
@@ -255,11 +245,6 @@ function preprocessBase(raw: string, preset: Preset, registry?: ExtensionRegistr
   // [^<>] (rather than [^>]) prevents quadratic backtracking on inputs like "<A<A<A…".
   if (preset.ignoreHtmlTags) {
     s = s.replace(/<\/?[a-zA-Z][^<>]*>/g, "");
-  }
-
-  // Code — fenced blocks and inline spans
-  if (preset.ignoreCode) {
-    s = s.replace(/```[\s\S]*?```/g, "").replace(/`[^`]*`/g, "");
   }
 
   // Images (always excluded)
@@ -424,26 +409,6 @@ function countEmbeds(text: string): number {
   return wiki + markdown;
 }
 
-/** Counts complete Markdown tables (a header row followed by a delimiter row). */
-function countTables(text: string): number {
-  const lines = text.split("\n");
-  let count = 0;
-  for (let i = 1; i < lines.length; i++) {
-    const delim = lines[i];
-    // Delimiter row: only pipes, dashes, colons and spaces, with at least one of each pipe/dash.
-    if (!/^[\s|:-]+$/.test(delim) || !delim.includes("|") || !delim.includes("-")) continue;
-    const header = lines[i - 1];
-    if (header.includes("|") && header.trim().length > 0) count++;
-  }
-  return count;
-}
-
-/** Counts Obsidian #tags (must contain at least one non-numeric character; Unicode-aware). */
-function countTags(text: string): number {
-  const matches = text.match(/(?<![\p{L}\p{N}_#])#[\p{L}\p{N}_/-]+/gu) ?? [];
-  return matches.filter((m) => /[^\p{N}]/u.test(m.slice(1))).length;
-}
-
 /**
  * Counts only complete footnotes. Inline footnotes (^[text]) are self-contained
  * and always complete. Reference/definition footnotes ([^label] in the text plus
@@ -498,8 +463,6 @@ export function computeFull(raw: string, preset: Preset, registry?: ExtensionReg
     wikiLinks: countWikiLinks(raw),
     citekeys: countCitekeys(raw),
     embeds: countEmbeds(raw),
-    tables: countTables(raw),
-    tags: countTags(raw),
     footnotes: countFootnotes(raw),
   };
 
@@ -625,8 +588,6 @@ export function metricRows(
     { key: "wikiLinks",          show: preset.showWikiLinks,          blockLabel: t.toggles.showWikiLinks.label,          statusText: t.statusWikiLinks(m.wikiLinks),             value: String(m.wikiLinks) },
     { key: "citekeys",           show: preset.showCitekeys,           blockLabel: t.toggles.showCitekeys.label,           statusText: t.statusCitekeys(m.citekeys),               value: String(m.citekeys) },
     { key: "embeds",             show: preset.showEmbeds,             blockLabel: t.toggles.showEmbeds.label,             statusText: t.statusEmbeds(m.embeds),                   value: String(m.embeds) },
-    { key: "tables",             show: preset.showTables,             blockLabel: t.toggles.showTables.label,             statusText: t.statusTables(m.tables),                   value: String(m.tables) },
-    { key: "tags",               show: preset.showTags,               blockLabel: t.toggles.showTags.label,               statusText: t.statusTags(m.tags),                       value: String(m.tags) },
     { key: "footnotes",          show: preset.showFootnotes,          blockLabel: t.toggles.showFootnotes.label,          statusText: t.statusFootnotes(m.footnotes),             value: String(m.footnotes) },
   ];
   const builtinRows: MetricRow[] = defs

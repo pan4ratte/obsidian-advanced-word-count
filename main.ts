@@ -300,9 +300,6 @@ export default class WordCountPlugin extends Plugin {
     const data = (await this.loadData()) as Partial<WordCountSettings> | null;
     this.settings = Object.assign({}, DEFAULT_SETTINGS, data);
     for (const p of this.settings.presets) {
-      // Code was always stripped before "Ignore code" became a toggle; default
-      // existing presets to true so their counts don't change.
-      if (p.ignoreCode === undefined) p.ignoreCode = true;
       // Reading-time speed was added later; default existing presets to the
       // average reader so the metric and its dropdown have a valid value.
       if (p.readingWpm === undefined) p.readingWpm = 250;
@@ -312,6 +309,19 @@ export default class WordCountPlugin extends Plugin {
       // registry can write into them.
       if (!p.extMetrics || typeof p.extMetrics !== "object") p.extMetrics = {};
       if (!p.extSettings || typeof p.extSettings !== "object") p.extSettings = {};
+
+      // The Tables/Tags metrics and the "Ignore code" setting were extracted into
+      // community extensions (ids "tables", "tags", "ignore-code"). Carry each
+      // preset's prior intent across, reading the now-removed legacy fields, so the
+      // matching extension is pre-connected the moment it's installed.
+      const em = p.extMetrics, es = p.extSettings;
+      const legacy = p as unknown as { showTables?: boolean; showTags?: boolean; ignoreCode?: boolean };
+      if (em && legacy.showTables === true) em["tables"] = true;
+      if (em && legacy.showTags === true) em["tags"] = true;
+      if (es && legacy.ignoreCode === true) es["ignore-code"] = true;
+      delete legacy.showTables;
+      delete legacy.showTags;
+      delete legacy.ignoreCode;
       // Migrate presets saved before warning/goal rules existed: the old
       // `limits`/`stashedLimits` maps (warnings only) become warning rules.
       if (!Array.isArray(p.rules)) {

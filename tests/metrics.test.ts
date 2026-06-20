@@ -30,15 +30,6 @@ describe("word count (wordsWithSpaces)", () => {
     expect(count("---\ntitle: x\ntags: [a]\n---\nhello world").wordsWithSpaces).toBe(2);
   });
 
-  it("excludes fenced and inline code by default", () => {
-    expect(count("hello ```js\ncode here``` world").wordsWithSpaces).toBe(2);
-    expect(count("hello `inline code` world").wordsWithSpaces).toBe(2);
-  });
-
-  it("counts code when ignoreCode is off", () => {
-    expect(count("alpha `beta` gamma", { ignoreCode: false }).wordsWithSpaces).toBe(3);
-  });
-
   it("excludes images", () => {
     expect(count("text ![alt text](img.png) more").wordsWithSpaces).toBe(2);
   });
@@ -192,14 +183,6 @@ describe("structural metrics", () => {
     expect(count("![[B]] and ![alt](img.png)").embeds).toBe(2);
     // A plain markdown link (no leading !) is not an embed.
     expect(count("[docs](https://x.com)").embeds).toBe(0);
-  });
-
-  it("counts complete markdown tables", () => {
-    expect(count("| H1 | H2 |\n| --- | --- |\n| a | b |").tables).toBe(1);
-  });
-
-  it("counts tags, excluding purely numeric ones and mid-word hashes", () => {
-    expect(count("#todo #project/work #123 word#notag").tags).toBe(2);
   });
 
   it("counts only complete footnotes", () => {
