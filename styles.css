@@ -584,6 +584,12 @@
   color: var(--text-normal);
 }
 
+/* Installed extensions are highlighted with the accent color. */
+.wcp-ext-card.is-installed .wcp-ext-type-icon,
+.wcp-ext-card.is-installed .wcp-ext-name {
+  color: var(--text-accent);
+}
+
 .wcp-ext-author {
   display: block;
   font-size: var(--font-smallest);

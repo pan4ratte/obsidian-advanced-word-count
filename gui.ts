@@ -955,6 +955,8 @@ export class ExtensionBrowserModal extends Modal {
     main.createEl("p", { text: this.plugin.extensions.loc(entry, "description") ?? entry.description, cls: "wcp-ext-desc" });
 
     const installed = this.plugin.extensionManager.isInstalled(entry.id);
+    // Highlight installed extensions: the type icon and title pick up the accent color.
+    if (installed) card.addClass("is-installed");
     const installedDate = this.plugin.extensionManager.installedDate(entry.id);
     // Update available when the catalogue's ISO date is newer than the installed
     // copy's (ISO dates compare correctly as strings).

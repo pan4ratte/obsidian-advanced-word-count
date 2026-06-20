@@ -95,40 +95,39 @@ const ru = {
   deleteConfirmNo: "Отменить",
 
   // ── Extensions ─────────────────────────────────────────────────────────────
-  settingsAddExtensionsName: "Добавить расширения",
-  settingsAddExtensionsDesc:
-    "Просматривайте расширения сообщества, добавляющие новые счётчики или настройки, и подключайте их к пресетам ниже",
-  settingsBrowseExtensions: "Обзор расширений",
+  settingsAddExtensionsName: "Расширения сообщества",
+  settingsAddExtensionsDesc: "Установите дополнительные метрики и настройки из магазина расширений",
+  settingsBrowseExtensions: "Магазин расширений",
 
   // Browse modal
-  extModalTitle: "Обзор расширений",
+  extModalTitle: "Магазин расширений",
   extSearchPlaceholder: "Поиск расширений…",
-  extLoading: "Загрузка расширений…",
-  extLoadError: "Не удалось загрузить расширения. Проверьте подключение и попробуйте снова.",
+  extLoading: "Загружаем расширения…",
+  extLoadError: "Не удалось загрузить расширения: проверьте подключение и попробуйте снова",
   extRetry: "Повторить",
   extNoResults: "Нет расширений по вашему запросу",
   extEmptyCatalogue: "Пока нет доступных расширений",
   extInstall: "Установить",
   extUpdate: "Обновить",
   extInstalling: "Установка…",
-  extTypeMetric: "Счётчик",
+  extTypeMetric: "Метрика",
   extTypeSetting: "Настройка",
   extUninstall: "Удалить",
-  extByAuthor: (author: string) => `автор: ${author}`,
-  extInstalledNotice: (name: string) => `Установлено «${name}»`,
+  extByAuthor: (author: string) => `Автор: ${author}`,
+  extInstalledNotice: (name: string) => `Установлено: "${name}"`,
   extInstallFailed: (msg: string) => `Ошибка установки: ${msg}`,
-  extUninstalledNotice: (name: string) => `Удалено «${name}»`,
+  extUninstalledNotice: (name: string) => `Удалено: "${name}"`,
   extUninstallFailed: (msg: string) => `Ошибка удаления: ${msg}`,
 
   // Browse modal — type filter chips
   extFilterAll: "Все",
-  extFilterMetrics: "Счётчики",
+  extFilterMetrics: "Метрики",
   extFilterSettings: "Расширенные настройки",
 
   // Per-preset connect (dropdowns in the metric / setting section headers)
-  connectAddMetric: "Добавить счётчик…",
-  connectAddSetting: "Добавить настройку…",
-  connectInstallFirst: "Сначала установите расширения…",
+  connectAddMetric: "Подключить метрику…",
+  connectAddSetting: "Подключить настройку…",
+  connectInstallFirst: "Расширения сообщетсва…",
 
   // ── Status bar metric toggles ──────────────────────────────────────────────
   toggles: {
