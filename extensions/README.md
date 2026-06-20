@@ -46,7 +46,34 @@ individual extension files on demand.
 | `updated`        | no       | ISO date (`YYYY-MM-DD`); a date newer than the installed copy surfaces an "Update" |
 | `hint`           | no       | Tooltip (use `\n` for a second line)                |
 | `defaultEnabled` | no       | Whether new presets enable it by default (`false`)  |
+| `i18n`           | no       | Per-locale translations of the display fields (see below) |
 | `minPluginVersion` | no     | Reserved for future compatibility gating            |
+
+### Localization (`i18n`)
+
+The display fields (`name`, `description`, `title`, `label`, `hint`, `statusLabel`,
+`unit`) can be translated per locale. `i18n` maps a BCP-47 tag (e.g. `"ru"`,
+`"zh-tw"`) to an object with any of those fields; the plugin picks the value for
+the user's Obsidian language — trying the full tag, then its base language — and
+falls back to the base (English) value when there's no translation. The logic
+fields (`id`, `count`, `transform`, …) are never localized.
+
+```json
+{
+  "id": "tables",
+  "name": "Table count",
+  "title": "Tables",
+  "label": "Tables",
+  "statusLabel": "Tables",
+  "count": { "mode": "matches", "source": "raw", "pattern": "…", "flags": "gm" },
+  "i18n": {
+    "ru": { "name": "Подсчёт таблиц", "title": "Таблицы", "label": "Таблицы", "statusLabel": "Таблиц" }
+  }
+}
+```
+
+Add the same `i18n` (just `name`/`description`) to the matching `index.json` entry
+so the browse modal localizes too.
 
 ### Regex safety
 

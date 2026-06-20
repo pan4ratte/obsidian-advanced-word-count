@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   compileRegex,
+  localize,
   validateExtension,
   ExtensionRegistry,
   MetricExtension,
@@ -292,5 +293,45 @@ describe("ratio mode", () => {
     const reg = new ExtensionRegistry();
     reg.set([ratioExt({ mode: "ratio", numerator: "chars", denominator: "words" })]);
     expect(reg.computeRatios(defaultPreset(), { chars: 4, words: 2 })).toEqual({});
+  });
+});
+
+// ── Localization ────────────────────────────────────────────────────────────────
+
+describe("localization", () => {
+  const i18n = { ru: { label: "Заголовки", hint: "Считает заголовки" }, "zh-tw": { label: "標題" } };
+
+  it("localize picks the most specific tag, then falls back to base", () => {
+    expect(localize("Headings", i18n, "label", ["ru"])).toBe("Заголовки");
+    expect(localize("Headings", i18n, "label", ["en"])).toBe("Headings"); // no ru → base
+    expect(localize("Counts…", i18n, "hint", ["zh-tw", "zh"])).toBe("Counts…"); // zh-tw lacks hint → base
+    expect(localize("Headings", i18n, "label", ["zh-tw", "zh"])).toBe("標題"); // full tag before base
+    expect(localize("Headings", undefined, "label", ["ru"])).toBe("Headings"); // no i18n → base
+  });
+
+  it("rejects i18n whose field values aren't strings", () => {
+    const m = metricExt({ i18n: { ru: { label: 5 } } as never });
+    expect(validateExtension(m).ok).toBe(false);
+  });
+
+  it("registry.loc localizes metric rows and display fields for the active locale", () => {
+    const reg = new ExtensionRegistry();
+    reg.set([
+      metricExt({
+        id: "headings", label: "Headings", title: "Headings", statusLabel: "Headings",
+        count: { pattern: "^#", flags: "gm" },
+        i18n: { ru: { label: "Заголовки", title: "Заголовки", statusLabel: "Заголовков" } },
+      }),
+    ]);
+    const preset = defaultPreset({ extMetrics: { headings: true } });
+
+    reg.setLocale(["ru"]);
+    const row = reg.metricRows(preset, { headings: 3 })[0];
+    expect(row.label).toBe("Заголовки");
+    expect(row.statusText).toBe("Заголовков: 3");
+    expect(reg.loc({ ...metricExt(), i18n: { ru: { title: "Заголовки" } }, title: "Headings" }, "title")).toBe("Заголовки");
+
+    reg.setLocale(["en"]);
+    expect(reg.metricRows(preset, { headings: 3 })[0].label).toBe("Headings");
   });
 });

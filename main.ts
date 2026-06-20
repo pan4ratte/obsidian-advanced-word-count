@@ -1,5 +1,5 @@
 import { Plugin, MarkdownView, setTooltip } from "obsidian";
-import { t, refreshLocale } from "./locales";
+import { t, refreshLocale, localeTags } from "./locales";
 import {
   VIEW_TYPE_METRICS,
   AppInternal,
@@ -39,8 +39,9 @@ export default class WordCountPlugin extends Plugin {
     await this.loadSettings();
 
     // Register installed extensions before the first count so their metrics and
-    // setting transforms are live immediately.
+    // setting transforms are live immediately, and localize them to the UI locale.
     this.extensionManager.load();
+    this.extensions.setLocale(localeTags());
 
     // Don't auto-create a preset on first run — the plugin starts with an empty
     // preset list and the user adds their own. Only keep activePresetId valid

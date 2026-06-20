@@ -61,6 +61,24 @@ export interface SubPattern {
   flags?: string;
 }
 
+/** The user-facing text fields an extension can translate. */
+export interface LocalizedFields {
+  name?: string;
+  description?: string;
+  title?: string;
+  label?: string;
+  hint?: string;
+  statusLabel?: string;
+  unit?: string;
+}
+
+/**
+ * Per-locale overrides of the display fields, keyed by BCP-47 tag (e.g. "ru",
+ * "zh-tw"). Any field omitted falls back to the base (English) value. The logic
+ * fields (id, count, transform, …) are never localized.
+ */
+export type I18n = Record<string, LocalizedFields>;
+
 export interface ExtensionManifestBase {
   id: string;            // unique, kebab-case (matches /^[a-z0-9][a-z0-9-]*$/)
   name: string;          // display name (shown in the browse modal)
@@ -71,6 +89,8 @@ export interface ExtensionManifestBase {
   // ISO date (YYYY-MM-DD) of the last change. A catalogue entry with a newer
   // `updated` than the installed copy surfaces an available update.
   updated?: string;
+  // Per-locale translations of the display fields (base values are the default).
+  i18n?: I18n;
   minPluginVersion?: string;
 }
 
@@ -143,6 +163,8 @@ export interface ExtensionIndexEntry {
   author: string;
   // ISO date of the last change; compared with the installed copy to detect updates.
   updated?: string;
+  // Per-locale translations of `name`/`description` for the browse modal.
+  i18n?: I18n;
   type: ExtensionType;
   // Path to the extension's JSON, relative to the index. Defaults to `${id}.json`.
   path?: string;
@@ -207,6 +229,22 @@ function collectMatches(re: RegExp, text: string): RegExpExecArray[] {
     if (m.index === re.lastIndex) re.lastIndex++;
   }
   return out;
+}
+
+/**
+ * A display field's value for the given locale tags (most specific first),
+ * falling back to the base value when no translation exists.
+ */
+export function localize(
+  base: string | undefined, i18n: I18n | undefined, field: keyof LocalizedFields, tags: string[]
+): string | undefined {
+  if (i18n) {
+    for (const tag of tags) {
+      const v = i18n[tag] ? i18n[tag][field] : undefined;
+      if (typeof v === "string" && v.length > 0) return v;
+    }
+  }
+  return base;
 }
 
 /** Resolve a ratio operand: a constant number, or a metric id read from `values`. */
@@ -279,6 +317,23 @@ export function validateExtension(value: unknown): ValidationResult {
   if (!optStr(o.updated)) return fail(`"updated" must be a string (ISO date)`);
   if (!optStr(o.minPluginVersion)) return fail(`"minPluginVersion" must be a string`);
   if (!optStr(o.hint)) return fail(`"hint" must be a string`);
+
+  if (o.i18n !== undefined) {
+    if (typeof o.i18n !== "object" || o.i18n === null || Array.isArray(o.i18n)) {
+      return fail(`"i18n" must be an object keyed by locale tag`);
+    }
+    const i18n = o.i18n as Record<string, unknown>;
+    for (const tag of Object.keys(i18n)) {
+      const fields = i18n[tag];
+      if (typeof fields !== "object" || fields === null || Array.isArray(fields)) {
+        return fail(`i18n["${tag}"] must be an object of translated fields`);
+      }
+      const fo = fields as Record<string, unknown>;
+      for (const k of Object.keys(fo)) {
+        if (typeof fo[k] !== "string") return fail(`i18n["${tag}"].${k} must be a string`);
+      }
+    }
+  }
   if (o.defaultEnabled !== undefined && typeof o.defaultEnabled !== "boolean") {
     return fail(`"defaultEnabled" must be a boolean`);
   }
@@ -375,6 +430,19 @@ export class ExtensionRegistry {
   private metricDefs = new Map<string, MetricExtension>();
   private settingDefs = new Map<string, SettingExtension>();
   private regexCache = new Map<string, RegExp | null>();
+  // Locale tags (most specific first) used to localize display fields. Set by the
+  // plugin from the current Obsidian locale; defaults to English-only.
+  private localeTags: string[] = ["en"];
+
+  /** Set the active locale tags (e.g. ["ru"] or ["zh-tw", "zh"]). */
+  setLocale(tags: string[]): void {
+    this.localeTags = tags.length > 0 ? tags : ["en"];
+  }
+
+  /** A display field's localized value (falls back to the item's base value). */
+  loc(item: { i18n?: I18n } & Partial<LocalizedFields>, field: keyof LocalizedFields): string | undefined {
+    return localize(item[field], item.i18n, field, this.localeTags);
+  }
 
   /** Replace the whole set (used when (re)loading from persisted settings). */
   set(exts: Extension[]): void {
@@ -589,12 +657,14 @@ export class ExtensionRegistry {
       if (!this.metricEnabled(preset, def.id)) continue;
       const value = ext[def.id] || 0;
       const valStr = String(value);
+      const label = this.loc(def, "label") ?? def.label;
+      const statusLabel = this.loc(def, "statusLabel") ?? def.statusLabel ?? label;
       rows.push({
         id: def.id,
-        label: def.label,
-        statusText: `${def.statusLabel || def.label}: ${valStr}`,
+        label,
+        statusText: `${statusLabel}: ${valStr}`,
         value: valStr,
-        unit: def.unit,
+        unit: this.loc(def, "unit") ?? def.unit,
         level: ruleLevel(preset, value, def.id),
       });
     }

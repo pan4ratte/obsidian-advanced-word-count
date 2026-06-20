@@ -10,6 +10,16 @@
   "hint": "Counts #tags (numeric-only tags ignored)",
   "statusLabel": "Tags",
   "defaultEnabled": false,
+  "i18n": {
+    "ru": {
+      "name": "Подсчёт тегов",
+      "description": "Считает #теги Obsidian, игнорируя числовые теги (например, #123) и решётки внутри слов.",
+      "title": "Теги",
+      "label": "Теги",
+      "hint": "Считает #теги (числовые теги игнорируются)",
+      "statusLabel": "Тегов"
+    }
+  },
   "count": {
     "mode": "matches",
     "source": "raw",

@@ -177,6 +177,9 @@
       "description": "Counts complete Markdown tables (header + delimiter row).",
       "author": "pan4ratte",
       "updated": "2026-06-20",
+      "i18n": {
+        "ru": { "name": "Подсчёт таблиц", "description": "Считает полные Markdown-таблицы (заголовок + разделитель)." }
+      },
       "type": "metric",
       "path": "tables.json"
     },
@@ -186,6 +189,9 @@
       "description": "Counts Obsidian #tags, ignoring numeric-only tags.",
       "author": "pan4ratte",
       "updated": "2026-06-20",
+      "i18n": {
+        "ru": { "name": "Подсчёт тегов", "description": "Считает #теги Obsidian, игнорируя числовые теги." }
+      },
       "type": "metric",
       "path": "tags.json"
     },
@@ -195,6 +201,9 @@
       "description": "Excludes fenced and inline code from word and character counts.",
       "author": "pan4ratte",
       "updated": "2026-06-20",
+      "i18n": {
+        "ru": { "name": "Игнорировать код", "description": "Исключает блоки и строчный код из подсчёта." }
+      },
       "type": "setting",
       "path": "ignore-code.json"
     }

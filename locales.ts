@@ -39,3 +39,14 @@ export let t: Locale = resolveLocale();
 export function refreshLocale(): void {
   t = resolveLocale();
 }
+
+/**
+ * Locale tags to try when resolving a translation, most specific first — e.g.
+ * ["zh-tw", "zh"] or ["ru"]. Used to localize community extensions, which carry
+ * their own per-locale `i18n` overrides (see extensions.ts).
+ */
+export function localeTags(): string[] {
+  const tag = moment.locale();
+  const base = tag.split("-")[0];
+  return tag === base ? [tag] : [tag, base];
+}

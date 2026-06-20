@@ -10,6 +10,16 @@
   "hint": "Counts complete tables (header row + delimiter row)",
   "statusLabel": "Tables",
   "defaultEnabled": false,
+  "i18n": {
+    "ru": {
+      "name": "Подсчёт таблиц",
+      "description": "Считает полные Markdown-таблицы (строка заголовка и строка-разделитель |---|---|).",
+      "title": "Таблицы",
+      "label": "Таблицы",
+      "hint": "Считает полные таблицы (заголовок + строка-разделитель)",
+      "statusLabel": "Таблиц"
+    }
+  },
   "count": {
     "mode": "matches",
     "source": "raw",

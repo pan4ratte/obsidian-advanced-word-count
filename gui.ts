@@ -625,7 +625,9 @@ export class WordCountSettingTab extends PluginSettingTab {
 
     const select = head.createEl("select", { cls: "dropdown wcp-ext-connect-select" });
     select.createEl("option", { text: placeholder, value: "" });
-    for (const def of available) select.createEl("option", { text: def.label, value: def.id });
+    for (const def of available) {
+      select.createEl("option", { text: this.plugin.extensions.loc(def, "label") ?? def.label, value: def.id });
+    }
     select.value = "";
     select.disabled = available.length === 0;
     select.addEventListener("change", handle(async () => {
@@ -640,8 +642,9 @@ export class WordCountSettingTab extends PluginSettingTab {
   /** A connected extension shown as a toggle in a grid; turning it off disconnects. */
   private renderExtToggle(grid: HTMLElement, preset: Preset, def: Extension) {
     const row = grid.createDiv({ cls: "wcp-toggle-chip" });
-    if (def.hint) setTooltip(row, def.hint, { placement: "top" });
-    row.createEl("span", { text: def.title, cls: "wcp-toggle-label" });
+    const hint = this.plugin.extensions.loc(def, "hint") ?? def.hint;
+    if (hint) setTooltip(row, hint, { placement: "top" });
+    row.createEl("span", { text: this.plugin.extensions.loc(def, "title") ?? def.title, cls: "wcp-toggle-label" });
     row.createDiv({ cls: "checkbox-container is-enabled" });
     row.addEventListener("click", handle(async () => {
       this.setExtConnected(preset, def, false);
@@ -943,13 +946,13 @@ export class ExtensionBrowserModal extends Modal {
     const card = parent.createDiv({ cls: "wcp-ext-card" });
 
     const head = card.createDiv({ cls: "wcp-ext-card-head" });
-    head.createEl("span", { text: entry.name, cls: "wcp-ext-name" });
+    head.createEl("span", { text: this.plugin.extensions.loc(entry, "name") ?? entry.name, cls: "wcp-ext-name" });
     head.createEl("span", {
       text: entry.type === "metric" ? t.extTypeMetric : t.extTypeSetting,
       cls: `wcp-ext-type wcp-ext-type-${entry.type}`,
     });
 
-    card.createEl("p", { text: entry.description, cls: "wcp-ext-desc" });
+    card.createEl("p", { text: this.plugin.extensions.loc(entry, "description") ?? entry.description, cls: "wcp-ext-desc" });
     card.createEl("span", { text: t.extByAuthor(entry.author), cls: "wcp-ext-author" });
 
     const installed = this.plugin.extensionManager.isInstalled(entry.id);

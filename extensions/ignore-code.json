@@ -9,6 +9,15 @@
   "title": "Ignore code",
   "hint": "Off: inline code `…` and code blocks ``` … ``` are counted\nOn: code is ignored",
   "defaultEnabled": false,
+  "i18n": {
+    "ru": {
+      "name": "Игнорировать код",
+      "description": "Исключает блоки кода (``` … ```) и строчный код (`…`) из подсчёта слов и символов.",
+      "title": "Игнорировать код",
+      "label": "Игнорировать код",
+      "hint": "Выкл.: строчный код `…` и блоки ``` … ``` подсчитываются\nВкл.: код игнорируется"
+    }
+  },
   "transform": {
     "pattern": "```[\\s\\S]*?```|`[^`]*`",
     "flags": "g",
