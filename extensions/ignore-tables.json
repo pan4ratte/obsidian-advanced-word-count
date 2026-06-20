@@ -3,9 +3,10 @@
   "name": "Ignore tables",
   "description": "Excludes Markdown table rows (lines starting with |) from word and character counts.",
   "author": "pan4ratte",
-  "version": "1.0.0",
+  "updated": "2026-06-20",
   "type": "setting",
   "label": "Ignore tables",
+  "title": "Ignore tables",
   "hint": "Off: table cell text is counted\nOn: table rows are ignored",
   "defaultEnabled": false,
   "transform": {

@@ -17,7 +17,7 @@ import {
   effectiveMetricOrder,
   reorderMetrics,
 } from "./metrics";
-import { Extension, ExtensionIndexEntry, compareVersions } from "./extensions";
+import { Extension, ExtensionIndexEntry } from "./extensions";
 
 // Wrap an async callback so it satisfies Obsidian's void-returning event/handler
 // types without leaving a floating promise.
@@ -547,8 +547,8 @@ export class WordCountSettingTab extends PluginSettingTab {
     }));
 
     // ── Status bar metrics ──────────────────────────────────────────────────
-    this.sectionHeader(card, t.sectionStatusBar);
-    card.createEl("p", { text: t.sectionStatusBarNote, cls: "wcp-section-note" });
+    // Header, description and the metric-extensions dropdown form one block.
+    this.renderSectionHeaderWithConnect(card, t.sectionStatusBar, t.sectionStatusBarNote, preset, "metric");
 
     const visGrid = card.createDiv({ cls: "wcp-toggle-grid" });
     for (const key of Object.keys(t.toggles) as (keyof typeof t.toggles)[]) {
@@ -557,89 +557,94 @@ export class WordCountSettingTab extends PluginSettingTab {
       });
       if (key === "showPages") pagesChip = chip;
     }
+    // Connected metric extensions appear as toggles in the same grid.
+    for (const def of this.plugin.extensions.metricList()) {
+      if (this.extConnected(preset, def)) this.renderExtToggle(visGrid, preset, def);
+    }
 
     refreshPagesValidity();
 
     // ── Word count options ──────────────────────────────────────────────────
-    this.sectionHeader(card, t.sectionWordCountOptions);
-    card.createEl("p", { text: t.sectionWordCountOptionsNote, cls: "wcp-section-note" });
+    // Header, description and the setting-extensions dropdown form one block.
+    this.renderSectionHeaderWithConnect(card, t.sectionWordCountOptions, t.sectionWordCountOptionsNote, preset, "setting");
 
     const wcGrid = card.createDiv({ cls: "wcp-toggle-grid-wide" });
     for (const key of Object.keys(t.wordCountOptions) as (keyof typeof t.wordCountOptions)[]) {
       this.renderToggleChip(wcGrid, preset, key, t.wordCountOptions[key].label, t.wordCountOptions[key].hint);
     }
+    // Connected setting extensions appear as toggles in the same grid.
+    for (const def of this.plugin.extensions.settingList()) {
+      if (this.extConnected(preset, def)) this.renderExtToggle(wcGrid, preset, def);
+    }
 
     // ── Warnings & goals ──────────────────────────────────────────────────────
     this.renderLimits(card.createDiv(), preset);
+  }
 
-    // ── Connect extensions ────────────────────────────────────────────────────
-    this.renderConnectExtensions(card.createDiv(), preset);
+  // ── Extension connections ───────────────────────────────────────────────────
+
+  /** Whether an extension is enabled (connected) for this preset. */
+  private extConnected(preset: Preset, def: Extension): boolean {
+    return def.type === "metric"
+      ? this.plugin.extensions.metricEnabled(preset, def.id)
+      : this.plugin.extensions.settingEnabled(preset, def.id);
+  }
+
+  /** Set an extension's connected/enabled flag for this preset. */
+  private setExtConnected(preset: Preset, def: Extension, on: boolean): void {
+    if (def.type === "metric") {
+      if (!preset.extMetrics) preset.extMetrics = {};
+      preset.extMetrics[def.id] = on;
+    } else {
+      if (!preset.extSettings) preset.extSettings = {};
+      preset.extSettings[def.id] = on;
+    }
   }
 
   /**
-   * Per-preset extension connections. Installed extensions are enabled for a
-   * preset by writing `true` into its extMetrics/extSettings map; the dropdown
-   * offers the not-yet-connected ones, and connected extensions show as chips that
-   * can be disconnected (removing the flag reverts to the extension's default).
+   * One container holding three stacked elements: a section header (Counter
+   * metrics / Advanced settings), its description, and a dropdown that connects an
+   * installed extension of the matching type. The dropdown is always shown —
+   * disabled when there's nothing to add. Its placeholder prompts to install
+   * extensions first when none of this type are installed.
    */
-  renderConnectExtensions(container: HTMLElement, preset: Preset) {
-    this.sectionHeader(container, t.sectionConnectExtensions);
-    container.createEl("p", { text: t.sectionConnectExtensionsNote, cls: "wcp-section-note" });
+  private renderSectionHeaderWithConnect(
+    parent: HTMLElement, title: string, note: string, preset: Preset, type: "metric" | "setting"
+  ) {
+    const head = parent.createDiv({ cls: "wcp-section-head" });
+    const text = head.createDiv({ cls: "wcp-section-head-text" });
+    text.createEl("p", { text: title, cls: "wcp-section-header" });
+    text.createEl("p", { text: note, cls: "wcp-section-note" });
 
-    const installed: Extension[] = [
-      ...this.plugin.extensions.metricList(),
-      ...this.plugin.extensions.settingList(),
-    ];
-    if (installed.length === 0) {
-      container.createEl("p", { text: t.connectNoneInstalled, cls: "wcp-section-note" });
-      return;
-    }
+    const installed = type === "metric" ? this.plugin.extensions.metricList() : this.plugin.extensions.settingList();
+    const available = installed.filter((def) => !this.extConnected(preset, def));
 
-    const mapFor = (def: Extension) => (def.type === "metric" ? preset.extMetrics : preset.extSettings);
-    const isConnected = (def: Extension) => mapFor(def)?.[def.id] === true;
-    const typeLabel = (def: Extension) => (def.type === "metric" ? t.extTypeMetric : t.extTypeSetting);
+    const placeholder = installed.length === 0
+      ? t.connectInstallFirst
+      : type === "metric" ? t.connectAddMetric : t.connectAddSetting;
 
-    // Connected extensions, shown as removable chips.
-    const connected = installed.filter(isConnected);
-    if (connected.length > 0) {
-      const grid = container.createDiv({ cls: "wcp-toggle-grid" });
-      for (const def of connected) {
-        const chip = grid.createDiv({ cls: "wcp-ext-chip" });
-        chip.createEl("span", { text: def.label, cls: "wcp-toggle-label" });
-        chip.createEl("span", { text: typeLabel(def), cls: `wcp-ext-type wcp-ext-type-${def.type}` });
-        const rm = chip.createEl("button");
-        setIcon(rm, "x");
-        setTooltip(rm, t.connectRemoveTooltip, { placement: "top" });
-        rm.addClass("wcp-btn", "wcp-btn-delete");
-        rm.addEventListener("click", handle(async () => {
-          const map = mapFor(def);
-          if (map) delete map[def.id];
-          await this.save();
-          this.display();
-        }));
-      }
-    }
-
-    // Dropdown of installed-but-not-connected extensions.
-    const available = installed.filter((def) => !isConnected(def));
-    const row = container.createDiv({ cls: "wcp-wpp-row" });
-    const select = row.createEl("select", { cls: "dropdown" });
-    select.createEl("option", { text: t.connectExtensionPlaceholder, value: "" });
-    for (const def of available) {
-      select.createEl("option", { text: `${def.label} (${typeLabel(def)})`, value: def.id });
-    }
-    select.disabled = available.length === 0;
+    const select = head.createEl("select", { cls: "dropdown wcp-ext-connect-select" });
+    select.createEl("option", { text: placeholder, value: "" });
+    for (const def of available) select.createEl("option", { text: def.label, value: def.id });
     select.value = "";
+    select.disabled = available.length === 0;
     select.addEventListener("change", handle(async () => {
-      const def = installed.find((d) => d.id === select.value);
+      const def = available.find((d) => d.id === select.value);
       if (!def) return;
-      if (def.type === "metric") {
-        if (!preset.extMetrics) preset.extMetrics = {};
-        preset.extMetrics[def.id] = true;
-      } else {
-        if (!preset.extSettings) preset.extSettings = {};
-        preset.extSettings[def.id] = true;
-      }
+      this.setExtConnected(preset, def, true);
+      await this.save();
+      this.display();
+    }));
+  }
+
+  /** A connected extension shown as a toggle in a grid; turning it off disconnects. */
+  private renderExtToggle(grid: HTMLElement, preset: Preset, def: Extension) {
+    const row = grid.createDiv({ cls: "wcp-toggle-chip" });
+    if (def.hint) setTooltip(row, def.hint, { placement: "top" });
+    row.createEl("span", { text: def.title, cls: "wcp-toggle-label" });
+    row.createDiv({ cls: "checkbox-container is-enabled" });
+    row.addEventListener("click", handle(async () => {
+      this.setExtConnected(preset, def, false);
       await this.save();
       this.display();
     }));
@@ -943,19 +948,20 @@ export class ExtensionBrowserModal extends Modal {
       text: entry.type === "metric" ? t.extTypeMetric : t.extTypeSetting,
       cls: `wcp-ext-type wcp-ext-type-${entry.type}`,
     });
-    head.createEl("span", { text: `v${entry.version}`, cls: "wcp-ext-version" });
 
     card.createEl("p", { text: entry.description, cls: "wcp-ext-desc" });
     card.createEl("span", { text: t.extByAuthor(entry.author), cls: "wcp-ext-author" });
 
-    const installedVer = this.plugin.extensionManager.installedVersion(entry.id);
-    const installed = installedVer !== null;
-    const updatable = installedVer !== null && compareVersions(entry.version, installedVer) > 0;
+    const installed = this.plugin.extensionManager.isInstalled(entry.id);
+    const installedDate = this.plugin.extensionManager.installedDate(entry.id);
+    // Update available when the catalogue's ISO date is newer than the installed
+    // copy's (ISO dates compare correctly as strings).
+    const updatable = installed && !!entry.updated && !!installedDate && entry.updated > installedDate;
     const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
     const actions = card.createDiv({ cls: "wcp-ext-actions" });
 
-    // Install (not installed) or Update (newer version available).
+    // Install (not installed) or Update (catalogue copy is newer).
     if (!installed || updatable) {
       const primary = actions.createEl("button", { cls: "wcp-ext-install" });
       primary.setText(updatable ? t.extUpdate : t.extInstall);

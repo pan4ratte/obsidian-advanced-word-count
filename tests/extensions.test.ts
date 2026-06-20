@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
   compileRegex,
-  compareVersions,
   validateExtension,
   ExtensionRegistry,
   MetricExtension,
@@ -16,9 +15,9 @@ const metricExt = (overrides: Partial<MetricExtension> = {}): MetricExtension =>
   name: "Sentence count",
   description: "Counts sentences",
   author: "tester",
-  version: "1.0.0",
   type: "metric",
   label: "Sentences",
+  title: "Sentences",
   count: { pattern: "[.!?]+(?=\\s|$)", flags: "g", source: "preprocessed" },
   ...overrides,
 });
@@ -28,9 +27,9 @@ const settingExt = (overrides: Partial<SettingExtension> = {}): SettingExtension
   name: "Ignore highlights",
   description: "Removes highlights",
   author: "tester",
-  version: "1.0.0",
   type: "setting",
   label: "Ignore highlights",
+  title: "Ignore highlights",
   transform: { pattern: "==[^=]+==", flags: "g", replacement: "" },
   ...overrides,
 });
@@ -67,17 +66,6 @@ describe("compileRegex", () => {
   });
 });
 
-// ── compareVersions ─────────────────────────────────────────────────────────────
-
-describe("compareVersions", () => {
-  it("orders dotted numeric versions", () => {
-    expect(compareVersions("1.0.0", "1.0.1")).toBe(-1);
-    expect(compareVersions("1.2.0", "1.1.9")).toBe(1);
-    expect(compareVersions("2.0", "2.0.0")).toBe(0);
-    expect(compareVersions("1.10.0", "1.9.0")).toBe(1); // numeric, not lexical
-  });
-});
-
 // ── validateExtension ───────────────────────────────────────────────────────────
 
 describe("validateExtension", () => {
@@ -96,11 +84,16 @@ describe("validateExtension", () => {
     expect(validateExtension("nope").ok).toBe(false);
     expect(validateExtension({ ...metricExt(), id: "" }).ok).toBe(false);
     expect(validateExtension({ ...metricExt(), label: undefined }).ok).toBe(false);
+    expect(validateExtension({ ...metricExt(), title: undefined }).ok).toBe(false); // title is mandatory
   });
 
-  it("rejects an invalid id, version or type", () => {
+  it("accepts an optional updated date", () => {
+    expect(validateExtension({ ...metricExt(), updated: "2026-06-20" }).ok).toBe(true);
+    expect(validateExtension({ ...metricExt(), updated: 20260620 }).ok).toBe(false);
+  });
+
+  it("rejects an invalid id or type", () => {
     expect(validateExtension({ ...metricExt(), id: "Bad Id" }).ok).toBe(false);
-    expect(validateExtension({ ...metricExt(), version: "v1" }).ok).toBe(false);
     expect(validateExtension({ ...metricExt(), type: "widget" }).ok).toBe(false);
   });
 

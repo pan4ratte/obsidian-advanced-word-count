@@ -3,9 +3,10 @@
   "name": "Ignore code",
   "description": "Excludes fenced code blocks (``` … ```) and inline code (`…`) from word and character counts.",
   "author": "pan4ratte",
-  "version": "1.0.0",
+  "updated": "2026-06-20",
   "type": "setting",
   "label": "Ignore code",
+  "title": "Ignore code",
   "hint": "Off: inline code `…` and code blocks ``` … ``` are counted\nOn: code is ignored",
   "defaultEnabled": false,
   "transform": {

@@ -303,8 +303,8 @@ describe("metric ordering", () => {
     const reg = new ExtensionRegistry();
     reg.set([
       {
-        id: "x-metric", name: "X", description: "", author: "t", version: "1.0.0",
-        type: "metric", label: "X", count: { pattern: "x", flags: "g" },
+        id: "x-metric", name: "X", description: "", author: "t",
+        type: "metric", label: "X", title: "X", count: { pattern: "x", flags: "g" },
       },
     ]);
     const on = effectiveMetricOrder(defaultPreset({ extMetrics: { "x-metric": true } }), reg);
@@ -323,12 +323,12 @@ describe("extensions integration", () => {
     reg.set([
       {
         id: "ignore-highlights", name: "Ignore highlights", description: "", author: "t",
-        version: "1.0.0", type: "setting", label: "Ignore highlights",
+        type: "setting", label: "Ignore highlights", title: "Ignore highlights",
         transform: { pattern: "==[^=]+==", flags: "g", replacement: "" },
       },
       {
         id: "sentence-count", name: "Sentence count", description: "", author: "t",
-        version: "1.0.0", type: "metric", label: "Sentences",
+        type: "metric", label: "Sentences", title: "Sentences",
         count: { pattern: "[.!?]+(?=\\s|$)", flags: "g", source: "preprocessed" },
       },
     ]);
@@ -365,7 +365,7 @@ describe("extensions integration", () => {
     reg.set([
       {
         id: "avg-word-length", name: "Avg word length", description: "", author: "t",
-        version: "1.0.0", type: "metric", label: "Avg word length",
+        type: "metric", label: "Avg word length", title: "Avg word length",
         count: { mode: "ratio", numerator: "charsWithoutSpaces", denominator: "wordsWithSpaces", decimals: 1 },
       },
     ]);
@@ -379,12 +379,12 @@ describe("extensions integration", () => {
     reg.set([
       {
         id: "sentence-count", name: "Sentence count", description: "", author: "t",
-        version: "1.0.0", type: "metric", label: "Sentences",
+        type: "metric", label: "Sentences", title: "Sentences",
         count: { mode: "split", source: "preprocessed", separator: "[.!?]+(?=\\s|$)" },
       },
       {
         id: "words-per-sentence", name: "Words per sentence", description: "", author: "t",
-        version: "1.0.0", type: "metric", label: "Words per sentence",
+        type: "metric", label: "Words per sentence", title: "Words per sentence",
         count: { mode: "ratio", numerator: "wordsWithSpaces", denominator: "sentence-count", decimals: 1 },
       },
     ]);

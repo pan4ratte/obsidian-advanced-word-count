@@ -109,9 +109,8 @@ const ru = {
   extNoResults: "Нет расширений по вашему запросу",
   extEmptyCatalogue: "Пока нет доступных расширений",
   extInstall: "Установить",
-  extInstalling: "Установка…",
-  extInstalled: "Установлено",
   extUpdate: "Обновить",
+  extInstalling: "Установка…",
   extTypeMetric: "Счётчик",
   extTypeSetting: "Настройка",
   extUninstall: "Удалить",
@@ -126,12 +125,10 @@ const ru = {
   extFilterInstalled: "Установленные",
   extFilterNotInstalled: "Не установленные",
 
-  // Per-preset connect
-  sectionConnectExtensions: "Подключить расширения",
-  sectionConnectExtensionsNote: "Включите установленные расширения для этого пресета",
-  connectExtensionPlaceholder: "Подключить расширение…",
-  connectNoneInstalled: "Расширения ещё не установлены — используйте «Добавить расширения» выше",
-  connectRemoveTooltip: "Отключить от пресета",
+  // Per-preset connect (dropdowns in the metric / setting section headers)
+  connectAddMetric: "Добавить счётчик…",
+  connectAddSetting: "Добавить настройку…",
+  connectInstallFirst: "Сначала установите расширения…",
 
   // ── Status bar metric toggles ──────────────────────────────────────────────
   toggles: {

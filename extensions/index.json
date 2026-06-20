@@ -5,7 +5,7 @@
       "name": "Sentence count",
       "description": "Counts sentences by their terminating punctuation (. ! ?).",
       "author": "pan4ratte",
-      "version": "1.0.0",
+      "updated": "2026-06-20",
       "type": "metric",
       "path": "sentence-count.json"
     },
@@ -14,7 +14,7 @@
       "name": "Emoji count",
       "description": "Counts emoji and pictographic characters.",
       "author": "pan4ratte",
-      "version": "1.0.0",
+      "updated": "2026-06-20",
       "type": "metric",
       "path": "emoji-count.json"
     },
@@ -23,7 +23,7 @@
       "name": "Footnote count",
       "description": "Counts complete footnotes (paired reference + definition, plus inline).",
       "author": "pan4ratte",
-      "version": "1.0.0",
+      "updated": "2026-06-20",
       "type": "metric",
       "path": "footnote-count.json"
     },
@@ -32,7 +32,7 @@
       "name": "Distinct tags",
       "description": "Counts how many different #tags appear, ignoring repeats.",
       "author": "pan4ratte",
-      "version": "1.0.0",
+      "updated": "2026-06-20",
       "type": "metric",
       "path": "unique-tags.json"
     },
@@ -41,7 +41,7 @@
       "name": "Average word length",
       "description": "Average characters per word (chars without spaces ÷ words).",
       "author": "pan4ratte",
-      "version": "1.0.0",
+      "updated": "2026-06-20",
       "type": "metric",
       "path": "avg-word-length.json"
     },
@@ -50,7 +50,7 @@
       "name": "Links per page",
       "description": "Average Markdown links per page (links ÷ pages).",
       "author": "pan4ratte",
-      "version": "1.0.0",
+      "updated": "2026-06-20",
       "type": "metric",
       "path": "links-per-page.json"
     },
@@ -59,7 +59,7 @@
       "name": "Words per sentence",
       "description": "Average words per sentence (words ÷ sentences; needs Sentence count).",
       "author": "pan4ratte",
-      "version": "1.0.0",
+      "updated": "2026-06-20",
       "type": "metric",
       "path": "words-per-sentence.json"
     },
@@ -68,7 +68,7 @@
       "name": "Ignore highlights",
       "description": "Excludes ==highlighted== spans from word and character counts.",
       "author": "pan4ratte",
-      "version": "1.0.0",
+      "updated": "2026-06-20",
       "type": "setting",
       "path": "ignore-highlights.json"
     },
@@ -77,7 +77,7 @@
       "name": "Heading count",
       "description": "Counts Markdown headings (# … ######).",
       "author": "pan4ratte",
-      "version": "1.0.0",
+      "updated": "2026-06-20",
       "type": "metric",
       "path": "headings.json"
     },
@@ -86,7 +86,7 @@
       "name": "Tasks (total)",
       "description": "Counts all task checkboxes, checked or unchecked.",
       "author": "pan4ratte",
-      "version": "1.0.0",
+      "updated": "2026-06-20",
       "type": "metric",
       "path": "tasks-total.json"
     },
@@ -95,7 +95,7 @@
       "name": "Tasks done",
       "description": "Counts completed task checkboxes.",
       "author": "pan4ratte",
-      "version": "1.0.0",
+      "updated": "2026-06-20",
       "type": "metric",
       "path": "tasks-done.json"
     },
@@ -104,7 +104,7 @@
       "name": "Tasks open",
       "description": "Counts unchecked task checkboxes.",
       "author": "pan4ratte",
-      "version": "1.0.0",
+      "updated": "2026-06-20",
       "type": "metric",
       "path": "tasks-open.json"
     },
@@ -113,7 +113,7 @@
       "name": "Distinct citekeys",
       "description": "Counts how many different @citekeys are cited, ignoring repeats.",
       "author": "pan4ratte",
-      "version": "1.0.0",
+      "updated": "2026-06-20",
       "type": "metric",
       "path": "distinct-citekeys.json"
     },
@@ -122,7 +122,7 @@
       "name": "Citations per page",
       "description": "Average citations per page (citekeys ÷ pages).",
       "author": "pan4ratte",
-      "version": "1.0.0",
+      "updated": "2026-06-20",
       "type": "metric",
       "path": "citations-per-page.json"
     },
@@ -131,7 +131,7 @@
       "name": "Ignore math",
       "description": "Excludes inline $…$ and block $$…$$ LaTeX math from counts (keeps currency).",
       "author": "pan4ratte",
-      "version": "1.1.0",
+      "updated": "2026-06-20",
       "type": "setting",
       "path": "ignore-math.json"
     },
@@ -140,7 +140,7 @@
       "name": "Ignore tables",
       "description": "Excludes Markdown table rows from counts.",
       "author": "pan4ratte",
-      "version": "1.0.0",
+      "updated": "2026-06-20",
       "type": "setting",
       "path": "ignore-tables.json"
     },
@@ -149,7 +149,7 @@
       "name": "Ignore URLs",
       "description": "Excludes bare http(s) URLs from counts.",
       "author": "pan4ratte",
-      "version": "1.0.0",
+      "updated": "2026-06-20",
       "type": "setting",
       "path": "ignore-urls.json"
     },
@@ -158,7 +158,7 @@
       "name": "Ignore strikethrough",
       "description": "Excludes ~~struck-through~~ text from counts.",
       "author": "pan4ratte",
-      "version": "1.0.0",
+      "updated": "2026-06-20",
       "type": "setting",
       "path": "ignore-strikethrough.json"
     },
@@ -167,7 +167,7 @@
       "name": "Ignore Dataview fields",
       "description": "Excludes inline Dataview [key:: value] fields from counts.",
       "author": "pan4ratte",
-      "version": "1.0.0",
+      "updated": "2026-06-20",
       "type": "setting",
       "path": "ignore-dataview-fields.json"
     },
@@ -176,7 +176,7 @@
       "name": "Table count",
       "description": "Counts complete Markdown tables (header + delimiter row).",
       "author": "pan4ratte",
-      "version": "1.0.0",
+      "updated": "2026-06-20",
       "type": "metric",
       "path": "tables.json"
     },
@@ -185,7 +185,7 @@
       "name": "Tag count",
       "description": "Counts Obsidian #tags, ignoring numeric-only tags.",
       "author": "pan4ratte",
-      "version": "1.0.0",
+      "updated": "2026-06-20",
       "type": "metric",
       "path": "tags.json"
     },
@@ -194,7 +194,7 @@
       "name": "Ignore code",
       "description": "Excludes fenced and inline code from word and character counts.",
       "author": "pan4ratte",
-      "version": "1.0.0",
+      "updated": "2026-06-20",
       "type": "setting",
       "path": "ignore-code.json"
     }

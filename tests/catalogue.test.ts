@@ -31,7 +31,6 @@ describe("shipped extension catalogue", () => {
       if (!r.ok) { problems.push(`${path}: ${r.error}`); continue; }
       if (r.ext.id !== entry.id) problems.push(`${path}: id "${r.ext.id}" ≠ index "${entry.id}"`);
       if (r.ext.type !== entry.type) problems.push(`${path}: type mismatch`);
-      if (r.ext.version !== entry.version) problems.push(`${path}: version mismatch`);
     }
     expect(problems).toEqual([]);
   });

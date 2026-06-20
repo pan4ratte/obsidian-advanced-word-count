@@ -63,10 +63,14 @@ export interface SubPattern {
 
 export interface ExtensionManifestBase {
   id: string;            // unique, kebab-case (matches /^[a-z0-9][a-z0-9-]*$/)
-  name: string;          // display name
+  name: string;          // display name (shown in the browse modal)
   description: string;
   author: string;
-  version: string;       // dotted numeric version, e.g. "1.0.0"
+  // Short title shown in the preset's connect toggle (required, no fallback).
+  title: string;
+  // ISO date (YYYY-MM-DD) of the last change. A catalogue entry with a newer
+  // `updated` than the installed copy surfaces an available update.
+  updated?: string;
   minPluginVersion?: string;
 }
 
@@ -137,7 +141,8 @@ export interface ExtensionIndexEntry {
   name: string;
   description: string;
   author: string;
-  version: string;
+  // ISO date of the last change; compared with the installed copy to detect updates.
+  updated?: string;
   type: ExtensionType;
   // Path to the extension's JSON, relative to the index. Defaults to `${id}.json`.
   path?: string;
@@ -214,21 +219,6 @@ function resolveOperand(op: RatioOperand | undefined, values: Record<string, num
   return 0;
 }
 
-// ── Version comparison ──────────────────────────────────────────────────────────
-
-/** Compare two dotted numeric versions. Returns -1, 0 or 1 (a vs b). */
-export function compareVersions(a: string, b: string): number {
-  const pa = a.split(".");
-  const pb = b.split(".");
-  const len = Math.max(pa.length, pb.length);
-  for (let i = 0; i < len; i++) {
-    const na = parseInt(pa[i], 10) || 0;
-    const nb = parseInt(pb[i], 10) || 0;
-    if (na !== nb) return na < nb ? -1 : 1;
-  }
-  return 0;
-}
-
 // ── Validation ──────────────────────────────────────────────────────────────────
 
 export type ValidationResult =
@@ -277,19 +267,16 @@ export function validateExtension(value: unknown): ValidationResult {
   if (typeof value !== "object" || value === null) return fail("not a JSON object");
   const o = value as Record<string, unknown>;
 
-  for (const k of ["id", "name", "description", "author", "version", "type", "label"]) {
+  for (const k of ["id", "name", "description", "author", "type", "label", "title"]) {
     const v = o[k];
     if (typeof v !== "string" || v.length === 0) return fail(`missing or invalid "${k}"`);
   }
 
   const id = o.id as string;
-  const version = o.version as string;
   if (!/^[a-z0-9][a-z0-9-]*$/.test(id)) {
     return fail(`invalid id "${id}" (use lowercase letters, digits and hyphens)`);
   }
-  if (!/^\d+(\.\d+)*$/.test(version)) {
-    return fail(`invalid version "${version}" (expected dotted numbers like 1.0.0)`);
-  }
+  if (!optStr(o.updated)) return fail(`"updated" must be a string (ISO date)`);
   if (!optStr(o.minPluginVersion)) return fail(`"minPluginVersion" must be a string`);
   if (!optStr(o.hint)) return fail(`"hint" must be a string`);
   if (o.defaultEnabled !== undefined && typeof o.defaultEnabled !== "boolean") {

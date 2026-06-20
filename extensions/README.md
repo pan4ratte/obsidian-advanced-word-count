@@ -23,7 +23,6 @@ individual extension files on demand.
       "name": "Sentence count",
       "description": "Counts sentences …",
       "author": "you",
-      "version": "1.0.0",
       "type": "metric",
       "path": "sentence-count.json"
     }
@@ -38,12 +37,13 @@ individual extension files on demand.
 | Field            | Required | Notes                                               |
 | ---------------- | -------- | --------------------------------------------------- |
 | `id`             | yes      | Unique, `^[a-z0-9][a-z0-9-]*$` (kebab-case)          |
-| `name`           | yes      | Display name                                        |
+| `name`           | yes      | Display name shown in the browse modal              |
 | `description`    | yes      | One-line summary                                    |
 | `author`         | yes      |                                                     |
-| `version`        | yes      | Dotted numbers, e.g. `1.0.0`                        |
 | `type`           | yes      | `"metric"` or `"setting"`                           |
-| `label`          | yes      | Toggle / block label shown in the UI                |
+| `label`          | yes      | Name shown in the right-pane metric block and the connect dropdown |
+| `title`          | yes      | Short title shown in the preset's connect toggle    |
+| `updated`        | no       | ISO date (`YYYY-MM-DD`); a date newer than the installed copy surfaces an "Update" |
 | `hint`           | no       | Tooltip (use `\n` for a second line)                |
 | `defaultEnabled` | no       | Whether new presets enable it by default (`false`)  |
 | `minPluginVersion` | no     | Reserved for future compatibility gating            |
@@ -177,15 +177,17 @@ Example — `ignore-highlights.json`:
   "name": "Ignore highlights",
   "description": "Excludes ==highlighted== spans from counts.",
   "author": "pan4ratte",
-  "version": "1.0.0",
+  "updated": "2026-06-20",
   "type": "setting",
   "label": "Ignore highlights",
+  "title": "Ignore highlights",
   "transform": { "pattern": "==[^=]+==", "flags": "g", "replacement": "" }
 }
 ```
 
 ## Contributing
 
-1. Add `<your-id>.json` to this folder.
-2. Add an entry to `index.json`.
-3. Bump the `version` when you change an extension so installs can detect updates.
+1. Add `<your-id>.json` to this folder (include a `title` and an `updated` date).
+2. Add an entry to `index.json` (same `id`, `name`, `author`, `type`, `updated`).
+3. When you change an extension, bump its `updated` date (in both the file and the
+   index entry) so installs detect the update.

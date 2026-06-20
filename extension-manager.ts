@@ -6,7 +6,6 @@ import {
   ExtensionIndex,
   ExtensionIndexEntry,
   ExtensionRegistry,
-  compareVersions,
   validateExtension,
 } from "./extensions";
 
@@ -41,9 +40,10 @@ export class ExtensionManager {
     return this.installed().some((e) => e.id === id);
   }
 
-  installedVersion(id: string): string | null {
+  /** The `updated` date of the installed copy, or null. Used for update detection. */
+  installedDate(id: string): string | null {
     const found = this.installed().find((e) => e.id === id);
-    return found ? found.version : null;
+    return found && typeof found.updated === "string" ? found.updated : null;
   }
 
   private async persist(list: Extension[]): Promise<void> {
@@ -78,14 +78,6 @@ export class ExtensionManager {
       throw new Error(`Invalid extension "${entry.id}": ${result.error}`);
     }
     return result.ext;
-  }
-
-  /** Index entries whose available version is newer than what's installed. */
-  updatesAvailable(entries: ExtensionIndexEntry[]): ExtensionIndexEntry[] {
-    return entries.filter((e) => {
-      const cur = this.installedVersion(e.id);
-      return cur !== null && compareVersions(e.version, cur) > 0;
-    });
   }
 
   // ── Install / uninstall ──────────────────────────────────────────────────────

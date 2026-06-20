@@ -110,9 +110,8 @@ const en = {
   extNoResults: "No extensions match your search",
   extEmptyCatalogue: "No extensions are available yet",
   extInstall: "Install",
-  extInstalling: "Installing…",
-  extInstalled: "Installed",
   extUpdate: "Update",
+  extInstalling: "Installing…",
   extTypeMetric: "Metric",
   extTypeSetting: "Setting",
   extUninstall: "Uninstall",
@@ -127,12 +126,10 @@ const en = {
   extFilterInstalled: "Installed",
   extFilterNotInstalled: "Not installed",
 
-  // Per-preset connect
-  sectionConnectExtensions: "Connect extensions",
-  sectionConnectExtensionsNote: "Enable installed extensions for this preset",
-  connectExtensionPlaceholder: "Connect an extension…",
-  connectNoneInstalled: 'No extensions installed yet — use "Add extensions" above',
-  connectRemoveTooltip: "Disconnect from this preset",
+  // Per-preset connect (dropdowns in the metric / setting section headers)
+  connectAddMetric: "Add metric…",
+  connectAddSetting: "Add setting…",
+  connectInstallFirst: "Install extensions first…",
 
   // ── Status bar metric toggles ──────────────────────────────────────────────
   toggles: {

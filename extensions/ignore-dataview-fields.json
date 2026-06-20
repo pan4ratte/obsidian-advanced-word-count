@@ -3,9 +3,10 @@
   "name": "Ignore Dataview fields",
   "description": "Excludes inline Dataview fields — [key:: value] and (key:: value) — from counts.",
   "author": "pan4ratte",
-  "version": "1.0.0",
+  "updated": "2026-06-20",
   "type": "setting",
   "label": "Ignore Dataview fields",
+  "title": "Ignore Dataview fields",
   "hint": "Off: inline [key:: value] fields are counted\nOn: inline Dataview fields are ignored",
   "defaultEnabled": false,
   "transform": {

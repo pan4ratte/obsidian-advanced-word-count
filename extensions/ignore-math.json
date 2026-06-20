@@ -3,9 +3,10 @@
   "name": "Ignore math",
   "description": "Excludes LaTeX math from counts — block $$…$$ and inline $…$ — using Pandoc's rules so currency like $5 and $20,000 is left alone.",
   "author": "pan4ratte",
-  "version": "1.1.0",
+  "updated": "2026-06-20",
   "type": "setting",
   "label": "Ignore math",
+  "title": "Ignore math",
   "hint": "Off: math like $x+y$ and $$…$$ is counted\nOn: math is ignored (currency such as $5 is kept)",
   "defaultEnabled": false,
   "transform": {

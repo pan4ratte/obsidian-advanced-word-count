@@ -3,9 +3,10 @@
   "name": "Ignore highlights",
   "description": "Removes ==highlighted== spans before counting so highlighted text is excluded from word and character counts.",
   "author": "pan4ratte",
-  "version": "1.0.0",
+  "updated": "2026-06-20",
   "type": "setting",
   "label": "Ignore highlights",
+  "title": "Ignore highlights",
   "hint": "Off: highlighted ==text== is counted\nOn: highlighted text is ignored",
   "defaultEnabled": false,
   "transform": {

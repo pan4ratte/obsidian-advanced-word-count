@@ -548,14 +548,9 @@
   color: var(--text-normal);
 }
 
-.wcp-ext-version {
-  margin-left: auto;
-  font-size: var(--font-smaller);
-  color: var(--text-muted);
-}
-
-/* Type badge (Metric / Setting) — shared by the modal cards and the connect chips */
+/* Type badge (Metric / Setting) shown on each browse-modal card */
 .wcp-ext-type {
+  margin-left: auto;
   font-size: var(--font-smallest);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -598,20 +593,37 @@
   opacity: 0.6;
 }
 
-/* ── Connect extensions (per preset) ─────────────────────────────────────────── */
+/* ── Section head: title + description + connect dropdown stacked in one container */
 
-.wcp-ext-chip {
+.wcp-section-head {
   display: flex;
+  flex-direction: row;
   align-items: center;
   gap: 8px;
-  padding: 6px 8px;
-  border-radius: var(--radius-l);
-  background-color: var(--setting-items-background);
-  border: 1px solid var(--background-modifier-border);
+  margin-top: 24px;
+  margin-bottom: 12px;
 }
 
-.wcp-ext-chip .wcp-toggle-label {
+/* Title + description take the available width; the dropdown sits beside them. */
+.wcp-section-head-text {
   flex: 1;
   min-width: 0;
-  pointer-events: auto;
+}
+
+.wcp-section-head .wcp-section-header {
+  margin: 0 0 4px;
+}
+
+.wcp-section-head .wcp-section-note {
+  margin: 0;
+}
+
+.wcp-ext-connect-select {
+  flex: 0 0 auto;
+  max-width: 45%;
+  font-size: var(--font-ui-smaller);
+}
+
+.wcp-ext-connect-select:disabled {
+  opacity: 0.6;
 }
