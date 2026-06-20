@@ -120,10 +120,10 @@ const ru = {
   extUninstalledNotice: (name: string) => `Удалено «${name}»`,
   extUninstallFailed: (msg: string) => `Ошибка удаления: ${msg}`,
 
-  // Browse modal — install-state filter chips
+  // Browse modal — type filter chips
   extFilterAll: "Все",
-  extFilterInstalled: "Установленные",
-  extFilterNotInstalled: "Не установленные",
+  extFilterMetrics: "Счётчики",
+  extFilterSettings: "Расширенные настройки",
 
   // Per-preset connect (dropdowns in the metric / setting section headers)
   connectAddMetric: "Добавить счётчик…",

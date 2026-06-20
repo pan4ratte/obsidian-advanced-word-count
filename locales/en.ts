@@ -121,10 +121,10 @@ const en = {
   extUninstalledNotice: (name: string) => `Uninstalled "${name}"`,
   extUninstallFailed: (msg: string) => `Uninstall failed: ${msg}`,
 
-  // Browse modal — install-state filter chips
+  // Browse modal — type filter chips
   extFilterAll: "All",
-  extFilterInstalled: "Installed",
-  extFilterNotInstalled: "Not installed",
+  extFilterMetrics: "Metrics",
+  extFilterSettings: "Advanced settings",
 
   // Per-preset connect (dropdowns in the metric / setting section headers)
   connectAddMetric: "Add metric…",

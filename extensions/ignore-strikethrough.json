@@ -9,6 +9,15 @@
   "title": "Ignore strikethrough",
   "hint": "Off: ~~struck-through~~ text is counted\nOn: struck-through text is ignored",
   "defaultEnabled": false,
+  "i18n": {
+    "ru": {
+      "name": "Игнорировать зачёркивание",
+      "description": "Исключает ~~зачёркнутый~~ текст из подсчёта (удобно при редактировании).",
+      "title": "Игнорировать зачёркивание",
+      "label": "Игнорировать зачёркивание",
+      "hint": "Выкл.: ~~зачёркнутый~~ текст подсчитывается\nВкл.: зачёркнутый текст игнорируется"
+    }
+  },
   "transform": {
     "pattern": "~~[^~]+~~",
     "flags": "g",

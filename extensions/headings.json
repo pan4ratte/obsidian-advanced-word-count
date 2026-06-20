@@ -10,6 +10,16 @@
   "hint": "Counts Markdown headings (# … ######)",
   "statusLabel": "Headings",
   "defaultEnabled": false,
+  "i18n": {
+    "ru": {
+      "name": "Подсчёт заголовков",
+      "description": "Считает Markdown-заголовки (строки, начинающиеся с # … ######).",
+      "title": "Заголовки",
+      "label": "Заголовки",
+      "hint": "Считает Markdown-заголовки (# … ######)",
+      "statusLabel": "Заголовков"
+    }
+  },
   "count": {
     "mode": "matches",
     "source": "raw",

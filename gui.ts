@@ -829,7 +829,7 @@ export class DeleteConfirmModal extends Modal {
 
 // ── Extension browser modal ───────────────────────────────────────────────────
 
-type InstallFilter = "all" | "installed" | "not-installed";
+type ExtTypeFilter = "all" | "metric" | "setting";
 
 export class ExtensionBrowserModal extends Modal {
   private plugin: WordCountPlugin;
@@ -837,7 +837,7 @@ export class ExtensionBrowserModal extends Modal {
   private onChanged: () => void;
   private entries: ExtensionIndexEntry[] = [];
   private filter = "";
-  private installFilter: InstallFilter = "all";
+  private typeFilter: ExtTypeFilter = "all";
   private chipsEl: HTMLElement;
   private listEl: HTMLElement;
   private state: "loading" | "ready" | "error" = "loading";
@@ -870,19 +870,19 @@ export class ExtensionBrowserModal extends Modal {
     void this.load();
   }
 
-  /** Install-state filter chips: All / Installed / Not installed. */
+  /** Type filter chips: All / Metrics / Advanced settings. */
   private renderChips() {
     this.chipsEl.empty();
-    const chips: { value: InstallFilter; label: string }[] = [
+    const chips: { value: ExtTypeFilter; label: string }[] = [
       { value: "all", label: t.extFilterAll },
-      { value: "installed", label: t.extFilterInstalled },
-      { value: "not-installed", label: t.extFilterNotInstalled },
+      { value: "metric", label: t.extFilterMetrics },
+      { value: "setting", label: t.extFilterSettings },
     ];
     for (const { value, label } of chips) {
       const chip = this.chipsEl.createEl("button", { text: label, cls: "wcp-ext-filter" });
-      if (this.installFilter === value) chip.addClass("is-active");
+      if (this.typeFilter === value) chip.addClass("is-active");
       chip.addEventListener("click", () => {
-        this.installFilter = value;
+        this.typeFilter = value;
         this.renderChips();
         this.renderList();
       });
@@ -929,13 +929,10 @@ export class ExtensionBrowserModal extends Modal {
       e.description.toLowerCase().includes(f) ||
       e.author.toLowerCase().includes(f) ||
       e.id.toLowerCase().includes(f);
-    const matchesState = (e: ExtensionIndexEntry) => {
-      if (this.installFilter === "all") return true;
-      const installed = this.plugin.extensionManager.isInstalled(e.id);
-      return this.installFilter === "installed" ? installed : !installed;
-    };
+    const matchesType = (e: ExtensionIndexEntry) =>
+      this.typeFilter === "all" || e.type === this.typeFilter;
 
-    const shown = this.entries.filter((e) => matchesSearch(e) && matchesState(e));
+    const shown = this.entries.filter((e) => matchesSearch(e) && matchesType(e));
     if (shown.length === 0) {
       list.createEl("p", { text: t.extNoResults, cls: "wcp-ext-status" });
       return;

@@ -10,6 +10,16 @@
   "hint": "Counts unique @citekeys (repeats counted once; emails ignored)",
   "statusLabel": "Distinct citekeys",
   "defaultEnabled": false,
+  "i18n": {
+    "ru": {
+      "name": "Уникальные ключи цитирования",
+      "description": "Считает, сколько разных @ключей цитирования упомянуто, игнорируя повторы. Сначала вырезает код, викиссылки и Markdown-ссылки и игнорирует адреса эл. почты (@ внутри слова).",
+      "title": "Уникальные цитаты",
+      "label": "Уникальные цитаты",
+      "hint": "Считает уникальные @ключи (повторы — один раз; эл. почта игнорируется)",
+      "statusLabel": "Уникальных цитат"
+    }
+  },
   "count": {
     "mode": "captureUnique",
     "source": "raw",

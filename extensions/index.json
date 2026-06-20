@@ -6,6 +6,9 @@
       "description": "Counts sentences by their terminating punctuation (. ! ?).",
       "author": "pan4ratte",
       "updated": "2026-06-20",
+      "i18n": {
+        "ru": {"name": "Подсчёт предложений", "description": "Считает предложения по завершающей пунктуации (. ! ?). Несколько подряд (например, «?!») считаются одним предложением."}
+      },
       "type": "metric",
       "path": "sentence-count.json"
     },
@@ -15,6 +18,9 @@
       "description": "Counts emoji and pictographic characters.",
       "author": "pan4ratte",
       "updated": "2026-06-20",
+      "i18n": {
+        "ru": {"name": "Подсчёт эмодзи", "description": "Считает эмодзи и другие пиктографические символы в заметке."}
+      },
       "type": "metric",
       "path": "emoji-count.json"
     },
@@ -36,6 +42,9 @@
       "description": "Counts how many different #tags appear, ignoring repeats.",
       "author": "pan4ratte",
       "updated": "2026-06-20",
+      "i18n": {
+        "ru": {"name": "Уникальные теги", "description": "Считает, сколько разных #тегов встречается, игнорируя повторы и чисто числовые теги."}
+      },
       "type": "metric",
       "path": "unique-tags.json"
     },
@@ -45,6 +54,9 @@
       "description": "Average characters per word (chars without spaces ÷ words).",
       "author": "pan4ratte",
       "updated": "2026-06-20",
+      "i18n": {
+        "ru": {"name": "Средняя длина слова", "description": "Среднее число символов в слове (символы без пробелов ÷ слова)."}
+      },
       "type": "metric",
       "path": "avg-word-length.json"
     },
@@ -54,6 +66,9 @@
       "description": "Average Markdown links per page (links ÷ pages).",
       "author": "pan4ratte",
       "updated": "2026-06-20",
+      "i18n": {
+        "ru": {"name": "Ссылок на страницу", "description": "Среднее число Markdown-ссылок на страницу (ссылки ÷ страницы)."}
+      },
       "type": "metric",
       "path": "links-per-page.json"
     },
@@ -63,6 +78,9 @@
       "description": "Average words per sentence (words ÷ sentences; needs Sentence count).",
       "author": "pan4ratte",
       "updated": "2026-06-20",
+      "i18n": {
+        "ru": {"name": "Слов в предложении", "description": "Среднее число слов в предложении (слова ÷ предложения). Требует расширение «Подсчёт предложений»."}
+      },
       "type": "metric",
       "path": "words-per-sentence.json"
     },
@@ -72,6 +90,9 @@
       "description": "Excludes ==highlighted== spans from word and character counts.",
       "author": "pan4ratte",
       "updated": "2026-06-20",
+      "i18n": {
+        "ru": {"name": "Игнорировать выделения", "description": "Удаляет ==выделенные== фрагменты перед подсчётом, исключая выделенный текст из подсчёта слов и символов."}
+      },
       "type": "setting",
       "path": "ignore-highlights.json"
     },
@@ -81,6 +102,9 @@
       "description": "Counts Markdown headings (# … ######).",
       "author": "pan4ratte",
       "updated": "2026-06-20",
+      "i18n": {
+        "ru": {"name": "Подсчёт заголовков", "description": "Считает Markdown-заголовки (строки, начинающиеся с # … ######)."}
+      },
       "type": "metric",
       "path": "headings.json"
     },
@@ -90,6 +114,9 @@
       "description": "Counts all task checkboxes, checked or unchecked.",
       "author": "pan4ratte",
       "updated": "2026-06-20",
+      "i18n": {
+        "ru": {"name": "Задачи (всего)", "description": "Считает все чекбоксы задач — отмеченные и неотмеченные (- [ ], - [x])."}
+      },
       "type": "metric",
       "path": "tasks-total.json"
     },
@@ -99,6 +126,9 @@
       "description": "Counts completed task checkboxes.",
       "author": "pan4ratte",
       "updated": "2026-06-20",
+      "i18n": {
+        "ru": {"name": "Выполненные задачи", "description": "Считает выполненные чекбоксы задач (- [x] или - [X])."}
+      },
       "type": "metric",
       "path": "tasks-done.json"
     },
@@ -108,6 +138,9 @@
       "description": "Counts unchecked task checkboxes.",
       "author": "pan4ratte",
       "updated": "2026-06-20",
+      "i18n": {
+        "ru": {"name": "Невыполненные задачи", "description": "Считает невыполненные чекбоксы задач (- [ ])."}
+      },
       "type": "metric",
       "path": "tasks-open.json"
     },
@@ -117,6 +150,9 @@
       "description": "Counts how many different @citekeys are cited, ignoring repeats.",
       "author": "pan4ratte",
       "updated": "2026-06-20",
+      "i18n": {
+        "ru": {"name": "Уникальные ключи цитирования", "description": "Считает, сколько разных @ключей цитирования упомянуто, игнорируя повторы. Сначала вырезает код, викиссылки и Markdown-ссылки и игнорирует адреса эл. почты (@ внутри слова)."}
+      },
       "type": "metric",
       "path": "distinct-citekeys.json"
     },
@@ -126,6 +162,9 @@
       "description": "Average citations per page (citekeys ÷ pages).",
       "author": "pan4ratte",
       "updated": "2026-06-20",
+      "i18n": {
+        "ru": {"name": "Цитат на страницу", "description": "Среднее число цитат на страницу (всего @ключей ÷ страницы)."}
+      },
       "type": "metric",
       "path": "citations-per-page.json"
     },
@@ -135,6 +174,9 @@
       "description": "Excludes inline $…$ and block $$…$$ LaTeX math from counts (keeps currency).",
       "author": "pan4ratte",
       "updated": "2026-06-20",
+      "i18n": {
+        "ru": {"name": "Игнорировать формулы", "description": "Исключает формулы LaTeX из подсчёта — блочные $$…$$ и строчные $…$ — по правилам Pandoc, так что валюта вроде $5 и $20,000 сохраняется."}
+      },
       "type": "setting",
       "path": "ignore-math.json"
     },
@@ -144,6 +186,9 @@
       "description": "Excludes Markdown table rows from counts.",
       "author": "pan4ratte",
       "updated": "2026-06-20",
+      "i18n": {
+        "ru": {"name": "Игнорировать таблицы", "description": "Исключает строки Markdown-таблиц (начинающиеся с |) из подсчёта слов и символов."}
+      },
       "type": "setting",
       "path": "ignore-tables.json"
     },
@@ -153,6 +198,9 @@
       "description": "Excludes bare http(s) URLs from counts.",
       "author": "pan4ratte",
       "updated": "2026-06-20",
+      "i18n": {
+        "ru": {"name": "Игнорировать URL", "description": "Исключает «голые» http(s)-ссылки из подсчёта слов и символов."}
+      },
       "type": "setting",
       "path": "ignore-urls.json"
     },
@@ -162,6 +210,9 @@
       "description": "Excludes ~~struck-through~~ text from counts.",
       "author": "pan4ratte",
       "updated": "2026-06-20",
+      "i18n": {
+        "ru": {"name": "Игнорировать зачёркивание", "description": "Исключает ~~зачёркнутый~~ текст из подсчёта (удобно при редактировании)."}
+      },
       "type": "setting",
       "path": "ignore-strikethrough.json"
     },
@@ -171,6 +222,9 @@
       "description": "Excludes inline Dataview [key:: value] fields from counts.",
       "author": "pan4ratte",
       "updated": "2026-06-20",
+      "i18n": {
+        "ru": {"name": "Игнорировать поля Dataview", "description": "Исключает строчные поля Dataview — [key:: value] и (key:: value) — из подсчёта."}
+      },
       "type": "setting",
       "path": "ignore-dataview-fields.json"
     },

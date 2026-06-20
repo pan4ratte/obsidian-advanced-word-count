@@ -10,6 +10,16 @@
   "hint": "Counts distinct #tags (repeats counted once, numeric-only tags ignored)",
   "statusLabel": "Distinct tags",
   "defaultEnabled": false,
+  "i18n": {
+    "ru": {
+      "name": "Уникальные теги",
+      "description": "Считает, сколько разных #тегов встречается, игнорируя повторы и чисто числовые теги.",
+      "title": "Уникальные теги",
+      "label": "Уникальные теги",
+      "hint": "Считает разные #теги (повторы — один раз, числовые игнорируются)",
+      "statusLabel": "Уникальных тегов"
+    }
+  },
   "count": {
     "mode": "captureUnique",
     "source": "raw",

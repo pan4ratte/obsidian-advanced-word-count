@@ -10,6 +10,16 @@
   "hint": "Counts unchecked task checkboxes",
   "statusLabel": "Open",
   "defaultEnabled": false,
+  "i18n": {
+    "ru": {
+      "name": "Невыполненные задачи",
+      "description": "Считает невыполненные чекбоксы задач (- [ ]).",
+      "title": "Невыполненные задачи",
+      "label": "Невыполненные задачи",
+      "hint": "Считает неотмеченные чекбоксы задач",
+      "statusLabel": "Открыто"
+    }
+  },
   "count": {
     "mode": "matches",
     "source": "raw",

@@ -9,6 +9,15 @@
   "title": "Ignore Dataview fields",
   "hint": "Off: inline [key:: value] fields are counted\nOn: inline Dataview fields are ignored",
   "defaultEnabled": false,
+  "i18n": {
+    "ru": {
+      "name": "Игнорировать поля Dataview",
+      "description": "Исключает строчные поля Dataview — [key:: value] и (key:: value) — из подсчёта.",
+      "title": "Игнорировать поля Dataview",
+      "label": "Игнорировать поля Dataview",
+      "hint": "Выкл.: строчные поля [key:: value] подсчитываются\nВкл.: строчные поля Dataview игнорируются"
+    }
+  },
   "transform": {
     "pattern": "\\[[^\\]]*::[^\\]]*\\]|\\([^)]*::[^)]*\\)",
     "flags": "g",

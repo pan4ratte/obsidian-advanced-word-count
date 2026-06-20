@@ -10,6 +10,16 @@
   "hint": "Total citekeys divided by the number of pages",
   "statusLabel": "Citations/page",
   "defaultEnabled": false,
+  "i18n": {
+    "ru": {
+      "name": "Цитат на страницу",
+      "description": "Среднее число цитат на страницу (всего @ключей ÷ страницы).",
+      "title": "Цитат/стр.",
+      "label": "Цитат на страницу",
+      "hint": "Всего ключей цитирования, делённое на число страниц",
+      "statusLabel": "Цитат/стр."
+    }
+  },
   "count": {
     "mode": "ratio",
     "numerator": "citekeys",

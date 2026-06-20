@@ -9,6 +9,15 @@
   "title": "Ignore URLs",
   "hint": "Off: bare URLs are counted\nOn: bare http(s) URLs are ignored",
   "defaultEnabled": false,
+  "i18n": {
+    "ru": {
+      "name": "Игнорировать URL",
+      "description": "Исключает «голые» http(s)-ссылки из подсчёта слов и символов.",
+      "title": "Игнорировать URL",
+      "label": "Игнорировать URL",
+      "hint": "Выкл.: «голые» URL подсчитываются\nВкл.: «голые» http(s)-URL игнорируются"
+    }
+  },
   "transform": {
     "pattern": "https?://\\S+",
     "flags": "g",

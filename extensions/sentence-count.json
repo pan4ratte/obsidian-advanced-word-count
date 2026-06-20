@@ -10,6 +10,16 @@
   "hint": "Counts sentence-ending punctuation runs (. ! ?)",
   "statusLabel": "Sentences",
   "defaultEnabled": false,
+  "i18n": {
+    "ru": {
+      "name": "Подсчёт предложений",
+      "description": "Считает предложения по завершающей пунктуации (. ! ?). Несколько подряд (например, «?!») считаются одним предложением.",
+      "title": "Предложения",
+      "label": "Предложения",
+      "hint": "Считает группы завершающей пунктуации (. ! ?)",
+      "statusLabel": "Предложений"
+    }
+  },
   "count": {
     "pattern": "[.!?]+(?=\\s|$)",
     "flags": "g",

@@ -9,6 +9,15 @@
   "title": "Ignore tables",
   "hint": "Off: table cell text is counted\nOn: table rows are ignored",
   "defaultEnabled": false,
+  "i18n": {
+    "ru": {
+      "name": "Игнорировать таблицы",
+      "description": "Исключает строки Markdown-таблиц (начинающиеся с |) из подсчёта слов и символов.",
+      "title": "Игнорировать таблицы",
+      "label": "Игнорировать таблицы",
+      "hint": "Выкл.: текст ячеек таблиц подсчитывается\nВкл.: строки таблиц игнорируются"
+    }
+  },
   "transform": {
     "pattern": "^\\|.*$",
     "flags": "gm",

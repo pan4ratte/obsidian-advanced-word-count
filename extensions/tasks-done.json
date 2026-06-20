@@ -10,6 +10,16 @@
   "hint": "Counts checked task checkboxes",
   "statusLabel": "Done",
   "defaultEnabled": false,
+  "i18n": {
+    "ru": {
+      "name": "Выполненные задачи",
+      "description": "Считает выполненные чекбоксы задач (- [x] или - [X]).",
+      "title": "Выполненные задачи",
+      "label": "Выполненные задачи",
+      "hint": "Считает отмеченные чекбоксы задач",
+      "statusLabel": "Выполнено"
+    }
+  },
   "count": {
     "mode": "matches",
     "source": "raw",

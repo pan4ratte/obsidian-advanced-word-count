@@ -10,6 +10,16 @@
   "hint": "Words divided by sentences. Needs the Sentence count extension enabled.",
   "statusLabel": "Words/sentence",
   "defaultEnabled": false,
+  "i18n": {
+    "ru": {
+      "name": "Слов в предложении",
+      "description": "Среднее число слов в предложении (слова ÷ предложения). Требует расширение «Подсчёт предложений».",
+      "title": "Слов/предл.",
+      "label": "Слов в предложении",
+      "hint": "Слова, делённые на число предложений. Нужно включить «Подсчёт предложений».",
+      "statusLabel": "Слов/предл."
+    }
+  },
   "count": {
     "mode": "ratio",
     "numerator": "wordsWithSpaces",

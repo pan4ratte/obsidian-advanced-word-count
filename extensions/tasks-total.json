@@ -10,6 +10,16 @@
   "hint": "Counts every task checkbox, checked or unchecked",
   "statusLabel": "Tasks",
   "defaultEnabled": false,
+  "i18n": {
+    "ru": {
+      "name": "Задачи (всего)",
+      "description": "Считает все чекбоксы задач — отмеченные и неотмеченные (- [ ], - [x]).",
+      "title": "Задачи (всего)",
+      "label": "Задачи (всего)",
+      "hint": "Считает все чекбоксы задач",
+      "statusLabel": "Задач"
+    }
+  },
   "count": {
     "mode": "matches",
     "source": "raw",

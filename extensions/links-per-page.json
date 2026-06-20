@@ -10,6 +10,16 @@
   "hint": "Markdown links divided by the number of pages",
   "statusLabel": "Links/page",
   "defaultEnabled": false,
+  "i18n": {
+    "ru": {
+      "name": "Ссылок на страницу",
+      "description": "Среднее число Markdown-ссылок на страницу (ссылки ÷ страницы).",
+      "title": "Ссылок/стр.",
+      "label": "Ссылок на страницу",
+      "hint": "Markdown-ссылки, делённые на число страниц",
+      "statusLabel": "Ссылок/стр."
+    }
+  },
   "count": {
     "mode": "ratio",
     "numerator": "markdownLinks",

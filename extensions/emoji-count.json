@@ -10,6 +10,16 @@
   "hint": "Counts emoji / pictographic characters",
   "statusLabel": "Emoji",
   "defaultEnabled": false,
+  "i18n": {
+    "ru": {
+      "name": "Подсчёт эмодзи",
+      "description": "Считает эмодзи и другие пиктографические символы в заметке.",
+      "title": "Эмодзи",
+      "label": "Эмодзи",
+      "hint": "Считает эмодзи и пиктографические символы",
+      "statusLabel": "Эмодзи"
+    }
+  },
   "count": {
     "pattern": "\\p{Extended_Pictographic}",
     "flags": "gu",

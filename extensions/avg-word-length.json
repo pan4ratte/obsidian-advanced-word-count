@@ -10,6 +10,16 @@
   "hint": "Characters (without spaces) divided by the number of words",
   "statusLabel": "Avg word length",
   "defaultEnabled": false,
+  "i18n": {
+    "ru": {
+      "name": "Средняя длина слова",
+      "description": "Среднее число символов в слове (символы без пробелов ÷ слова).",
+      "title": "Ср. длина слова",
+      "label": "Средняя длина слова",
+      "hint": "Символы (без пробелов), делённые на число слов",
+      "statusLabel": "Ср. длина слова"
+    }
+  },
   "count": {
     "mode": "ratio",
     "numerator": "charsWithoutSpaces",

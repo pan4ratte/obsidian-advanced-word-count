@@ -9,6 +9,15 @@
   "title": "Ignore highlights",
   "hint": "Off: highlighted ==text== is counted\nOn: highlighted text is ignored",
   "defaultEnabled": false,
+  "i18n": {
+    "ru": {
+      "name": "Игнорировать выделения",
+      "description": "Удаляет ==выделенные== фрагменты перед подсчётом, исключая выделенный текст из подсчёта слов и символов.",
+      "title": "Игнорировать выделения",
+      "label": "Игнорировать выделения",
+      "hint": "Выкл.: выделенный ==текст== подсчитывается\nВкл.: выделенный текст игнорируется"
+    }
+  },
   "transform": {
     "pattern": "==[^=]+==",
     "flags": "g",
