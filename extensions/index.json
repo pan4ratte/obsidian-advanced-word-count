@@ -71,6 +71,105 @@
       "version": "1.0.0",
       "type": "setting",
       "path": "ignore-highlights.json"
+    },
+    {
+      "id": "headings",
+      "name": "Heading count",
+      "description": "Counts Markdown headings (# … ######).",
+      "author": "pan4ratte",
+      "version": "1.0.0",
+      "type": "metric",
+      "path": "headings.json"
+    },
+    {
+      "id": "tasks-total",
+      "name": "Tasks (total)",
+      "description": "Counts all task checkboxes, checked or unchecked.",
+      "author": "pan4ratte",
+      "version": "1.0.0",
+      "type": "metric",
+      "path": "tasks-total.json"
+    },
+    {
+      "id": "tasks-done",
+      "name": "Tasks done",
+      "description": "Counts completed task checkboxes.",
+      "author": "pan4ratte",
+      "version": "1.0.0",
+      "type": "metric",
+      "path": "tasks-done.json"
+    },
+    {
+      "id": "tasks-open",
+      "name": "Tasks open",
+      "description": "Counts unchecked task checkboxes.",
+      "author": "pan4ratte",
+      "version": "1.0.0",
+      "type": "metric",
+      "path": "tasks-open.json"
+    },
+    {
+      "id": "distinct-citekeys",
+      "name": "Distinct citekeys",
+      "description": "Counts how many different @citekeys are cited, ignoring repeats.",
+      "author": "pan4ratte",
+      "version": "1.0.0",
+      "type": "metric",
+      "path": "distinct-citekeys.json"
+    },
+    {
+      "id": "citations-per-page",
+      "name": "Citations per page",
+      "description": "Average citations per page (citekeys ÷ pages).",
+      "author": "pan4ratte",
+      "version": "1.0.0",
+      "type": "metric",
+      "path": "citations-per-page.json"
+    },
+    {
+      "id": "ignore-math",
+      "name": "Ignore math",
+      "description": "Excludes inline $…$ and block $$…$$ LaTeX math from counts (keeps currency).",
+      "author": "pan4ratte",
+      "version": "1.1.0",
+      "type": "setting",
+      "path": "ignore-math.json"
+    },
+    {
+      "id": "ignore-tables",
+      "name": "Ignore tables",
+      "description": "Excludes Markdown table rows from counts.",
+      "author": "pan4ratte",
+      "version": "1.0.0",
+      "type": "setting",
+      "path": "ignore-tables.json"
+    },
+    {
+      "id": "ignore-urls",
+      "name": "Ignore URLs",
+      "description": "Excludes bare http(s) URLs from counts.",
+      "author": "pan4ratte",
+      "version": "1.0.0",
+      "type": "setting",
+      "path": "ignore-urls.json"
+    },
+    {
+      "id": "ignore-strikethrough",
+      "name": "Ignore strikethrough",
+      "description": "Excludes ~~struck-through~~ text from counts.",
+      "author": "pan4ratte",
+      "version": "1.0.0",
+      "type": "setting",
+      "path": "ignore-strikethrough.json"
+    },
+    {
+      "id": "ignore-dataview-fields",
+      "name": "Ignore Dataview fields",
+      "description": "Excludes inline Dataview [key:: value] fields from counts.",
+      "author": "pan4ratte",
+      "version": "1.0.0",
+      "type": "setting",
+      "path": "ignore-dataview-fields.json"
     }
   ]
 }

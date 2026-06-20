@@ -1,0 +1,18 @@
+{
+  "id": "citations-per-page",
+  "name": "Citations per page",
+  "description": "Average number of citations per page (total @citekeys ÷ pages). Uses the built-in citekey and page metrics.",
+  "author": "pan4ratte",
+  "version": "1.0.0",
+  "type": "metric",
+  "label": "Citations per page",
+  "hint": "Total citekeys divided by the number of pages",
+  "statusLabel": "Citations/page",
+  "defaultEnabled": false,
+  "count": {
+    "mode": "ratio",
+    "numerator": "citekeys",
+    "denominator": "pages",
+    "decimals": 1
+  }
+}

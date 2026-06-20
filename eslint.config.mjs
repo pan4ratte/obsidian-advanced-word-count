@@ -32,9 +32,11 @@ export default defineConfig([
     // Tests and their tooling aren't shipped plugin code. The obsidian-stub
     // deliberately re-exports moment to stand in for the "obsidian" module under
     // test, which the bundled-moment import restriction would otherwise forbid.
+    // Tests run in Node (vitest), so Node builtins like fs/path/url are fine here.
     files: ["tests/**/*.ts"],
     rules: {
       "no-restricted-imports": "off",
+      "import/no-nodejs-modules": "off",
     },
   },
 ]);

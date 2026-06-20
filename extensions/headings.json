@@ -1,0 +1,18 @@
+{
+  "id": "headings",
+  "name": "Heading count",
+  "description": "Counts Markdown headings (lines starting with # to ######).",
+  "author": "pan4ratte",
+  "version": "1.0.0",
+  "type": "metric",
+  "label": "Headings",
+  "hint": "Counts Markdown headings (# … ######)",
+  "statusLabel": "Headings",
+  "defaultEnabled": false,
+  "count": {
+    "mode": "matches",
+    "source": "raw",
+    "pattern": "^#{1,6}\\s",
+    "flags": "gm"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "id": "ignore-math",
+  "name": "Ignore math",
+  "description": "Excludes LaTeX math from counts — block $$…$$ and inline $…$ — using Pandoc's rules so currency like $5 and $20,000 is left alone.",
+  "author": "pan4ratte",
+  "version": "1.1.0",
+  "type": "setting",
+  "label": "Ignore math",
+  "hint": "Off: math like $x+y$ and $$…$$ is counted\nOn: math is ignored (currency such as $5 is kept)",
+  "defaultEnabled": false,
+  "transform": {
+    "pattern": "\\$\\$[\\s\\S]*?\\$\\$|(?<!\\\\)\\$(?=\\S)[^$\\n]*?[^$\\s\\n]\\$(?!\\d)",
+    "flags": "g",
+    "replacement": "",
+    "stage": "pre"
+  }
+}

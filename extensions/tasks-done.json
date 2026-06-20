@@ -1,0 +1,18 @@
+{
+  "id": "tasks-done",
+  "name": "Tasks done",
+  "description": "Counts completed task checkboxes (- [x] or - [X]).",
+  "author": "pan4ratte",
+  "version": "1.0.0",
+  "type": "metric",
+  "label": "Tasks done",
+  "hint": "Counts checked task checkboxes",
+  "statusLabel": "Done",
+  "defaultEnabled": false,
+  "count": {
+    "mode": "matches",
+    "source": "raw",
+    "pattern": "^[ \\t]*[-*+] \\[[xX]\\]",
+    "flags": "gm"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "id": "ignore-urls",
+  "name": "Ignore URLs",
+  "description": "Excludes bare http(s) URLs from word and character counts.",
+  "author": "pan4ratte",
+  "version": "1.0.0",
+  "type": "setting",
+  "label": "Ignore URLs",
+  "hint": "Off: bare URLs are counted\nOn: bare http(s) URLs are ignored",
+  "defaultEnabled": false,
+  "transform": {
+    "pattern": "https?://\\S+",
+    "flags": "g",
+    "replacement": "",
+    "stage": "pre"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "id": "ignore-strikethrough",
+  "name": "Ignore strikethrough",
+  "description": "Excludes ~~struck-through~~ text from counts (handy while editing).",
+  "author": "pan4ratte",
+  "version": "1.0.0",
+  "type": "setting",
+  "label": "Ignore strikethrough",
+  "hint": "Off: ~~struck-through~~ text is counted\nOn: struck-through text is ignored",
+  "defaultEnabled": false,
+  "transform": {
+    "pattern": "~~[^~]+~~",
+    "flags": "g",
+    "replacement": "",
+    "stage": "pre"
+  }
+}

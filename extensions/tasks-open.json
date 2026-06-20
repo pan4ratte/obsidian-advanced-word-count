@@ -1,0 +1,18 @@
+{
+  "id": "tasks-open",
+  "name": "Tasks open",
+  "description": "Counts unchecked task checkboxes (- [ ]).",
+  "author": "pan4ratte",
+  "version": "1.0.0",
+  "type": "metric",
+  "label": "Tasks open",
+  "hint": "Counts unchecked task checkboxes",
+  "statusLabel": "Open",
+  "defaultEnabled": false,
+  "count": {
+    "mode": "matches",
+    "source": "raw",
+    "pattern": "^[ \\t]*[-*+] \\[ \\]",
+    "flags": "gm"
+  }
+}

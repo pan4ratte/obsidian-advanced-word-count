@@ -1,0 +1,24 @@
+{
+  "id": "distinct-citekeys",
+  "name": "Distinct citekeys",
+  "description": "Counts how many different @citekeys are cited, ignoring repeats. Strips code, wikilinks and Markdown links first, and ignores email addresses (an @ inside a word).",
+  "author": "pan4ratte",
+  "version": "1.0.0",
+  "type": "metric",
+  "label": "Distinct citekeys",
+  "hint": "Counts unique @citekeys (repeats counted once; emails ignored)",
+  "statusLabel": "Distinct citekeys",
+  "defaultEnabled": false,
+  "count": {
+    "mode": "captureUnique",
+    "source": "raw",
+    "strip": [
+      { "pattern": "```[\\s\\S]*?```", "flags": "g" },
+      { "pattern": "`[^`]*`", "flags": "g" },
+      { "pattern": "\\[\\[[^\\]]*\\]\\]", "flags": "g" },
+      { "pattern": "\\[[^\\]]*\\]\\([^)]*\\)", "flags": "g" }
+    ],
+    "pattern": "(?<![\\p{L}\\p{N}])@([\\p{L}][\\p{L}\\p{N}_:-]*)",
+    "flags": "gu"
+  }
+}
