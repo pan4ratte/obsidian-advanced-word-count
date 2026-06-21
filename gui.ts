@@ -488,8 +488,13 @@ export class WordCountSettingTab extends PluginSettingTab {
     const a = activeDocument.createElement("a");
     a.href = url;
     a.download = `${ext.id}.json`;
+    // Attach the anchor and defer the revoke. Clicking a detached anchor or
+    // revoking the object URL synchronously can drop the download on some Electron
+    // builds (notably macOS/Linux), even though it happens to work on Windows.
+    activeDocument.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(url);
+    a.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 10000);
     new Notice(t.presetExportedNotice(preset.name));
   }
 
@@ -524,11 +529,16 @@ export class WordCountSettingTab extends PluginSettingTab {
       await this.save();
     }));
 
-    const shareBtn = header.createEl("button");
-    setIcon(shareBtn, "share-2");
-    setTooltip(shareBtn, t.btnShareTooltip, { placement: "top" });
-    shareBtn.addClass("wcp-btn", "wcp-btn-share");
-    shareBtn.addEventListener("click", () => this.exportPreset(preset));
+    // Export relies on a Blob/<a download> file save, which only works on the
+    // Electron desktop app — Obsidian mobile (Capacitor/WebView) can't honour it,
+    // so the Share button is hidden there rather than offering a dead action.
+    if (!Platform.isMobile) {
+      const shareBtn = header.createEl("button");
+      setIcon(shareBtn, "share-2");
+      setTooltip(shareBtn, t.btnShareTooltip, { placement: "top" });
+      shareBtn.addClass("wcp-btn", "wcp-btn-share");
+      shareBtn.addEventListener("click", () => this.exportPreset(preset));
+    }
 
     const delBtn = header.createEl("button");
     setIcon(delBtn, "trash-2");
