@@ -29,14 +29,14 @@ const en = {
 
   // ── Settings page ──────────────────────────────────────────────────────────
   settingsHeading: "Advanced Word Count settings",
-  settingsDescription: "This plugin allows you to create complex word counting presets for the status bar and right pane tab, cycle them with one click, set goals and limit warnings ставить and more. Plugin was created in the academic context and you can fine-tune [@citekeys], [[wikilinks]], footnotes and other fomatting elements counting methods.",
+  settingsDescription: "This plugin lets you create complex word-count presets for the status bar or the right pane, switch between them with one click, set goals and limit warnings, and much more. Thanks to community extensions — presets, metrics and advanced settings — the plugin flexibly adapts to writing, academic and other purposes.",
   settingsSectionGeneral: "General",
   settingsSectionPresets: "Presets & extensions",
-  settingsPresetsStoreName: "Add a preset or extension",
-  settingsPresetsStoreDesc: "Create your own counter presets, or install community extensions that add new metrics and advanced settings.",
-  settingsAddPreset: "New preset",
+  settingsPresetsStoreName: "Manage presets and extensions",
+  settingsPresetsStoreDesc: "Create your own counter presets, or install community presets, metrics and settings.",
+  settingsAddPreset: "Create preset",
   settingsSeparatorName: "Status bar metrics separator",
-  settingsSeparatorDesc: "Specify the look of metrics separator by typing anything",
+  settingsSeparatorDesc: "Type the characters that will visually separate metrics in the status bar",
   settingsHideDefaultName: "Hide default Obsidian word counter",
   settingsHideDefaultDesc: "Disables Obsidian word count core plugin",
   settingsDisplayMethodName: "Counters display method",
@@ -66,14 +66,14 @@ const en = {
 
   // Preset export dialog
   exportModalTitle: "Share preset",
-  exportFieldName: "Preset name",
+  exportFieldName: "Preset name (English)",
   exportFieldAuthor: "Author",
-  exportAuthorPlaceholder: "Your name or GitHub handle",
-  exportFieldDescription: "Description",
-  exportLocalizedNote: "Russian translation is optional — if you can't translate, leave these fields empty and the English text is used.",
+  exportAuthorPlaceholder: "Your name or nickname",
+  exportFieldDescription: "Description (English)",
+  exportLocalizedNote: "Filling in the fields below is optional — if you leave them empty, the English text is used.",
   exportFieldNameRu: "Preset name (Russian)",
   exportFieldDescriptionRu: "Description (Russian)",
-  exportInstruction: "On Export you'll get two files: upload the preset file to the repository as-is, and paste the index-entry file's contents into the repository's index.json.",
+  exportInstruction: "After export you'll get two files and can add your preset to the community store: upload the preset file to the repository as-is, and paste the index-entry file's contents at the end of the repository's index.json.",
   exportConfirm: "Export",
   exportCancel: "Cancel",
   exportOpenRepo: "Open repository",
@@ -91,11 +91,11 @@ const en = {
   readingSpeedComplex: "Complex text (150 WPM)",
 
   // Section headers
-  sectionStatusBar: "Counter metrics",
-  sectionStatusBarNote: "Choose, which metrics will be displayed in the counter",
+  sectionStatusBar: "Metrics",
+  sectionStatusBarNote: "Choose which metrics are displayed in the counter, or connect community extensions installed from the store",
   sectionWordCountOptions: "Words and characters: advanced settings",
   sectionWordCountOptionsNote:
-    "Fine-tune counting rules of formatting elements when words and characters are counted",
+    "Fine-tune the counting rules for formatting elements when counting words and characters, or connect community extensions installed from the store",
 
   // Warnings & goals
   limitsTitle: "Warnings and goals",
@@ -114,15 +114,15 @@ const en = {
   deleteConfirmNo: "Cancel",
 
   // ── Extensions ─────────────────────────────────────────────────────────────
-  settingsBrowseExtensions: "Browse extensions",
-  settingsAutoUpdateExtensionsName: "Automatically update installed community extensions",
+  settingsBrowseExtensions: "Extensions store",
+  settingsAutoUpdateExtensionsName: "Automatically update community extensions",
   settingsAutoUpdateExtensionsDesc:
-    "Check the catalogue on startup and update installed extensions when a newer version is available",
+    "Check for updates to installed community extensions when Obsidian starts",
   extAutoUpdatedNotice: (count: number) =>
     `Updated ${count} ${count === 1 ? "extension" : "extensions"}`,
 
   // Browse modal
-  extModalTitle: "Browse extensions",
+  extModalTitle: "Extensions store",
   extSearchPlaceholder: "Search extensions…",
   extLoading: "Loading extensions…",
   extLoadError: "Couldn't load extensions. Check your connection and try again.",
@@ -161,9 +161,9 @@ const en = {
   extFilterPresets: "Presets",
 
   // Per-preset connect (dropdowns in the metric / setting section headers)
-  connectAddMetric: "Add metric…",
-  connectAddSetting: "Add setting…",
-  connectInstallFirst: "Install extensions first…",
+  connectAddMetric: "Community extensions…",
+  connectAddSetting: "Connect a setting…",
+  connectInstallFirst: "Community extensions…",
 
   // ── Status bar metric toggles ──────────────────────────────────────────────
   toggles: {
@@ -192,8 +192,8 @@ const en = {
       hint: "Counts lines, including blank lines",
     },
     showParagraphs: {
-      label: "Blocks",
-      hint: "Counts blocks of text, excluding blank lines",
+      label: "Paragraphs",
+      hint: "Counts paragraphs, excluding blank lines",
     },
     showMarkdownLinks: {
       label: "Markdown links",
