@@ -1,5 +1,5 @@
 import { App, ItemView, Modal, Notice, Platform, PluginSettingTab, Setting, WorkspaceLeaf, ButtonComponent, ToggleComponent, setIcon, setTooltip } from "obsidian";
-import { t } from "./locales";
+import { t, SUPPORTED_LOCALES } from "./locales";
 import type WordCountPlugin from "./main";
 import {
   VIEW_TYPE_METRICS,
@@ -476,12 +476,15 @@ export class WordCountSettingTab extends PluginSettingTab {
    * Export a preset as a catalogue-ready `type: "preset"` extension and download it
    * as a JSON file, so the user can open a PR suggesting it for the community store.
    * Dependencies are the installed extensions the preset uses; `author`/
-   * `description` are left blank for the contributor to fill in.
+   * `description` are left blank for the contributor to fill in; and an `i18n`
+   * scaffold (one entry per shipped locale, with a "//" note) is added so name/
+   * description translations are easy to drop in.
    */
   private exportPreset(preset: Preset) {
     const deps = presetDependencyIds(preset, (id) => this.plugin.extensions.has(id));
     const updated = new Date().toISOString().slice(0, 10);
-    const ext = presetExtensionFrom(preset, deps, updated);
+    // Scaffold an i18n block for every shipped locale so translations are easy to add.
+    const ext = presetExtensionFrom(preset, deps, updated, SUPPORTED_LOCALES);
     const json = JSON.stringify(ext, null, 2);
     const blob = new Blob([json], { type: "application/json" });
     const url = URL.createObjectURL(blob);

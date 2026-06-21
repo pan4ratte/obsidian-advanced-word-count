@@ -256,8 +256,9 @@ Example — `ignore-highlights.json`:
 ### Preset extensions (`type: "preset"`)
 
 A preset extension bundles a whole preset — its toggle states, advanced settings,
-warning/goal rules and the per-preset extension enable-flags — together with the
-ids of the metric/setting extensions it uses. Installing one **adds the preset** to
+warning/goal rules, the right-pane metric order, and the per-preset extension
+enable-flags — together with the ids of the metric/setting extensions it uses.
+Installing one **adds the preset** to
 the user's preset list and **downloads every extension it depends on** (and their
 transitive dependencies) automatically. Unlike metric/setting extensions, a preset
 is not a live "registry" item and is not connected to other presets, so it doesn't
@@ -267,7 +268,7 @@ Extra field:
 
 | Field    | Required | Notes                                                              |
 | -------- | -------- | ------------------------------------------------------------------ |
-| `preset` | yes      | The preset configuration object (toggles, advanced settings, `rules`, `extMetrics`/`extSettings`, `wordsPerPage`, …). Any `id` inside is ignored — a fresh one is generated on install; a missing `name` falls back to the extension's `name`. |
+| `preset` | yes      | The preset configuration object (toggles, advanced settings, `rules`, `metricOrder`, `extMetrics`/`extSettings`, `wordsPerPage`, …). Any `id` inside is ignored — a fresh one is generated on install; a missing `name` falls back to the extension's `name`. |
 
 List the extensions the preset relies on in [`dependencies`](#dependencies) so they
 download with it.
@@ -288,6 +289,13 @@ until those two fields are filled).
   "updated": "2026-06-21",
   "type": "preset",
   "dependencies": ["distinct-citekeys", "sentence-count"],
+  "i18n": {
+    "ru": {
+      "//": "Translate name/description into this locale, or copy the original-language values if no separate translation is needed; remove this \"//\" line before submitting.",
+      "name": "Academic paper",
+      "description": ""
+    }
+  },
   "preset": {
     "name": "Academic paper",
     "showCitekeys": true,
@@ -297,6 +305,18 @@ until those two fields are filled).
   }
 }
 ```
+
+**Localizing the name/description.** Like metric and setting extensions, a preset's
+catalogue name and description can be translated per locale (see
+[Localization](#localization-i18n)). The export already scaffolds an `i18n` block —
+one entry per shipped locale, with `name` pre-filled and a `"//"` note. For each
+locale, either translate `name`/`description` or copy the original-language text,
+then delete the `"//"` line. JSON has no comments, so that `"//"` key is just a
+convention the plugin ignores at runtime; leaving it in is harmless, but tidy it up
+before submitting. **Important:** the browse modal localizes from the `index.json`
+**entry**, so mirror the finished `i18n` (just `name`/`description`) into the
+catalogue entry too — the `i18n` inside the preset file alone won't change what the
+store displays.
 
 ### Dependencies
 

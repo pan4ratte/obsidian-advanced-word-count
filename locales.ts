@@ -22,6 +22,10 @@ const LOCALES: Record<string, Locale> = {
   // ja,
 };
 
+// BCP-47 tags of every shipped locale (e.g. ["en", "ru"]). Used to scaffold the
+// i18n block when exporting a preset for the catalogue.
+export const SUPPORTED_LOCALES: string[] = Object.keys(LOCALES);
+
 // ── Resolution ────────────────────────────────────────────────────────────────
 //
 // Obsidian exposes the user's chosen language via moment.locale().

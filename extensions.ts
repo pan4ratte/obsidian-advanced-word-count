@@ -285,7 +285,12 @@ export function presetDependencyIds(preset: Preset, isExtension: (id: string) =>
  * the extensions the preset uses. `author`/`description` are left blank for the
  * contributor to fill in before opening a pull request.
  */
-export function presetExtensionFrom(preset: Preset, dependencies: string[], updated: string): PresetExtension {
+export function presetExtensionFrom(
+  preset: Preset,
+  dependencies: string[],
+  updated: string,
+  locales: string[] = [],
+): PresetExtension {
   const slug = preset.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
   const id = /^[a-z0-9]/.test(slug) ? slug : "preset";
   const payload: Record<string, unknown> = { ...preset };
@@ -300,6 +305,19 @@ export function presetExtensionFrom(preset: Preset, dependencies: string[], upda
     preset: payload,
   };
   if (dependencies.length > 0) ext.dependencies = dependencies;
+  if (locales.length > 0) {
+    // Scaffold a per-locale name/description so contributors have a clear place to
+    // translate. JSON has no comments, so each locale carries a "//" note (a
+    // convention `localize()` ignores at runtime) telling the contributor to
+    // translate the fields or copy the original-language values. `name` is
+    // pre-filled with the original; `description` is left blank like the base.
+    const note =
+      "Translate name/description into this locale, or copy the original-language values " +
+      "if no separate translation is needed; remove this \"//\" line before submitting.";
+    const scaffold: Record<string, Record<string, string>> = {};
+    for (const tag of locales) scaffold[tag] = { "//": note, name: preset.name, description: "" };
+    ext.i18n = scaffold;
+  }
   return ext;
 }
 

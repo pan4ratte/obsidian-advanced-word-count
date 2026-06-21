@@ -291,6 +291,22 @@ describe("presetExtensionFrom", () => {
     expect(ext.id).toBe("preset");
     expect(ext.dependencies).toBeUndefined();
   });
+
+  it("omits i18n when no locales are requested", () => {
+    expect(presetExtensionFrom(defaultPreset(), [], "2026-06-21").i18n).toBeUndefined();
+  });
+
+  it("scaffolds an i18n block (name pre-filled, blank description, '//' note) for the given locales", () => {
+    const ext = presetExtensionFrom(defaultPreset({ name: "My Preset" }), [], "2026-06-21", ["en", "ru"]);
+    const i18n = ext.i18n as unknown as Record<string, Record<string, string>>;
+    expect(Object.keys(i18n)).toEqual(["en", "ru"]);
+    expect(i18n.ru.name).toBe("My Preset");      // pre-filled with the original
+    expect(i18n.ru.description).toBe("");          // contributor fills it
+    expect(typeof i18n.ru["//"]).toBe("string");   // instructional note
+    // The "//" note is ignored by validation, so the scaffold still validates once
+    // author/description are filled.
+    expect(validateExtension({ ...ext, author: "me", description: "x" }).ok).toBe(true);
+  });
 });
 
 // ── ExtensionRegistry ───────────────────────────────────────────────────────────
