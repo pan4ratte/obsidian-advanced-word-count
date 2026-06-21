@@ -1,19 +1,80 @@
-# Advanced Word Count — community extensions
+# Contributing a community extension
 
-This folder is the catalogue of **community extensions** for the Advanced Word
-Count plugin. An extension adds either a new **metric** or a new **advanced
-(word-count) setting** to the plugin's presets.
+Thanks for helping grow **Advanced Word Count**! This folder is the catalogue of
+**community extensions** — small add-ons that each contribute one new **metric** or
+one new **advanced (word-count) setting** to the plugin's presets. This guide walks
+you through building one and opening a pull request.
 
 Extensions are **pure declarative JSON** — they contain *no executable code*. A
-metric is a regular expression plus a count mode; a setting is a regular
-expression find/replace applied while the note is preprocessed. This keeps them
-safe to download, review and store (no remote-code execution), in line with
-Obsidian's plugin guidelines.
+metric is a regular expression plus a count mode; a setting is a regular-expression
+find/replace applied while a note is preprocessed. That keeps every extension safe
+to download, review and store (no remote-code execution), in line with Obsidian's
+plugin guidelines. The plugin downloads `index.json` from this folder, then fetches
+and validates each extension file on demand.
 
-The plugin downloads `index.json` from this folder, then fetches and validates the
-individual extension files on demand.
+> **No code, no build step.** You only add/edit JSON files. The only tooling you
+> need is Node.js to run the validation tests.
 
-## Catalogue: `index.json`
+## What you can build
+
+- **A metric** (`type: "metric"`) — a counted number shown in the status bar / right
+  pane (e.g. sentences, headings, distinct citekeys, a ratio of two other metrics).
+- **A setting** (`type: "setting"`) — an advanced toggle that transforms the text
+  before word/character counting (e.g. "ignore highlights", "ignore math").
+
+If the plugin's existing count [modes](#metric-extensions-type-metric) can express
+what you want, you can almost certainly ship it as an extension without touching the
+plugin's code.
+
+## Quick start
+
+1. **Fork & clone** [`pan4ratte/obsidian-advanced-word-count`](https://github.com/pan4ratte/obsidian-advanced-word-count),
+   then create a branch:
+   ```bash
+   git clone https://github.com/<you>/obsidian-advanced-word-count
+   cd obsidian-advanced-word-count
+   git checkout -b add-<your-extension-id>
+   ```
+2. **Add your extension file** at `extensions/<your-id>.json` (see
+   [Anatomy of an extension](#anatomy-of-an-extension)). Include a `title` and an
+   `updated` date.
+3. **Register it** in [`extensions/index.json`](index.json) — add an entry with the
+   same `id`, `name`, `author`, `type` and `updated` (and mirror `dependencies` /
+   translated `i18n` if you use them).
+4. **Validate locally:**
+   ```bash
+   npm install
+   npm test
+   ```
+   See [Testing your extension](#testing-your-extension) for what this checks.
+5. *(Optional)* **Try it live in Obsidian** — see [Testing your extension](#testing-your-extension).
+6. **Open a pull request** against `main` and complete the
+   [PR checklist](#pull-request-checklist).
+
+## Anatomy of an extension
+
+### Common fields (every extension)
+
+| Field            | Required | Notes                                               |
+| ---------------- | -------- | --------------------------------------------------- |
+| `id`             | yes      | Unique, `^[a-z0-9][a-z0-9-]*$` (kebab-case)          |
+| `name`           | yes      | Display name shown in the browse modal              |
+| `description`    | yes      | One-line summary                                    |
+| `author`         | yes      | Your name or handle                                 |
+| `type`           | yes      | `"metric"` or `"setting"`                           |
+| `label`          | yes      | Name shown in the right-pane metric block and the connect dropdown |
+| `title`          | yes      | Short title shown in the preset's connect toggle    |
+| `updated`        | no       | ISO date (`YYYY-MM-DD`); a date newer than the installed copy surfaces an "Update" |
+| `hint`           | no       | Tooltip (use `\n` for a second line)                |
+| `defaultEnabled` | no       | Whether new presets enable it by default (`false`)  |
+| `i18n`           | no       | Per-locale translations of the display fields (see [Localization](#localization-i18n)) |
+| `dependencies`   | no       | Array of other extension `id`s this one needs installed (see [Dependencies](#dependencies)) |
+| `minPluginVersion` | no     | Reserved for future compatibility gating            |
+
+### The catalogue entry (`index.json`)
+
+Every extension also gets a row in [`index.json`](index.json). It carries the fields
+the browse modal needs *before* downloading the file:
 
 ```json
 {
@@ -30,94 +91,10 @@ individual extension files on demand.
 }
 ```
 
-`path` is optional and defaults to `<id>.json`.
+`path` is optional and defaults to `<id>.json`. If your extension declares
+`dependencies` or `i18n` (`name`/`description`), mirror those in the entry too.
 
-## Common fields (every extension)
-
-| Field            | Required | Notes                                               |
-| ---------------- | -------- | --------------------------------------------------- |
-| `id`             | yes      | Unique, `^[a-z0-9][a-z0-9-]*$` (kebab-case)          |
-| `name`           | yes      | Display name shown in the browse modal              |
-| `description`    | yes      | One-line summary                                    |
-| `author`         | yes      |                                                     |
-| `type`           | yes      | `"metric"` or `"setting"`                           |
-| `label`          | yes      | Name shown in the right-pane metric block and the connect dropdown |
-| `title`          | yes      | Short title shown in the preset's connect toggle    |
-| `updated`        | no       | ISO date (`YYYY-MM-DD`); a date newer than the installed copy surfaces an "Update" |
-| `hint`           | no       | Tooltip (use `\n` for a second line)                |
-| `defaultEnabled` | no       | Whether new presets enable it by default (`false`)  |
-| `i18n`           | no       | Per-locale translations of the display fields (see below) |
-| `dependencies`   | no       | Array of other extension `id`s this one needs installed (see below) |
-| `minPluginVersion` | no     | Reserved for future compatibility gating            |
-
-### Dependencies
-
-If your extension needs another extension installed to work — most commonly a
-`ratio` metric whose operand reads another extension's metric value — list those
-ids in `dependencies`:
-
-```json
-{
-  "id": "citations-per-1000-words",
-  "type": "metric",
-  "dependencies": ["distinct-citekeys"],
-  "count": { "mode": "ratio", "numerator": "distinct-citekeys", "denominator": "wordsWithSpaces", "decimals": 2 }
-}
-```
-
-When the user installs an extension, the plugin resolves the whole dependency tree
-from the catalogue and installs every required extension first (dependencies
-before dependents), skipping any already installed. Conversely, removing an
-extension that others depend on prompts a confirmation listing those dependents.
-
-Rules:
-
-- Each id must be a valid `^[a-z0-9][a-z0-9-]*$` id; an extension can't depend on
-  itself, and cycles are rejected.
-- Only declare *extension* ids. Built-in metric ids (`wordsWithSpaces`, `pages`,
-  `footnotes`, …) are always available — use them directly as ratio operands;
-  listing one in `dependencies` is **rejected at validation** (there's nothing to
-  install).
-- Mirror the same `dependencies` array in the matching `index.json` entry so the
-  installer can resolve the tree from the catalogue without downloading every
-  file first.
-- A dependency id that isn't present in `index.json` makes the install fail with a
-  "missing required dependencies" error.
-
-### Localization (`i18n`)
-
-The display fields (`name`, `description`, `title`, `label`, `hint`, `statusLabel`,
-`unit`) can be translated per locale. `i18n` maps a BCP-47 tag (e.g. `"ru"`,
-`"zh-tw"`) to an object with any of those fields; the plugin picks the value for
-the user's Obsidian language — trying the full tag, then its base language — and
-falls back to the base (English) value when there's no translation. The logic
-fields (`id`, `count`, `transform`, …) are never localized.
-
-```json
-{
-  "id": "tables",
-  "name": "Table count",
-  "title": "Tables",
-  "label": "Tables",
-  "statusLabel": "Tables",
-  "count": { "mode": "matches", "source": "raw", "pattern": "…", "flags": "gm" },
-  "i18n": {
-    "ru": { "name": "Подсчёт таблиц", "title": "Таблицы", "label": "Таблицы", "statusLabel": "Таблиц" }
-  }
-}
-```
-
-Add the same `i18n` (just `name`/`description`) to the matching `index.json` entry
-so the browse modal localizes too.
-
-### Regex safety
-
-Both `pattern` fields are compiled with `new RegExp`. Allowed flags are limited to
-`g i m s u`; anything else (or a pattern that doesn't parse) is rejected at
-validation time. Avoid patterns that can match the empty string or that are prone
-to catastrophic backtracking — they run against whole notes on every edit.
-
-## Metric extensions (`type: "metric"`)
+### Metric extensions (`type: "metric"`)
 
 Adds a counted metric. Extra fields:
 
@@ -213,10 +190,10 @@ result `0`. `decimals` (0–6, default 1) controls rounding.
 > extension only needs to be **installed** — it does **not** have to be connected to
 > the preset. The plugin computes the operand's value behind the scenes, so the
 > ratio works without the dependency cluttering the preset's metric list. List it in
-> `dependencies` (see above) so it's installed automatically. Built-in operands are
-> always available. A `ratio` can't reference another `ratio`.
+> [`dependencies`](#dependencies) so it's installed automatically. Built-in operands
+> are always available. A `ratio` can't reference another `ratio`.
 
-## Setting extensions (`type: "setting"`)
+### Setting extensions (`type: "setting"`)
 
 Adds an advanced word-count toggle that transforms the text before counting (just
 like the built-in "Ignore code", "Ignore comments", … options). Extra field:
@@ -250,10 +227,127 @@ Example — `ignore-highlights.json`:
 }
 ```
 
-## Contributing
+### Dependencies
 
-1. Add `<your-id>.json` to this folder (include a `title` and an `updated` date).
-2. Add an entry to `index.json` (same `id`, `name`, `author`, `type`, `updated`).
-3. If the extension has `dependencies`, mirror them in the `index.json` entry too.
-4. When you change an extension, bump its `updated` date (in both the file and the
-   index entry) so installs detect the update.
+If your extension needs another extension installed to work — most commonly a
+`ratio` metric whose operand reads another extension's metric value — list those
+ids in `dependencies`:
+
+```json
+{
+  "id": "citations-per-1000-words",
+  "type": "metric",
+  "dependencies": ["distinct-citekeys"],
+  "count": { "mode": "ratio", "numerator": "distinct-citekeys", "denominator": "wordsWithSpaces", "decimals": 2 }
+}
+```
+
+When a user installs an extension, the plugin resolves the whole dependency tree
+from the catalogue and installs every required extension first (dependencies before
+dependents), skipping any already installed. Conversely, removing an extension that
+others depend on prompts a confirmation listing those dependents.
+
+Rules:
+
+- Each id must be a valid `^[a-z0-9][a-z0-9-]*$` id; an extension can't depend on
+  itself, and cycles are rejected.
+- Only declare *extension* ids. Built-in metric ids (`wordsWithSpaces`, `pages`,
+  `footnotes`, …) are always available — use them directly as ratio operands;
+  listing one in `dependencies` is **rejected at validation** (there's nothing to
+  install).
+- Mirror the same `dependencies` array in the matching `index.json` entry so the
+  installer can resolve the tree from the catalogue without downloading every
+  file first.
+- A dependency id that isn't present in `index.json` makes the install fail with a
+  "missing required dependencies" error.
+
+### Localization (`i18n`)
+
+The display fields (`name`, `description`, `title`, `label`, `hint`, `statusLabel`,
+`unit`) can be translated per locale. `i18n` maps a BCP-47 tag (e.g. `"ru"`,
+`"zh-tw"`) to an object with any of those fields; the plugin picks the value for the
+user's Obsidian language — trying the full tag, then its base language — and falls
+back to the base (English) value when there's no translation. The logic fields
+(`id`, `count`, `transform`, …) are never localized.
+
+```json
+{
+  "id": "tables",
+  "name": "Table count",
+  "title": "Tables",
+  "label": "Tables",
+  "statusLabel": "Tables",
+  "count": { "mode": "matches", "source": "raw", "pattern": "…", "flags": "gm" },
+  "i18n": {
+    "ru": { "name": "Подсчёт таблиц", "title": "Таблицы", "label": "Таблицы", "statusLabel": "Таблиц" }
+  }
+}
+```
+
+Add the same `i18n` (just `name`/`description`) to the matching `index.json` entry
+so the browse modal localizes too.
+
+### Regex safety
+
+Both `pattern` fields are compiled with `new RegExp`. Allowed flags are limited to
+`g i m s u`; anything else (or a pattern that doesn't parse) is rejected at
+validation time. Avoid patterns that can match the empty string or that are prone to
+catastrophic backtracking — they run against whole notes on every keystroke.
+
+## Testing your extension
+
+**Validate (required).** `npm test` runs the catalogue test suite, which is the same
+validation gate the PR must pass. It checks that:
+
+- every file in this folder validates (well-formed JSON + a sound `count`/`transform`
+  + safe regexes),
+- each `index.json` entry has a matching file with the same `id` and `type`,
+- every file is listed in `index.json`, and
+- every declared `dependency` resolves within the catalogue, with no cycles.
+
+To iterate on just the catalogue checks:
+
+```bash
+npx vitest run tests/catalogue.test.ts
+```
+
+**Try it live (optional).** There's no settings UI for the catalogue source, but you
+can point the plugin at your fork by editing the vault's
+`.obsidian/plugins/obsidian-advanced-word-count/data.json` and setting:
+
+```json
+"extensionRepoUrl": "https://raw.githubusercontent.com/<you>/obsidian-advanced-word-count/<branch>/extensions/"
+```
+
+(The URL must end with `/`.) Reload the plugin, open **Browse extensions**, and your
+extension will appear in the catalogue so you can install and test it against real
+notes. Reset `extensionRepoUrl` (or remove the key) when you're done.
+
+## Pull request checklist
+
+- [ ] File named `<id>.json` with a unique kebab-case `id` (`^[a-z0-9][a-z0-9-]*$`).
+- [ ] `name`, `description`, `author`, `type`, `label` and `title` are all set.
+- [ ] `updated` is today's date (`YYYY-MM-DD`).
+- [ ] A matching entry is added to `index.json` (same `id`, `type`; `dependencies`
+      and translated `i18n` mirrored if used).
+- [ ] Any `dependencies` reference existing **extensions** (not built-ins, no
+      self-reference, no cycles).
+- [ ] Regex patterns use only `g i m s u` flags and don't backtrack catastrophically.
+- [ ] `npm test` passes.
+- [ ] If you're **updating** an existing extension, you bumped its `updated` date in
+      both the file and the `index.json` entry so installs detect the update.
+
+## Tips & guidelines
+
+- **One job per extension.** Keep each extension focused on a single metric or
+  setting; ship related ideas as separate extensions rather than one configurable
+  blob.
+- **Reuse existing modes.** Prefer the declarative `count`/`transform` modes above.
+  If your idea genuinely can't be expressed with them, open an issue — new *modes*
+  live in the plugin's engine, not in extensions.
+- **Mind performance.** Patterns run on every edit against the whole note; favour
+  anchored, linear-time regexes.
+- **Localize if you can.** Adding an `i18n` block (at least `name`/`description`)
+  helps non-English users discover your extension.
+- **Licensing.** By submitting a pull request you agree to contribute your extension
+  under the repository's license.

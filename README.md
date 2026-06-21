@@ -70,7 +70,7 @@ Beyond the built-in counters, you can install **community extensions** — small
 * **Dependencies are handled for you.** If an extension relies on another (for example, a ratio metric that divides one metric by another), installing it automatically pulls in everything it needs. You only connect the extension you actually want to a preset — its dependencies do their job in the background and don't clutter the metric list. Removing an extension that others depend on shows a warning first so you don't break them.
 * **Keep them up to date.** When a newer version of an installed extension is available, the browser shows an **Update** button. You can also enable **Automatically update installed community extensions** (the toggle right under *Browse extensions*) to check the catalogue on startup and update them quietly in the background.
 
-The official catalogue already includes extras such as headings, sentence count, tasks (total / done / open), distinct citekeys, emoji and unique tags, average word length and other ratios, and "ignore" settings for math, tables, URLs, strikethrough, highlights and Dataview fields. Want to build your own? See the [extensions specification](https://github.com/pan4ratte/obsidian-advanced-word-count/blob/main/extensions/README.md).
+The official catalogue already includes extras such as headings, sentence count, tasks (total / done / open), distinct citekeys, emoji and unique tags, average word length and other ratios, and "ignore" settings for math, tables, URLs, strikethrough, highlights and Dataview fields. Want to build your own? See the [extension contributor guide](https://github.com/pan4ratte/obsidian-advanced-word-count/blob/main/extensions/README.md).
 
 
 ## Installation
