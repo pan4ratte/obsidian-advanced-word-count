@@ -203,15 +203,16 @@ Example — `avg-word-length.json` (a `ratio` of two built-in metrics):
 A `ratio` operand is either a **constant number** or the **id of another metric**:
 a built-in id (`wordsWithSpaces`, `charsWithSpaces`, `charsWithoutSpaces`, `pages`,
 `readingTime`, `lines`, `paragraphs`, `markdownLinks`, `wikiLinks`, `citekeys`,
-`embeds`, `tables`, `tags`, `footnotes`) or another **non-ratio** extension metric
-id. A metric that is missing or disabled resolves to `0`, and a zero denominator
-makes the result `0`. `decimals` (0–6, default 1) controls rounding.
+`embeds`, `footnotes`) or another **non-ratio** extension metric id. An operand
+whose metric isn't available resolves to `0`, and a zero denominator makes the
+result `0`. `decimals` (0–6, default 1) controls rounding.
 
 > Note: if an operand names an *extension* metric (e.g. `sentence-count`), that
-> extension must also be installed and enabled, or the operand reads as 0. List it
-> in `dependencies` (see above) so it's installed automatically. Built-in operands
-> are always available even if the metric isn't shown. A `ratio` can't reference
-> another `ratio`.
+> extension only needs to be **installed** — it does **not** have to be connected to
+> the preset. The plugin computes the operand's value behind the scenes, so the
+> ratio works without the dependency cluttering the preset's metric list. List it in
+> `dependencies` (see above) so it's installed automatically. Built-in operands are
+> always available. A `ratio` can't reference another `ratio`.
 
 ## Setting extensions (`type: "setting"`)
 

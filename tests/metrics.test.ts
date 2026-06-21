@@ -391,9 +391,15 @@ describe("extensions integration", () => {
     // "a b. c d." → 4 words ÷ 2 sentences = 2.0
     const both = defaultPreset({ extMetrics: { "sentence-count": true, "words-per-sentence": true } });
     expect(computeFull("a b. c d.", both, reg).ext["words-per-sentence"]).toBe(2);
-    // Denominator extension disabled → resolves to 0 → ratio is 0.
+    // The denominator extension is installed but NOT connected to the preset: its
+    // value is still computed as an operand, so the ratio resolves without the
+    // dependency being shown (the only requirement is that it's installed).
     const onlyRatio = defaultPreset({ extMetrics: { "words-per-sentence": true } });
-    expect(computeFull("a b. c d.", onlyRatio, reg).ext["words-per-sentence"]).toBe(0);
+    const full = computeFull("a b. c d.", onlyRatio, reg);
+    expect(full.ext["words-per-sentence"]).toBe(2);
+    // …and the dependency does not appear among the displayed metric rows.
+    expect(metricRows(onlyRatio, full.values, reg, full.ext).map((r) => r.key))
+      .not.toContain("sentence-count");
   });
 
   it("metricRows lists enabled extension metrics after built-ins", () => {

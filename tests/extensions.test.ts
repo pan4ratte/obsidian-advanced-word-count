@@ -370,6 +370,61 @@ describe("ratio mode", () => {
   });
 });
 
+// ── Ratio operands from installed-but-not-connected dependencies ──────────────────
+
+describe("ratio operands from installed dependencies", () => {
+  // sentence-count is an ordinary split metric; words-per-sentence is a ratio that
+  // divides the built-in word count by it and declares it as a dependency.
+  const sentences = metricExt({
+    id: "sentence-count", label: "Sentences",
+    count: { mode: "split", source: "raw", separator: "[.!?]+(?=\\s|$)" },
+  });
+  const wps = metricExt({
+    id: "words-per-sentence", label: "Words/sentence", dependencies: ["sentence-count"],
+    count: { mode: "ratio", numerator: "wordsWithSpaces", denominator: "sentence-count", decimals: 1 },
+  });
+  const text = "One two three. Four five."; // two sentences
+
+  it("computes a dependency's value even when it isn't connected to the preset", () => {
+    const reg = new ExtensionRegistry();
+    reg.set([sentences, wps]);
+    const preset = withEnabled(["words-per-sentence"]); // the dependency is NOT enabled
+    const ext = reg.computeMetrics(preset, text, text);
+    expect(ext["sentence-count"]).toBe(2);                          // available as an operand…
+    expect(reg.metricEnabled(preset, "sentence-count")).toBe(false); // …but not connected
+  });
+
+  it("resolves the ratio from the dependency, and does not display the dependency", () => {
+    const reg = new ExtensionRegistry();
+    reg.set([sentences, wps]);
+    const preset = withEnabled(["words-per-sentence"]);
+    const ext = reg.computeMetrics(preset, text, text);
+    const ratios = reg.computeRatios(preset, { ...ext, wordsWithSpaces: 5 });
+    expect(ratios["words-per-sentence"]).toBe(2.5); // 5 words ÷ 2 sentences
+
+    // Only the connected ratio is shown; the dependency stays hidden.
+    const rows = reg.metricRows(preset, { ...ext, "words-per-sentence": 2.5 });
+    expect(rows.map((r) => r.id)).toEqual(["words-per-sentence"]);
+  });
+
+  it("computes an operand even if the dependencies field is omitted (operands are inspected too)", () => {
+    const wpsNoDep = metricExt({
+      id: "words-per-sentence", label: "Words/sentence",
+      count: { mode: "ratio", numerator: "wordsWithSpaces", denominator: "sentence-count", decimals: 1 },
+    });
+    const reg = new ExtensionRegistry();
+    reg.set([sentences, wpsNoDep]);
+    expect(reg.computeMetrics(withEnabled(["words-per-sentence"]), text, text)["sentence-count"]).toBe(2);
+  });
+
+  it("leaves an unrelated installed metric uncomputed when nothing needs it", () => {
+    const reg = new ExtensionRegistry();
+    reg.set([sentences, wps]);
+    // Nothing enabled → no metrics computed at all (no spurious dependency values).
+    expect(reg.computeMetrics(defaultPreset(), text, text)).toEqual({});
+  });
+});
+
 // ── Localization ────────────────────────────────────────────────────────────────
 
 describe("localization", () => {

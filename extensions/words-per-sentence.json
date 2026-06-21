@@ -1,22 +1,22 @@
 {
   "id": "words-per-sentence",
   "name": "Words per sentence",
-  "description": "Average number of words per sentence (words ÷ sentences). The \"Sentence count\" extension (sentence-count) is installed automatically as a dependency; enable it in the same preset to supply the denominator.",
+  "description": "Average number of words per sentence (words ÷ sentences). The \"Sentence count\" extension (sentence-count) is installed automatically as a dependency and supplies the denominator — you don't need to connect it to the preset.",
   "author": "pan4ratte",
   "updated": "2026-06-21",
   "type": "metric",
   "label": "Words per sentence",
   "title": "Words/sentence",
-  "hint": "Words divided by sentences. Needs the Sentence count extension enabled.",
+  "hint": "Words divided by sentences. The Sentence count extension is installed automatically; no need to connect it.",
   "statusLabel": "Words/sentence",
   "defaultEnabled": false,
   "i18n": {
     "ru": {
       "name": "Слов в предложении",
-      "description": "Среднее число слов в предложении (слова ÷ предложения). Расширение «Подсчёт предложений» устанавливается автоматически как зависимость; включите его в том же пресете, чтобы оно задавало знаменатель.",
+      "description": "Среднее число слов в предложении (слова ÷ предложения). Расширение «Подсчёт предложений» устанавливается автоматически как зависимость и задаёт знаменатель — подключать его к пресету не нужно.",
       "title": "Слов/предл.",
       "label": "Слов в предложении",
-      "hint": "Слова, делённые на число предложений. Нужно включить «Подсчёт предложений».",
+      "hint": "Слова, делённые на число предложений. «Подсчёт предложений» устанавливается автоматически, подключать не нужно.",
       "statusLabel": "Слов/предл."
     }
   },

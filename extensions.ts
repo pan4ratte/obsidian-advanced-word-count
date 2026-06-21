@@ -666,15 +666,46 @@ export class ExtensionRegistry {
   }
 
   /**
-   * Values for every enabled *text-based* metric extension, keyed by id. `ratio`
-   * metrics are derived from other metrics and are computed afterwards by
-   * computeRatios (which needs the built-in values too).
+   * Non-ratio metric ids that an enabled metric needs computed as an operand but
+   * which aren't themselves enabled in the preset — i.e. installed dependencies of
+   * an enabled extension. Collected from each enabled metric's declared
+   * `dependencies` and from the operands of enabled `ratio` metrics. This lets a
+   * ratio like words-per-sentence work when its dependency (sentence-count) is
+   * merely installed, without the user having to connect — and thereby display —
+   * the dependency in the preset. Only installed, non-ratio ids are returned
+   * (built-ins are always in the value map already; ratio-of-ratio is unsupported).
+   */
+  private requiredMetricIds(preset: Preset): Set<string> {
+    const required = new Set<string>();
+    const need = (id: unknown) => {
+      if (typeof id !== "string") return;
+      const dep = this.metricDefs.get(id);
+      if (dep && dep.count.mode !== "ratio") required.add(id);
+    };
+    for (const def of this.metricDefs.values()) {
+      if (!this.metricEnabled(preset, def.id)) continue;
+      for (const id of def.dependencies || []) need(id);
+      if (def.count.mode === "ratio") {
+        need(def.count.numerator);
+        need(def.count.denominator);
+      }
+    }
+    return required;
+  }
+
+  /**
+   * Values for every enabled *text-based* metric extension, keyed by id, plus any
+   * non-ratio metric required as a dependency/operand of an enabled metric (see
+   * requiredMetricIds) so ratios resolve without their dependencies being connected
+   * to the preset. `ratio` metrics are derived from other metrics and are computed
+   * afterwards by computeRatios (which needs the built-in values too).
    */
   computeMetrics(preset: Preset, raw: string, preprocessed: string): Record<string, number> {
+    const required = this.requiredMetricIds(preset);
     const out: Record<string, number> = {};
     for (const def of this.metricDefs.values()) {
       if (def.count.mode === "ratio") continue;
-      if (!this.metricEnabled(preset, def.id)) continue;
+      if (!this.metricEnabled(preset, def.id) && !required.has(def.id)) continue;
       out[def.id] = this.evalCount(def, raw, preprocessed);
     }
     return out;
