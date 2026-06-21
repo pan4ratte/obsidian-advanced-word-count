@@ -40,12 +40,14 @@ plugin's code.
    cd obsidian-advanced-word-count
    git checkout -b add-<your-extension-id>
    ```
-2. **Add your extension file** at `extensions/<your-id>.json` (see
+2. **Add your extension file** in the subfolder for its type — `extensions/metrics/`,
+   `extensions/settings/` or `extensions/presets/` — as `<your-id>.json` (see
    [Anatomy of an extension](#anatomy-of-an-extension)). Include a `title` and an
    `updated` date.
 3. **Register it** in [`extensions/index.json`](index.json) — add an entry with the
-   same `id`, `name`, `author`, `type` and `updated` (and mirror `dependencies` /
-   translated `i18n` if you use them).
+   same `id`, `name`, `author`, `type` and `updated`, and a `path` pointing at your
+   file (e.g. `"metrics/<your-id>.json"`). Mirror `dependencies` / translated `i18n`
+   if you use them.
 4. **Validate locally:**
    ```bash
    npm install
@@ -76,6 +78,23 @@ plugin's code.
 | `dependencies`   | no       | Array of other extension `id`s this one needs installed (see [Dependencies](#dependencies)) |
 | `minPluginVersion` | no     | Reserved for future compatibility gating            |
 
+### Folder layout
+
+Extension files are grouped by type so the catalogue stays easy to navigate:
+
+```
+extensions/
+  index.json        ← the single catalogue (one entry per extension)
+  metrics/          ← type: "metric"  files
+  settings/         ← type: "setting" files
+  presets/          ← type: "preset"  files
+```
+
+There is **one** `index.json` for the whole catalogue — it's the single source of
+truth the installer uses to resolve dependencies across types (a preset, for
+instance, can depend on both a metric and a setting). Each entry's `path` points
+into the matching subfolder.
+
 ### The catalogue entry (`index.json`)
 
 Every extension also gets a row in [`index.json`](index.json). It carries the fields
@@ -90,13 +109,15 @@ the browse modal needs *before* downloading the file:
       "description": "Counts sentences …",
       "author": "you",
       "type": "metric",
-      "path": "sentence-count.json"
+      "path": "metrics/sentence-count.json"
     }
   ]
 }
 ```
 
-`path` is optional and defaults to `<id>.json`. If your extension declares
+`path` is the file's location relative to `index.json` (e.g.
+`"metrics/<id>.json"`); it defaults to `<id>.json` at the catalogue root, so with
+the type subfolders you should always set it explicitly. If your extension declares
 `dependencies` or `i18n` (`name`/`description`), mirror those in the entry too.
 
 ### Metric extensions (`type: "metric"`)
@@ -349,9 +370,10 @@ catastrophic backtracking — they run against whole notes on every keystroke.
 **Validate (required).** `npm test` runs the catalogue test suite, which is the same
 validation gate the PR must pass. It checks that:
 
-- every file in this folder validates (well-formed JSON + a sound `count`/`transform`
-  + safe regexes),
-- each `index.json` entry has a matching file with the same `id` and `type`,
+- every file in the type subfolders validates (well-formed JSON + a sound
+  `count`/`transform` + safe regexes),
+- each `index.json` entry has a matching file (at its `path`) with the same `id`
+  and `type`,
 - every file is listed in `index.json`, and
 - every declared `dependency` resolves within the catalogue, with no cycles.
 
@@ -375,11 +397,13 @@ notes. Reset `extensionRepoUrl` (or remove the key) when you're done.
 
 ## Pull request checklist
 
-- [ ] File named `<id>.json` with a unique kebab-case `id` (`^[a-z0-9][a-z0-9-]*$`).
-- [ ] `name`, `description`, `author`, `type`, `label` and `title` are all set.
+- [ ] File named `<id>.json`, in the subfolder for its type (`metrics/`,
+      `settings/` or `presets/`), with a unique kebab-case `id` (`^[a-z0-9][a-z0-9-]*$`).
+- [ ] `name`, `description`, `author`, `type` are set (plus `label`/`title` for
+      metric/setting extensions).
 - [ ] `updated` is today's date (`YYYY-MM-DD`).
-- [ ] A matching entry is added to `index.json` (same `id`, `type`; `dependencies`
-      and translated `i18n` mirrored if used).
+- [ ] A matching entry is added to `index.json` (same `id`, `type`; a `path` into
+      the subfolder; `dependencies` and translated `i18n` mirrored if used).
 - [ ] Any `dependencies` reference existing **extensions** (not built-ins, no
       self-reference, no cycles).
 - [ ] Regex patterns use only `g i m s u` flags and don't backtrack catastrophically.

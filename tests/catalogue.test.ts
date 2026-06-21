@@ -1,14 +1,25 @@
 import { describe, it, expect } from "vitest";
-import { readFileSync, readdirSync } from "node:fs";
+import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { ExtensionRegistry, resolveInstallOrder, validateExtension, Extension, ExtensionIndex } from "../extensions";
 import { computeFull, defaultPreset, Preset } from "../metrics";
 
-// The shipped catalogue lives in ../extensions (one JSON per extension + index.json).
+// The shipped catalogue lives in ../extensions: index.json plus one JSON per
+// extension, grouped into metrics/, settings/ and presets/ subfolders.
 const extDir = join(dirname(fileURLToPath(import.meta.url)), "..", "extensions");
 const readJson = (file: string): unknown => JSON.parse(readFileSync(join(extDir, file), "utf8"));
-const extFiles = readdirSync(extDir).filter((f) => f.endsWith(".json") && f !== "index.json");
+
+// Every extension file, as a forward-slash path relative to extDir (e.g.
+// "metrics/headings.json"), recursing the type subfolders. Matches the `path`
+// values in index.json.
+const listExtFiles = (rel = ""): string[] =>
+  readdirSync(join(extDir, rel)).flatMap((name) => {
+    const childRel = rel ? `${rel}/${name}` : name;
+    if (statSync(join(extDir, childRel)).isDirectory()) return listExtFiles(childRel);
+    return childRel.endsWith(".json") && childRel !== "index.json" ? [childRel] : [];
+  });
+const extFiles = listExtFiles();
 
 describe("shipped extension catalogue", () => {
   it("every extension file validates", () => {
