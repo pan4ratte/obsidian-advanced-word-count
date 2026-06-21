@@ -139,4 +139,26 @@ export class ExtensionManager {
     }
     return installed;
   }
+
+  /**
+   * Update every installed extension whose catalogue copy is newer (its `updated`
+   * date is lexically greater than the installed one). Fetches the index once and
+   * reuses it for dependency resolution. Returns the updated definitions; a single
+   * failed download is skipped so one bad entry doesn't abort the rest.
+   */
+  async updateAll(): Promise<Extension[]> {
+    const index = await this.fetchIndex();
+    const updated: Extension[] = [];
+    for (const entry of index) {
+      const installedDate = this.installedDate(entry.id);
+      if (!installedDate || !entry.updated || entry.updated <= installedDate) continue;
+      try {
+        const batch = await this.installFromIndex(entry, index);
+        updated.push(batch[batch.length - 1]); // the entry itself is installed last
+      } catch {
+        // Leave the current copy in place if its update can't be fetched/validated.
+      }
+    }
+    return updated;
+  }
 }

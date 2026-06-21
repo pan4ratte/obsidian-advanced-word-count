@@ -100,6 +100,11 @@ const en = {
   settingsAddExtensionsDesc:
     "Browse community extensions that add new metrics or advanced settings, then connect them to your presets below",
   settingsBrowseExtensions: "Browse extensions",
+  settingsAutoUpdateExtensionsName: "Automatically update installed community extensions",
+  settingsAutoUpdateExtensionsDesc:
+    "Check the catalogue on startup and update installed extensions when a newer version is available",
+  extAutoUpdatedNotice: (count: number) =>
+    `Updated ${count} ${count === 1 ? "extension" : "extensions"}`,
 
   // Browse modal
   extModalTitle: "Browse extensions",

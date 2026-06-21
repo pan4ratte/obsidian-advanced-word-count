@@ -98,6 +98,16 @@ const ru = {
   settingsAddExtensionsName: "Расширения сообщества",
   settingsAddExtensionsDesc: "Установите дополнительные метрики и настройки из магазина расширений",
   settingsBrowseExtensions: "Магазин расширений",
+  settingsAutoUpdateExtensionsName: "Автоматически обновлять установленные расширения сообщества",
+  settingsAutoUpdateExtensionsDesc:
+    "Проверять каталог при запуске и обновлять установленные расширения, когда доступна новая версия",
+  extAutoUpdatedNotice: (count: number) => {
+    const m10 = count % 10, m100 = count % 100;
+    const word = m10 === 1 && m100 !== 11 ? "расширение"
+      : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? "расширения"
+      : "расширений";
+    return `Обновлено ${count} ${word}`;
+  },
 
   // Browse modal
   extModalTitle: "Магазин расширений",

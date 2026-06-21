@@ -108,6 +108,9 @@ export interface WordCountSettings {
   installedExtensions: unknown[];
   // Base URL of the repo's extensions folder (raw GitHub), ending with "/".
   extensionRepoUrl: string;
+  // When true, check the catalogue on startup and update installed extensions
+  // whose catalogue copy carries a newer `updated` date.
+  autoUpdateExtensions: boolean;
 }
 
 export interface Metrics {
@@ -222,6 +225,7 @@ export const DEFAULT_SETTINGS: WordCountSettings = {
   limitWarningsDisplayMethod: "both",
   installedExtensions: [],
   extensionRepoUrl: DEFAULT_EXTENSION_REPO_URL,
+  autoUpdateExtensions: false,
 };
 
 // ── Text pre-processing ───────────────────────────────────────────────────────

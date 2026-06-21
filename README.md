@@ -37,8 +37,8 @@ Each separate preset can have its own list of metrics and methods of counting fo
 	* Reading time (estimated from a chosen reading speed)
 	* Markdown links `(url)[label]` and `[label](url)`
   * Embeds `![[note]]` or `![[file.pdf]]`
-  * Complete (rendered) tables
-  * Any `#tags` that are valid in Obsidian
+  * Complete (rendered) tables *(now an official extension — see §5)*
+  * Any `#tags` that are valid in Obsidian *(now an official extension — see §5)*
   * Footnotes — complete `[^1]` references and inline `^[…]`
 
 * Special "academic" options:
@@ -57,8 +57,20 @@ You can specify, how formatting elements will be counted:
 | **Count wikilinks display text** | `[[wiki\|label]]` → wiki and label will be counted 				  | only label will be counted  		  |
 | **Ignore citekeys** 			       | citekeys text will be counted 															  | citekeys will be ignored 				  |
 | **Ignore comments**			         | comments `%% … %%` and `<!-- … -->` text will be counted		  | comments will be ignored 	   		  |
-| **Ignore code**			             | inline code `` `…` `` and fenced code blocks will be counted  | code will be ignored 			   		  |
 | **Ignore HTML tags**		         | HTML tags like `<b> … </b>` etc. will be counted		          | HTML tags will be ignored 	   		|
+
+> **Note:** **Complete tables**, **#tags** and **Ignore code** are no longer built in — they now ship as official community extensions. Install them from the catalogue (see below); presets that already used them are migrated automatically, so they keep working once the matching extension is installed.
+
+### 5. Extend the plugin with community extensions
+
+Beyond the built-in counters, you can install **community extensions** — small add-ons that each contribute one extra metric or one extra advanced (word-count) setting. Extensions are pure declarative JSON (a regular expression plus a counting rule, or a regex find/replace) and contain **no executable code**, so they are safe to download, review and store.
+
+* **Browse and install.** In the plugin settings, under the **Presets** section, click **Browse extensions** to open the catalogue. Search by name, author or description, filter by type (metrics / advanced settings), and install, update or uninstall any extension with a single click. Installed extensions are highlighted with your accent colour.
+* **Connect to presets.** A freshly installed extension changes nothing until you connect it: use the **Add metric…** / **Add setting…** dropdown in a preset's metric and advanced-settings section headers. Once connected, an extension metric behaves exactly like a built-in one — it can carry a limit warning and a goal, be reordered by dragging, and appear in the status bar and the right pane. Extension labels are shown in your Obsidian language whenever a translation is provided.
+* **Dependencies are handled for you.** If an extension relies on another (for example, a ratio metric that divides one metric by another), installing it automatically pulls in everything it needs. Removing an extension that others depend on shows a warning first so you don't break them.
+* **Keep them up to date.** When a newer version of an installed extension is available, the browser shows an **Update** button. You can also enable **Automatically update installed community extensions** (the toggle right under *Browse extensions*) to check the catalogue on startup and update them quietly in the background.
+
+The official catalogue already includes extras such as headings, sentence count, tasks (total / done / open), distinct citekeys, emoji and unique tags, average word length and other ratios, and "ignore" settings for math, tables, URLs, strikethrough, highlights and Dataview fields. Want to build your own? See the [extensions specification](https://github.com/pan4ratte/obsidian-advanced-word-count/blob/main/extensions/README.md).
 
 
 ## Installation

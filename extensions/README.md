@@ -47,7 +47,40 @@ individual extension files on demand.
 | `hint`           | no       | Tooltip (use `\n` for a second line)                |
 | `defaultEnabled` | no       | Whether new presets enable it by default (`false`)  |
 | `i18n`           | no       | Per-locale translations of the display fields (see below) |
+| `dependencies`   | no       | Array of other extension `id`s this one needs installed (see below) |
 | `minPluginVersion` | no     | Reserved for future compatibility gating            |
+
+### Dependencies
+
+If your extension needs another extension installed to work — most commonly a
+`ratio` metric whose operand reads another extension's metric value — list those
+ids in `dependencies`:
+
+```json
+{
+  "id": "citations-per-1000-words",
+  "type": "metric",
+  "dependencies": ["distinct-citekeys"],
+  "count": { "mode": "ratio", "numerator": "distinct-citekeys", "denominator": "wordsWithSpaces", "decimals": 2 }
+}
+```
+
+When the user installs an extension, the plugin resolves the whole dependency tree
+from the catalogue and installs every required extension first (dependencies
+before dependents), skipping any already installed. Conversely, removing an
+extension that others depend on prompts a confirmation listing those dependents.
+
+Rules:
+
+- Each id must be a valid `^[a-z0-9][a-z0-9-]*$` id; an extension can't depend on
+  itself, and cycles are rejected.
+- Only declare *extension* ids. Built-in metric ids (`wordsWithSpaces`, …) are
+  always available and must **not** be listed.
+- Mirror the same `dependencies` array in the matching `index.json` entry so the
+  installer can resolve the tree from the catalogue without downloading every
+  file first.
+- A dependency id that isn't present in `index.json` makes the install fail with a
+  "missing required dependencies" error.
 
 ### Localization (`i18n`)
 
@@ -175,9 +208,10 @@ id. A metric that is missing or disabled resolves to `0`, and a zero denominator
 makes the result `0`. `decimals` (0–6, default 1) controls rounding.
 
 > Note: if an operand names an *extension* metric (e.g. `sentence-count`), that
-> extension must also be installed and enabled, or the operand reads as 0. Built-in
-> operands are always available even if the metric isn't shown. A `ratio` can't
-> reference another `ratio`.
+> extension must also be installed and enabled, or the operand reads as 0. List it
+> in `dependencies` (see above) so it's installed automatically. Built-in operands
+> are always available even if the metric isn't shown. A `ratio` can't reference
+> another `ratio`.
 
 ## Setting extensions (`type: "setting"`)
 
@@ -217,5 +251,6 @@ Example — `ignore-highlights.json`:
 
 1. Add `<your-id>.json` to this folder (include a `title` and an `updated` date).
 2. Add an entry to `index.json` (same `id`, `name`, `author`, `type`, `updated`).
-3. When you change an extension, bump its `updated` date (in both the file and the
+3. If the extension has `dependencies`, mirror them in the `index.json` entry too.
+4. When you change an extension, bump its `updated` date (in both the file and the
    index entry) so installs detect the update.

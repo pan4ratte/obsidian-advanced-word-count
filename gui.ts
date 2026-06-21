@@ -432,6 +432,21 @@ export class WordCountSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
+      .setName(t.settingsAutoUpdateExtensionsName)
+      .setDesc(t.settingsAutoUpdateExtensionsDesc)
+      .addToggle((toggle) =>
+        toggle
+          .setValue(this.plugin.settings.autoUpdateExtensions)
+          .onChange(async (value) => {
+            this.plugin.settings.autoUpdateExtensions = value;
+            await this.save();
+            // Run a check straight away when the user opts in, so they don't have
+            // to restart Obsidian to pick up pending updates.
+            if (value) void this.plugin.autoUpdateInstalledExtensions();
+          })
+      );
+
+    new Setting(containerEl)
       .setName(t.settingsPresetsName)
       .setDesc(t.settingsPresetsDesc)
       .addButton((btn: ButtonComponent) =>

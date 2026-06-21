@@ -1,4 +1,4 @@
-import { Plugin, MarkdownView, setTooltip } from "obsidian";
+import { Plugin, MarkdownView, Notice, setTooltip } from "obsidian";
 import { t, refreshLocale, localeTags } from "./locales";
 import {
   VIEW_TYPE_METRICS,
@@ -82,6 +82,8 @@ export default class WordCountPlugin extends Plugin {
     this.app.workspace.onLayoutReady(() => {
       if (this.settings.hideDefaultWordCount) void this.setDefaultWordCountHidden(true);
       void this.applyDisplayMethod();
+      // Check the catalogue for extension updates in the background (opt-in).
+      if (this.settings.autoUpdateExtensions) void this.autoUpdateInstalledExtensions();
     });
 
     this.updateCount();
@@ -142,6 +144,23 @@ export default class WordCountPlugin extends Plugin {
 
   detachRightPane() {
     this.app.workspace.detachLeavesOfType(VIEW_TYPE_METRICS);
+  }
+
+  // ── Extension auto-update ─────────────────────────────────────────────────────
+
+  /**
+   * Update installed community extensions whose catalogue copy is newer. Runs in
+   * the background (opt-in via settings.autoUpdateExtensions); network failures are
+   * swallowed so a missing connection never disrupts startup. On success the live
+   * counts refresh to reflect the new copies.
+   */
+  async autoUpdateInstalledExtensions() {
+    if (this.extensions.isEmpty()) return;
+    // offline or the index couldn't be fetched — try again next launch
+    const updated = await this.extensionManager.updateAll().catch(() => null);
+    if (!updated || updated.length === 0) return;
+    new Notice(t.extAutoUpdatedNotice(updated.length));
+    this.updateCount();
   }
 
   // ── Core word counter toggle ────────────────────────────────────────────────
@@ -344,6 +363,7 @@ export default class WordCountPlugin extends Plugin {
     if (typeof this.settings.extensionRepoUrl !== "string" || this.settings.extensionRepoUrl.length === 0) {
       this.settings.extensionRepoUrl = DEFAULT_EXTENSION_REPO_URL;
     }
+    if (typeof this.settings.autoUpdateExtensions !== "boolean") this.settings.autoUpdateExtensions = false;
   }
 
   async saveSettings() {
