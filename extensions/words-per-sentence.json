@@ -1,9 +1,9 @@
 {
   "id": "words-per-sentence",
   "name": "Words per sentence",
-  "description": "Average number of words per sentence (words ÷ sentences). Requires the \"Sentence count\" extension (sentence-count) to be installed and enabled — it supplies the denominator.",
+  "description": "Average number of words per sentence (words ÷ sentences). The \"Sentence count\" extension (sentence-count) is installed automatically as a dependency; enable it in the same preset to supply the denominator.",
   "author": "pan4ratte",
-  "updated": "2026-06-20",
+  "updated": "2026-06-21",
   "type": "metric",
   "label": "Words per sentence",
   "title": "Words/sentence",
@@ -13,13 +13,14 @@
   "i18n": {
     "ru": {
       "name": "Слов в предложении",
-      "description": "Среднее число слов в предложении (слова ÷ предложения). Требует расширение «Подсчёт предложений».",
+      "description": "Среднее число слов в предложении (слова ÷ предложения). Расширение «Подсчёт предложений» устанавливается автоматически как зависимость; включите его в том же пресете, чтобы оно задавало знаменатель.",
       "title": "Слов/предл.",
       "label": "Слов в предложении",
       "hint": "Слова, делённые на число предложений. Нужно включить «Подсчёт предложений».",
       "statusLabel": "Слов/предл."
     }
   },
+  "dependencies": ["sentence-count"],
   "count": {
     "mode": "ratio",
     "numerator": "wordsWithSpaces",

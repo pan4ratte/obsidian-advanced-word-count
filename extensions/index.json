@@ -77,11 +77,12 @@
       "name": "Words per sentence",
       "description": "Average words per sentence (words ÷ sentences; needs Sentence count).",
       "author": "pan4ratte",
-      "updated": "2026-06-20",
+      "updated": "2026-06-21",
       "i18n": {
         "ru": {"name": "Среднее количество слов в предложении", "description": "Рассчитывает среднее число слов в предложении. Требует установки расширения «Подсчёт предложений»."}
       },
       "type": "metric",
+      "dependencies": ["sentence-count"],
       "path": "words-per-sentence.json"
     },
     {
