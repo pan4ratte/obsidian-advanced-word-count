@@ -215,6 +215,10 @@ export function defaultPreset(overrides: Partial<Preset> = {}): Preset {
 export const DEFAULT_EXTENSION_REPO_URL =
   "https://raw.githubusercontent.com/pan4ratte/obsidian-advanced-word-count/main/extensions/";
 
+// The plugin's GitHub repository — where contributors open PRs (e.g. from the
+// preset export dialog's "Open repository" button).
+export const REPOSITORY_URL = "https://github.com/pan4ratte/obsidian-advanced-word-count";
+
 export const DEFAULT_SETTINGS: WordCountSettings = {
   activePresetId: "",
   presets: [],

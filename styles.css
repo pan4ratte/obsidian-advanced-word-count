@@ -502,6 +502,47 @@
   margin-top: 20px;
 }
 
+/* Preset export dialog — helper note (above the Russian fields) and the intro
+   instruction (below the heading). */
+.wcp-export-note {
+  margin-top: 24px;
+  margin-bottom: 16px;
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+}
+
+.wcp-export-instruction {
+  margin: 0 0 16px;
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+}
+
+/* Description fields stack their label above a full-width text area. */
+.wcp-export-fullwidth {
+  display: block;
+}
+
+.wcp-export-fullwidth .setting-item-info {
+  margin-bottom: 12px;
+}
+
+.wcp-export-fullwidth .setting-item-control {
+  width: 100%;
+}
+
+.wcp-export-fullwidth .setting-item-control textarea {
+  width: 100%;
+  min-height: 60px;
+  resize: vertical;
+}
+
+/* Required export field left empty on an export attempt. */
+.wcp-export-invalid,
+.wcp-export-invalid:focus {
+  border-color: var(--color-red);
+  box-shadow: 0 0 0 1px var(--color-red);
+}
+
 /* ── Extension browser modal ─────────────────────────────────────────────────── */
 
 /* Remove the padding on the outer .modal element for this modal instance only.

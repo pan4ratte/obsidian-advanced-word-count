@@ -6,12 +6,14 @@ import {
   materializePreset,
   presetDependencyIds,
   presetExtensionFrom,
+  presetIndexEntryFrom,
   resolveInstallOrder,
   validateExtension,
   ExtensionIndexEntry,
   ExtensionRegistry,
   MetricExtension,
   PresetExtension,
+  PresetExportMeta,
   SettingExtension,
 } from "../extensions";
 import { defaultPreset, Preset } from "../metrics";
@@ -272,40 +274,60 @@ describe("presetDependencyIds", () => {
 });
 
 describe("presetExtensionFrom", () => {
-  it("builds a catalogue-ready preset extension (valid once author/description are filled)", () => {
-    const preset = defaultPreset({ name: "Academic Paper!", extMetrics: { "distinct-citekeys": true } });
-    const ext = presetExtensionFrom(preset, ["distinct-citekeys"], "2026-06-21");
+  const meta = (o: Partial<PresetExportMeta> = {}): PresetExportMeta =>
+    ({ name: "Academic Paper!", author: "me", description: "A preset", ...o });
+
+  it("builds a catalogue-ready, valid preset extension from the supplied metadata", () => {
+    const preset = defaultPreset({ name: "old name", extMetrics: { "distinct-citekeys": true } });
+    const ext = presetExtensionFrom(preset, ["distinct-citekeys"], "2026-06-21", meta());
     expect(ext.type).toBe("preset");
-    expect(ext.id).toBe("academic-paper"); // slugified from the name
+    expect(ext.id).toBe("academic-paper"); // slugified from meta.name
+    expect(ext.name).toBe("Academic Paper!");
+    expect(ext.author).toBe("me");
+    expect(ext.description).toBe("A preset");
     expect(ext.dependencies).toEqual(["distinct-citekeys"]);
-    expect(ext.preset.id).toBeUndefined(); // runtime id stripped
-    expect(ext.preset.name).toBe("Academic Paper!");
-    // Author/description are left blank for the contributor, so it isn't valid yet…
-    expect(validateExtension(ext).ok).toBe(false);
-    // …but it's otherwise sound: filling those in yields a valid extension.
-    expect(validateExtension({ ...ext, author: "me", description: "A preset" }).ok).toBe(true);
+    expect(ext.preset.id).toBeUndefined();             // runtime id stripped
+    expect(ext.preset.name).toBe("Academic Paper!");   // payload name overridden with meta.name
+    expect(validateExtension(ext).ok).toBe(true);      // ready to submit as-is
   });
 
   it("falls back to a safe id when the name has no ascii slug, and omits empty deps", () => {
-    const ext = presetExtensionFrom(defaultPreset({ name: "Статья" }), [], "2026-06-21");
+    const ext = presetExtensionFrom(defaultPreset(), [], "2026-06-21", meta({ name: "Статья" }));
     expect(ext.id).toBe("preset");
     expect(ext.dependencies).toBeUndefined();
   });
 
-  it("omits i18n when no locales are requested", () => {
-    expect(presetExtensionFrom(defaultPreset(), [], "2026-06-21").i18n).toBeUndefined();
+  it("omits i18n when none is supplied, and carries it through when given", () => {
+    expect(presetExtensionFrom(defaultPreset(), [], "2026-06-21", meta()).i18n).toBeUndefined();
+    const i18n = { ru: { name: "Научная статья", description: "Описание" } };
+    expect(presetExtensionFrom(defaultPreset(), [], "2026-06-21", meta({ i18n })).i18n).toBe(i18n);
+  });
+});
+
+describe("presetIndexEntryFrom", () => {
+  const meta = (o: Partial<PresetExportMeta> = {}): PresetExportMeta =>
+    ({ name: "Academic Paper!", author: "me", description: "A preset", ...o });
+
+  it("derives the catalogue entry: subfolder path, shared meta, no payload", () => {
+    const i18n = { ru: { name: "Научная статья" } };
+    const ext = presetExtensionFrom(defaultPreset(), ["distinct-citekeys"], "2026-06-21", meta({ i18n }));
+    const entry = presetIndexEntryFrom(ext);
+    expect(entry).toMatchObject({
+      id: "academic-paper",
+      type: "preset",
+      path: "presets/academic-paper.json",
+      updated: "2026-06-21",
+      dependencies: ["distinct-citekeys"],
+    });
+    expect(entry.i18n).toBe(ext.i18n);                  // same i18n carried over
+    expect("preset" in (entry as object)).toBe(false);  // the payload stays out of the index
   });
 
-  it("scaffolds an i18n block (name pre-filled, blank description, '//' note) for the given locales", () => {
-    const ext = presetExtensionFrom(defaultPreset({ name: "My Preset" }), [], "2026-06-21", ["en", "ru"]);
-    const i18n = ext.i18n as unknown as Record<string, Record<string, string>>;
-    expect(Object.keys(i18n)).toEqual(["en", "ru"]);
-    expect(i18n.ru.name).toBe("My Preset");      // pre-filled with the original
-    expect(i18n.ru.description).toBe("");          // contributor fills it
-    expect(typeof i18n.ru["//"]).toBe("string");   // instructional note
-    // The "//" note is ignored by validation, so the scaffold still validates once
-    // author/description are filled.
-    expect(validateExtension({ ...ext, author: "me", description: "x" }).ok).toBe(true);
+  it("omits optional fields the preset doesn't carry", () => {
+    const entry = presetIndexEntryFrom(presetExtensionFrom(defaultPreset(), [], "2026-06-21", meta({ name: "Plain" })));
+    expect(entry.path).toBe("presets/plain.json");
+    expect(entry.dependencies).toBeUndefined();
+    expect(entry.i18n).toBeUndefined();
   });
 });
 

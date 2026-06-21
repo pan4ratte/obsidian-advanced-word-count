@@ -275,26 +275,31 @@ download with it.
 
 **The easy way: the Share button.** You don't have to write a preset file by hand.
 Configure a preset in the plugin's settings, then click the **Share** (↗) button in
-its header — the plugin exports a ready-to-edit `type: "preset"` file with
-`dependencies` already filled in from the extensions you connected. Add your
-`author` and `description`, then submit it (the file is intentionally left invalid
-until those two fields are filled).
+its header. A dialog asks for the catalogue metadata — **preset name**, **author**
+and **description** (all required), plus an optional **Russian name/description**
+(leave the Russian fields empty if you can't translate; the English text is used as
+a fallback). On **Export** the plugin downloads **two files**, fully filled in:
+
+1. **`<id>.json`** — the `type: "preset"` extension, with `dependencies` taken from
+   the extensions you connected and `i18n` populated from what you entered. Put it
+   in `extensions/presets/`.
+2. **`<id>-index-entry.json`** — the matching `index.json` row (with the right
+   `path` and the same `i18n`). Paste its contents into the `extensions` array in
+   [`index.json`](index.json).
+
+Both files are valid as exported, so you can submit them as-is.
 
 ```json
 {
   "id": "academic-paper",
   "name": "Academic paper",
-  "description": "Citations, sentences and a 8-page goal for journal submissions.",
+  "description": "Citations, sentences and an 8-page goal for journal submissions.",
   "author": "you",
   "updated": "2026-06-21",
   "type": "preset",
   "dependencies": ["distinct-citekeys", "sentence-count"],
   "i18n": {
-    "ru": {
-      "//": "Translate name/description into this locale, or copy the original-language values if no separate translation is needed; remove this \"//\" line before submitting.",
-      "name": "Academic paper",
-      "description": ""
-    }
+    "ru": { "name": "Научная статья", "description": "Цитаты, предложения и цель в 8 страниц." }
   },
   "preset": {
     "name": "Academic paper",
@@ -308,15 +313,12 @@ until those two fields are filled).
 
 **Localizing the name/description.** Like metric and setting extensions, a preset's
 catalogue name and description can be translated per locale (see
-[Localization](#localization-i18n)). The export already scaffolds an `i18n` block —
-one entry per shipped locale, with `name` pre-filled and a `"//"` note. For each
-locale, either translate `name`/`description` or copy the original-language text,
-then delete the `"//"` line. JSON has no comments, so that `"//"` key is just a
-convention the plugin ignores at runtime; leaving it in is harmless, but tidy it up
-before submitting. **Important:** the browse modal localizes from the `index.json`
-**entry**, so mirror the finished `i18n` (just `name`/`description`) into the
-catalogue entry too — the `i18n` inside the preset file alone won't change what the
-store displays.
+[Localization](#localization-i18n)). The Share dialog collects the Russian
+translation for you and writes the `i18n` into **both** exported files — which
+matters because the browse modal localizes from the `index.json` **entry**, so the
+translation has to live there, not just in the preset file. To add other languages
+by hand, extend the `i18n` block (`name`/`description` per BCP-47 tag) in the index
+entry.
 
 ### Dependencies
 

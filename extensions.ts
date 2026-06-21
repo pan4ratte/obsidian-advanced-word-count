@@ -278,47 +278,62 @@ export function presetDependencyIds(preset: Preset, isExtension: (id: string) =>
   return Array.from(deps).sort();
 }
 
+/** Catalogue metadata supplied by the contributor when exporting a preset. */
+export interface PresetExportMeta {
+  name: string;          // display name (also used for the slug id and payload name)
+  author: string;
+  description: string;
+  i18n?: I18n;           // optional per-locale name/description translations
+}
+
 /**
- * Build a shareable `PresetExtension` from a live preset — a catalogue-ready file.
- * The runtime `id` is dropped from the payload (a fresh one is generated on
- * install), the manifest `id` is slugified from the name, and `dependencies` lists
- * the extensions the preset uses. `author`/`description` are left blank for the
- * contributor to fill in before opening a pull request.
+ * Build a shareable `PresetExtension` from a live preset and the contributor's
+ * catalogue metadata — a ready-to-submit file. The runtime `id` is dropped from the
+ * payload (a fresh one is generated on install), the manifest `id` is slugified from
+ * `meta.name`, and `dependencies` lists the extensions the preset uses.
  */
 export function presetExtensionFrom(
   preset: Preset,
   dependencies: string[],
   updated: string,
-  locales: string[] = [],
+  meta: PresetExportMeta,
 ): PresetExtension {
-  const slug = preset.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  const slug = meta.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
   const id = /^[a-z0-9]/.test(slug) ? slug : "preset";
-  const payload: Record<string, unknown> = { ...preset };
+  const payload: Record<string, unknown> = { ...preset, name: meta.name };
   delete payload.id;
   const ext: PresetExtension = {
     id,
-    name: preset.name,
-    description: "",
-    author: "",
+    name: meta.name,
+    description: meta.description,
+    author: meta.author,
     type: "preset",
     updated,
     preset: payload,
   };
   if (dependencies.length > 0) ext.dependencies = dependencies;
-  if (locales.length > 0) {
-    // Scaffold a per-locale name/description so contributors have a clear place to
-    // translate. JSON has no comments, so each locale carries a "//" note (a
-    // convention `localize()` ignores at runtime) telling the contributor to
-    // translate the fields or copy the original-language values. `name` is
-    // pre-filled with the original; `description` is left blank like the base.
-    const note =
-      "Translate name/description into this locale, or copy the original-language values " +
-      "if no separate translation is needed; remove this \"//\" line before submitting.";
-    const scaffold: Record<string, Record<string, string>> = {};
-    for (const tag of locales) scaffold[tag] = { "//": note, name: preset.name, description: "" };
-    ext.i18n = scaffold;
-  }
+  if (meta.i18n) ext.i18n = meta.i18n;
   return ext;
+}
+
+/**
+ * Derive the `index.json` catalogue entry for a preset extension — the row a
+ * contributor pastes into the catalogue's `extensions` array. It mirrors the
+ * manifest's display/meta fields (not the `preset` payload) and points `path` at
+ * the `presets/` subfolder.
+ */
+export function presetIndexEntryFrom(ext: PresetExtension): ExtensionIndexEntry {
+  return {
+    id: ext.id,
+    name: ext.name,
+    description: ext.description,
+    author: ext.author,
+    ...(ext.updated ? { updated: ext.updated } : {}),
+    type: "preset",
+    ...(ext.dependencies ? { dependencies: ext.dependencies } : {}),
+    ...(ext.i18n ? { i18n: ext.i18n } : {}),
+    path: `presets/${ext.id}.json`,
+  };
 }
 
 // ── A computed extension-metric row (parallel to metrics.ts MetricRow) ──────────

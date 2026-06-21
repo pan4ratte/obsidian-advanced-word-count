@@ -1,5 +1,5 @@
 import { App, ItemView, Modal, Notice, Platform, PluginSettingTab, Setting, WorkspaceLeaf, ButtonComponent, ToggleComponent, setIcon, setTooltip } from "obsidian";
-import { t, SUPPORTED_LOCALES } from "./locales";
+import { t } from "./locales";
 import type WordCountPlugin from "./main";
 import {
   VIEW_TYPE_METRICS,
@@ -11,13 +11,14 @@ import {
   LimitRule,
   METRIC_ORDER,
   METRIC_SHOW_KEY,
+  REPOSITORY_URL,
   defaultPreset,
   metricRows,
   surfaceWarnLevel,
   effectiveMetricOrder,
   reorderMetrics,
 } from "./metrics";
-import { ExtensionIndexEntry, MetricExtension, SettingExtension, presetDependencyIds, presetExtensionFrom } from "./extensions";
+import { ExtensionIndexEntry, I18n, MetricExtension, PresetExportMeta, SettingExtension, presetDependencyIds, presetExtensionFrom, presetIndexEntryFrom } from "./extensions";
 
 // Extensions that live in the registry and can be connected to a preset — i.e.
 // everything except shareable presets (which install as user presets, not toggles).
@@ -472,25 +473,36 @@ export class WordCountSettingTab extends PluginSettingTab {
     }
   }
 
-  /**
-   * Export a preset as a catalogue-ready `type: "preset"` extension and download it
-   * as a JSON file, so the user can open a PR suggesting it for the community store.
-   * Dependencies are the installed extensions the preset uses; `author`/
-   * `description` are left blank for the contributor to fill in; and an `i18n`
-   * scaffold (one entry per shipped locale, with a "//" note) is added so name/
-   * description translations are easy to drop in.
-   */
+  /** Open the export dialog, which collects catalogue metadata then downloads the files. */
   private exportPreset(preset: Preset) {
+    new PresetExportModal(this.plugin.app, preset, (meta) => this.downloadPresetFiles(preset, meta)).open();
+  }
+
+  /**
+   * Export a preset for the community store as two downloads: the catalogue-ready
+   * `type: "preset"` file (drop into `presets/`) and its `index.json` entry (paste
+   * into the catalogue's `extensions` array). `meta` carries the contributor's
+   * name/author/description and optional Russian translation, collected by the
+   * export dialog; dependencies are the installed extensions the preset uses.
+   */
+  private downloadPresetFiles(preset: Preset, meta: PresetExportMeta) {
     const deps = presetDependencyIds(preset, (id) => this.plugin.extensions.has(id));
     const updated = new Date().toISOString().slice(0, 10);
-    // Scaffold an i18n block for every shipped locale so translations are easy to add.
-    const ext = presetExtensionFrom(preset, deps, updated, SUPPORTED_LOCALES);
-    const json = JSON.stringify(ext, null, 2);
-    const blob = new Blob([json], { type: "application/json" });
+    const ext = presetExtensionFrom(preset, deps, updated, meta);
+    const entry = presetIndexEntryFrom(ext);
+    this.downloadJson(`${ext.id}.json`, ext);
+    // Stagger the second download so the two saves don't race in the same tick.
+    window.setTimeout(() => this.downloadJson(`${ext.id}-index-entry.json`, entry), 150);
+    new Notice(t.presetExportedNotice(ext.name));
+  }
+
+  /** Download an object as a pretty-printed JSON file. */
+  private downloadJson(filename: string, data: unknown) {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = activeDocument.createElement("a");
     a.href = url;
-    a.download = `${ext.id}.json`;
+    a.download = filename;
     // Attach the anchor and defer the revoke. Clicking a detached anchor or
     // revoking the object URL synchronously can drop the download on some Electron
     // builds (notably macOS/Linux), even though it happens to work on Windows.
@@ -498,7 +510,6 @@ export class WordCountSettingTab extends PluginSettingTab {
     a.click();
     a.remove();
     window.setTimeout(() => URL.revokeObjectURL(url), 10000);
-    new Notice(t.presetExportedNotice(preset.name));
   }
 
   renderPreset(containerEl: HTMLElement, preset: Preset) {
@@ -917,6 +928,111 @@ export class ExtUninstallConfirmModal extends Modal {
       this.onConfirm();
       this.close();
     });
+  }
+
+  onClose() {
+    this.contentEl.empty();
+  }
+}
+
+// ── Preset export modal ───────────────────────────────────────────────────────
+//
+// Collects the catalogue metadata (name, author, description + optional Russian
+// translation) before exporting a preset, then hands a PresetExportMeta back so the
+// caller can generate the two download files with the fields already filled in.
+
+export class PresetExportModal extends Modal {
+  private name: string;
+  private author = "";
+  private description = "";
+  private ruName = "";
+  private ruDescription = "";
+  // Inputs of the required fields, kept so Export can flag the empty ones in red.
+  private requiredInputs: (HTMLInputElement | HTMLTextAreaElement)[] = [];
+
+  constructor(app: App, preset: Preset, private onExport: (meta: PresetExportMeta) => void) {
+    super(app);
+    this.name = preset.name;
+  }
+
+  onOpen() {
+    const { contentEl } = this;
+    this.requiredInputs = [];
+    contentEl.createEl("h3", { text: t.exportModalTitle });
+    contentEl.createEl("p", { text: t.exportInstruction, cls: "wcp-export-instruction" });
+
+    // Clear the red flag as soon as a required field gets non-blank input.
+    const clearInvalid = (el: HTMLElement, v: string) => { if (v.trim()) el.removeClass("wcp-export-invalid"); };
+
+    new Setting(contentEl)
+      .setName(t.exportFieldName)
+      .addText((tc) => {
+        tc.setValue(this.name).onChange((v) => { this.name = v; clearInvalid(tc.inputEl, v); });
+        tc.inputEl.maxLength = 112;
+        this.requiredInputs.push(tc.inputEl);
+      });
+    new Setting(contentEl)
+      .setName(t.exportFieldAuthor)
+      .addText((tc) => {
+        tc.setPlaceholder(t.exportAuthorPlaceholder).onChange((v) => { this.author = v; clearInvalid(tc.inputEl, v); });
+        tc.inputEl.maxLength = 64;
+        this.requiredInputs.push(tc.inputEl);
+      });
+    new Setting(contentEl)
+      .setName(t.exportFieldDescription)
+      .setClass("wcp-export-fullwidth")
+      .addTextArea((tc) => {
+        tc.onChange((v) => { this.description = v; clearInvalid(tc.inputEl, v); });
+        tc.inputEl.maxLength = 256;
+        this.requiredInputs.push(tc.inputEl);
+      });
+
+    contentEl.createEl("p", { text: t.exportLocalizedNote, cls: "wcp-export-note" });
+
+    new Setting(contentEl)
+      .setName(t.exportFieldNameRu)
+      .addText((tc) => {
+        tc.onChange((v) => (this.ruName = v));
+        tc.inputEl.maxLength = 112;
+      });
+    new Setting(contentEl)
+      .setName(t.exportFieldDescriptionRu)
+      .setClass("wcp-export-fullwidth")
+      .addTextArea((tc) => {
+        tc.onChange((v) => (this.ruDescription = v));
+        tc.inputEl.maxLength = 256;
+      });
+
+    const btnRow = contentEl.createDiv({ cls: "wcp-modal-buttons" });
+    const openRepo = btnRow.createEl("button", { text: t.exportOpenRepo, cls: "wcp-modal-btn-left" });
+    openRepo.addEventListener("click", () => window.open(REPOSITORY_URL, "_blank"));
+    btnRow.createEl("button", { text: t.exportCancel })
+      .addEventListener("click", () => this.close());
+    const exportBtn = btnRow.createEl("button", { text: t.exportConfirm });
+    exportBtn.addClass("mod-cta");
+    exportBtn.addEventListener("click", () => {
+      const name = this.name.trim();
+      const author = this.author.trim();
+      const description = this.description.trim();
+      // Flag every empty required field in red (and clear the ones now filled).
+      for (const el of this.requiredInputs) el.toggleClass("wcp-export-invalid", el.value.trim().length === 0);
+      if (!name || !author || !description) {
+        new Notice(t.exportMissingFields);
+        return;
+      }
+      this.onExport({ name, author, description, i18n: this.buildI18n() });
+      this.close();
+    });
+  }
+
+  /** Build the i18n block from the Russian fields, or undefined when both are blank. */
+  private buildI18n(): I18n | undefined {
+    const ru: Record<string, string> = {};
+    const ruName = this.ruName.trim();
+    const ruDescription = this.ruDescription.trim();
+    if (ruName) ru.name = ruName;
+    if (ruDescription) ru.description = ruDescription;
+    return Object.keys(ru).length > 0 ? { ru } : undefined;
   }
 
   onClose() {

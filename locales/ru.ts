@@ -58,11 +58,26 @@ const ru = {
   // Preset card header
   badgeActive: "Активный",
   badgeInactive: "Неактивный",
-  btnShareTooltip: "Поделиться пресетом (экспорт файла для предложения в каталог)",
+  btnShareTooltip: "Поделиться пресетом (экспорт файлов для предложения в каталог)",
   btnDeleteTooltip: "Удалить пресет",
   inputNamePlaceholder: "Введите имя пресета",
   presetExportedNotice: (name: string) =>
-    `Пресет "${name}" экспортирован. Заполните автора/описание и откройте pull request, чтобы предложить его.`,
+    `Пресет "${name}" экспортирован: файл пресета + запись для индекса.`,
+
+  // Preset export dialog
+  exportModalTitle: "Поделиться пресетом",
+  exportFieldName: "Название пресета (на английском)",
+  exportFieldAuthor: "Автор",
+  exportAuthorPlaceholder: "Ваше имя или ник",
+  exportFieldDescription: "Описание (на английском)",
+  exportLocalizedNote: "Заполнение полей ниже не обязательно: если оставить их пустыми, будет использован английский текст.",
+  exportFieldNameRu: "Название пресета (на русском)",
+  exportFieldDescriptionRu: "Описание (на русском)",
+  exportInstruction: "После экспорта вы получите два файла и сможете добавить свой пресет в магазин сообщества: загрузите файл пресета в репозиторий как есть, а содержимое файла записи вставьте в конец файла index.json в репозитории.",
+  exportConfirm: "Экспортировать",
+  exportCancel: "Отмена",
+  exportOpenRepo: "Открыть репозиторий",
+  exportMissingFields: "Сначала заполните название пресета, автора и описание.",
 
   // Words per page row
   wppLabel: "Считать",

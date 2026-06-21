@@ -58,11 +58,26 @@ const en = {
   // Preset card header
   badgeActive: "Active",
   badgeInactive: "Inactive",
-  btnShareTooltip: "Share preset (export a file to suggest for the catalogue)",
+  btnShareTooltip: "Share preset (export files to suggest for the catalogue)",
   btnDeleteTooltip: "Delete preset",
   inputNamePlaceholder: "Enter preset name",
   presetExportedNotice: (name: string) =>
-    `Exported "${name}". Fill in author/description and open a pull request to suggest it.`,
+    `Exported "${name}": preset file + index entry.`,
+
+  // Preset export dialog
+  exportModalTitle: "Share preset",
+  exportFieldName: "Preset name",
+  exportFieldAuthor: "Author",
+  exportAuthorPlaceholder: "Your name or GitHub handle",
+  exportFieldDescription: "Description",
+  exportLocalizedNote: "Russian translation is optional — if you can't translate, leave these fields empty and the English text is used.",
+  exportFieldNameRu: "Preset name (Russian)",
+  exportFieldDescriptionRu: "Description (Russian)",
+  exportInstruction: "On Export you'll get two files: upload the preset file to the repository as-is, and paste the index-entry file's contents into the repository's index.json.",
+  exportConfirm: "Export",
+  exportCancel: "Cancel",
+  exportOpenRepo: "Open repository",
+  exportMissingFields: "Fill in the preset name, author and description first.",
 
   // Words per page row
   wppLabel: "Count",
