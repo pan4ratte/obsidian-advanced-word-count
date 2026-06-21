@@ -1,5 +1,10 @@
 import type { Preset, WarnLevel } from "./metrics";
-import { ruleLevel } from "./metrics";
+import { METRIC_ORDER, ruleLevel } from "./metrics";
+
+// Built-in metric ids (e.g. "wordsWithSpaces", "pages"). They're always computed,
+// so they're valid ratio operands but must never appear in `dependencies` — there
+// is nothing to install. Used to reject that mistake with a clear message.
+const BUILTIN_METRIC_IDS: string[] = METRIC_ORDER;
 
 // ── Community extensions ────────────────────────────────────────────────────────
 //
@@ -392,7 +397,11 @@ export function validateExtension(value: unknown): ValidationResult {
   if (o.dependencies !== undefined) {
     if (!Array.isArray(o.dependencies)) return fail(`"dependencies" must be an array of extension ids`);
     for (const dep of o.dependencies) {
-      if (typeof dep !== "string" || !/^[a-z0-9][a-z0-9-]*$/.test(dep)) {
+      if (typeof dep !== "string") return fail(`"dependencies" must contain extension ids as strings (got ${show(dep)})`);
+      if (BUILTIN_METRIC_IDS.indexOf(dep) !== -1) {
+        return fail(`"${dep}" is a built-in metric — use it directly as a ratio operand, not as a dependency`);
+      }
+      if (!/^[a-z0-9][a-z0-9-]*$/.test(dep)) {
         return fail(`"dependencies" must contain valid extension ids (got ${show(dep)})`);
       }
       if (dep === id) return fail(`an extension cannot depend on itself ("${id}")`);

@@ -74,8 +74,10 @@ Rules:
 
 - Each id must be a valid `^[a-z0-9][a-z0-9-]*$` id; an extension can't depend on
   itself, and cycles are rejected.
-- Only declare *extension* ids. Built-in metric ids (`wordsWithSpaces`, …) are
-  always available and must **not** be listed.
+- Only declare *extension* ids. Built-in metric ids (`wordsWithSpaces`, `pages`,
+  `footnotes`, …) are always available — use them directly as ratio operands;
+  listing one in `dependencies` is **rejected at validation** (there's nothing to
+  install).
 - Mirror the same `dependencies` array in the matching `index.json` entry so the
   installer can resolve the tree from the catalogue without downloading every
   file first.

@@ -115,13 +115,17 @@ describe("validateExtension", () => {
   });
 
   it("validates the optional dependencies list", () => {
-    expect(validateExtension({ ...metricExt(), dependencies: ["words", "pages"] }).ok).toBe(true);
+    expect(validateExtension({ ...metricExt(), dependencies: ["word-frequency", "headings"] }).ok).toBe(true);
     expect(validateExtension({ ...metricExt(), dependencies: [] }).ok).toBe(true);
     expect(validateExtension({ ...metricExt(), dependencies: "words" }).ok).toBe(false); // not an array
     expect(validateExtension({ ...metricExt(), dependencies: ["Bad Id"] }).ok).toBe(false); // invalid id
     expect(validateExtension({ ...metricExt(), dependencies: [5] }).ok).toBe(false); // not a string
     // Self-dependency is rejected (id is "sentence-count").
     expect(validateExtension({ ...metricExt(), dependencies: ["sentence-count"] }).ok).toBe(false);
+    // Built-in metric ids must not be listed — they're always available as operands.
+    expect(validateExtension({ ...metricExt(), dependencies: ["pages"] }).ok).toBe(false);           // lowercase built-in
+    expect(validateExtension({ ...metricExt(), dependencies: ["footnotes"] }).ok).toBe(false);       // lowercase built-in
+    expect(validateExtension({ ...metricExt(), dependencies: ["wordsWithSpaces"] }).ok).toBe(false); // camelCase built-in
   });
 });
 
