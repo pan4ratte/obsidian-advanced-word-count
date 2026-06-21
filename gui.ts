@@ -817,7 +817,6 @@ export class WordCountSettingTab extends PluginSettingTab {
     input.min = rule.kind === "warning" && paired && paired.threshold > 0 ? String(paired.threshold) : "0";
     if (rule.kind === "goal" && paired && paired.threshold > 0) input.max = String(paired.threshold);
     input.value = String(rule.threshold);
-    input.addClass("wcp-limit-threshold");
     input.addEventListener("change", handle(async () => {
       let n = Number(input.value);
       if (!isFinite(n) || n < 0) n = 0;
@@ -1009,7 +1008,7 @@ export class PresetExportModal extends Modal {
       });
 
     const btnRow = contentEl.createDiv({ cls: "wcp-modal-buttons" });
-    const openRepo = btnRow.createEl("button", { text: t.exportOpenRepo, cls: "wcp-modal-btn-left" });
+    const openRepo = btnRow.createEl("button", { text: t.exportOpenRepo });
     openRepo.addEventListener("click", () => window.open(REPOSITORY_URL, "_blank"));
     btnRow.createEl("button", { text: t.exportCancel })
       .addEventListener("click", () => this.close());

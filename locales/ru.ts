@@ -264,5 +264,6 @@ const ru = {
   },
 } as const;
 
-export type Locale = typeof ru;
+// The canonical `Locale` type is derived from en.ts (the structural reference);
+// other locales just export their object as the default.
 export default ru;
