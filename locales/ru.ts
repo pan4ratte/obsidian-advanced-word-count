@@ -74,9 +74,9 @@ const ru = {
 
   // Section headers
   sectionStatusBar: "Метрики",
-  sectionStatusBarNote: "Выберите, какие метрики будут отображены в счётчике",
+  sectionStatusBarNote: "Выберите, какие метрики будут отображены в счётчике или подключите расширения сообщества, установленные из магазина",
   sectionWordCountOptions: "Слова и символы: расширенные настройки",
-  sectionWordCountOptionsNote:"Настройте правила подсчёта элементов форматирования при подсчёте слов и символов",
+  sectionWordCountOptionsNote:"Настройте правила подсчёта элементов форматирования при подсчёте слов и символов или подключите расширения сообщества, установленные из магазина",
 
   // Warnings & goals
   limitsTitle: "Предупреждения и цели",
@@ -125,7 +125,7 @@ const ru = {
   extFilterSettings: "Расширенные настройки",
 
   // Per-preset connect (dropdowns in the metric / setting section headers)
-  connectAddMetric: "Подключить метрику…",
+  connectAddMetric: "Расширения сообщества…",
   connectAddSetting: "Подключить настройку…",
   connectInstallFirst: "Расширения сообщетсва…",
 
