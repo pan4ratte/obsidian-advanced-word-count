@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { readFileSync, readdirSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { ExtensionRegistry, validateExtension, Extension, ExtensionIndex } from "../extensions";
+import { ExtensionRegistry, resolveInstallOrder, validateExtension, Extension, ExtensionIndex } from "../extensions";
 import { computeFull, defaultPreset, Preset } from "../metrics";
 
 // The shipped catalogue lives in ../extensions (one JSON per extension + index.json).
@@ -40,6 +40,24 @@ describe("shipped extension catalogue", () => {
     const listed = new Set(index.extensions.map((e) => e.path || `${e.id}.json`));
     const unlisted = extFiles.filter((f) => !listed.has(f));
     expect(unlisted).toEqual([]);
+  });
+
+  it("every declared dependency resolves within the catalogue, with no cycles", () => {
+    const index = readJson("index.json") as ExtensionIndex;
+    const known = new Set(index.extensions.map((e) => e.id));
+    const problems: string[] = [];
+    for (const entry of index.extensions) {
+      for (const dep of entry.dependencies || []) {
+        if (!known.has(dep)) problems.push(`${entry.id}: unknown dependency "${dep}"`);
+      }
+      // resolveInstallOrder throws on a cycle; surface it as a readable failure.
+      try {
+        resolveInstallOrder(entry.id, index.extensions, () => false);
+      } catch (e) {
+        problems.push(`${entry.id}: ${(e as Error).message}`);
+      }
+    }
+    expect(problems).toEqual([]);
   });
 });
 

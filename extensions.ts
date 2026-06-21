@@ -91,6 +91,9 @@ export interface ExtensionManifestBase {
   updated?: string;
   // Per-locale translations of the display fields (base values are the default).
   i18n?: I18n;
+  // Ids of other extensions this one needs installed (e.g. a ratio metric that
+  // reads another metric's value). Installing this extension pulls them in too.
+  dependencies?: string[];
   minPluginVersion?: string;
 }
 
@@ -166,12 +169,60 @@ export interface ExtensionIndexEntry {
   // Per-locale translations of `name`/`description` for the browse modal.
   i18n?: I18n;
   type: ExtensionType;
+  // Ids of other extensions this one requires (mirrors the manifest's
+  // `dependencies`); lets the installer resolve the whole tree from the index.
+  dependencies?: string[];
   // Path to the extension's JSON, relative to the index. Defaults to `${id}.json`.
   path?: string;
 }
 
 export interface ExtensionIndex {
   extensions: ExtensionIndexEntry[];
+}
+
+/**
+ * Topologically order an install: every (transitive) dependency of `id` first,
+ * then `id` itself — so dependencies are always installed before the extensions
+ * that rely on them. Dependencies already satisfied by `isInstalled` are pruned
+ * (along with their subtree), but the target `id` is always included so it can be
+ * (re)installed/updated. Dependency ids absent from `index` are collected in
+ * `missing` rather than ordered. Throws on a dependency cycle.
+ */
+export function resolveInstallOrder(
+  id: string,
+  index: ExtensionIndexEntry[],
+  isInstalled: (id: string) => boolean,
+): { order: ExtensionIndexEntry[]; missing: string[] } {
+  const byId = new Map(index.map((e) => [e.id, e]));
+  const order: ExtensionIndexEntry[] = [];
+  const missing: string[] = [];
+  const done = new Set<string>();    // fully processed (already pushed)
+  const path = new Set<string>();    // current DFS path, for cycle detection
+
+  const visit = (cur: string, isTarget: boolean) => {
+    if (done.has(cur)) return;
+    // Prune already-installed dependencies; the target is always (re)installed.
+    if (!isTarget && isInstalled(cur)) return;
+    const entry = byId.get(cur);
+    if (!entry) {
+      if (missing.indexOf(cur) === -1) missing.push(cur);
+      return;
+    }
+    if (path.has(cur)) throw new Error(`dependency cycle through "${cur}"`);
+    path.add(cur);
+    for (const dep of entry.dependencies || []) visit(dep, false);
+    path.delete(cur);
+    done.add(cur);
+    order.push(entry);
+  };
+
+  visit(id, true);
+  return { order, missing };
+}
+
+/** Installed extensions that list `id` among their dependencies (its dependents). */
+export function findDependents(id: string, exts: Extension[]): Extension[] {
+  return exts.filter((e) => (e.dependencies || []).indexOf(id) !== -1);
 }
 
 // ── A computed extension-metric row (parallel to metrics.ts MetricRow) ──────────
@@ -336,6 +387,16 @@ export function validateExtension(value: unknown): ValidationResult {
   }
   if (o.defaultEnabled !== undefined && typeof o.defaultEnabled !== "boolean") {
     return fail(`"defaultEnabled" must be a boolean`);
+  }
+
+  if (o.dependencies !== undefined) {
+    if (!Array.isArray(o.dependencies)) return fail(`"dependencies" must be an array of extension ids`);
+    for (const dep of o.dependencies) {
+      if (typeof dep !== "string" || !/^[a-z0-9][a-z0-9-]*$/.test(dep)) {
+        return fail(`"dependencies" must contain valid extension ids (got ${show(dep)})`);
+      }
+      if (dep === id) return fail(`an extension cannot depend on itself ("${id}")`);
+    }
   }
 
   if (o.type === "metric") {

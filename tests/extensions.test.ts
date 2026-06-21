@@ -1,8 +1,11 @@
 import { describe, it, expect } from "vitest";
 import {
   compileRegex,
+  findDependents,
   localize,
+  resolveInstallOrder,
   validateExtension,
+  ExtensionIndexEntry,
   ExtensionRegistry,
   MetricExtension,
   SettingExtension,
@@ -109,6 +112,77 @@ describe("validateExtension", () => {
     expect(validateExtension({ ...settingExt(), transform: undefined }).ok).toBe(false);
     expect(validateExtension({ ...settingExt(), transform: { pattern: "a" } }).ok).toBe(false); // no replacement
     expect(validateExtension({ ...settingExt(), transform: { pattern: "(", replacement: "" } }).ok).toBe(false);
+  });
+
+  it("validates the optional dependencies list", () => {
+    expect(validateExtension({ ...metricExt(), dependencies: ["words", "pages"] }).ok).toBe(true);
+    expect(validateExtension({ ...metricExt(), dependencies: [] }).ok).toBe(true);
+    expect(validateExtension({ ...metricExt(), dependencies: "words" }).ok).toBe(false); // not an array
+    expect(validateExtension({ ...metricExt(), dependencies: ["Bad Id"] }).ok).toBe(false); // invalid id
+    expect(validateExtension({ ...metricExt(), dependencies: [5] }).ok).toBe(false); // not a string
+    // Self-dependency is rejected (id is "sentence-count").
+    expect(validateExtension({ ...metricExt(), dependencies: ["sentence-count"] }).ok).toBe(false);
+  });
+});
+
+// ── resolveInstallOrder ───────────────────────────────────────────────────────
+
+describe("resolveInstallOrder", () => {
+  // A minimal catalogue entry; only id/dependencies matter to the resolver.
+  const entry = (id: string, dependencies?: string[]): ExtensionIndexEntry => ({
+    id, name: id, description: "", author: "t", type: "metric", dependencies,
+  });
+  const ids = (es: ExtensionIndexEntry[]) => es.map((e) => e.id);
+  const none = () => false;
+
+  it("orders dependencies before the target, target last", () => {
+    const index = [entry("a", ["b", "c"]), entry("b", ["c"]), entry("c")];
+    const { order, missing } = resolveInstallOrder("a", index, none);
+    expect(ids(order)).toEqual(["c", "b", "a"]);
+    expect(missing).toEqual([]);
+  });
+
+  it("installs each dependency once across a diamond graph", () => {
+    const index = [entry("a", ["b", "c"]), entry("b", ["d"]), entry("c", ["d"]), entry("d")];
+    const { order } = resolveInstallOrder("a", index, none);
+    expect(order.filter((e) => e.id === "d")).toHaveLength(1);
+    expect(ids(order).indexOf("d")).toBe(0); // d first, a last
+    expect(ids(order)[ids(order).length - 1]).toBe("a");
+  });
+
+  it("prunes already-installed dependencies but always includes the target", () => {
+    const index = [entry("a", ["b", "c"]), entry("b"), entry("c")];
+    const { order } = resolveInstallOrder("a", index, (id) => id === "b");
+    expect(ids(order)).toEqual(["c", "a"]); // b skipped, a reinstalled
+  });
+
+  it("collects dependencies missing from the catalogue", () => {
+    const index = [entry("a", ["ghost"])];
+    const { order, missing } = resolveInstallOrder("a", index, none);
+    expect(missing).toEqual(["ghost"]);
+    expect(ids(order)).toEqual(["a"]);
+  });
+
+  it("throws on a dependency cycle", () => {
+    const index = [entry("a", ["b"]), entry("b", ["a"])];
+    expect(() => resolveInstallOrder("a", index, none)).toThrow(/cycle/);
+  });
+});
+
+// ── findDependents ────────────────────────────────────────────────────────────
+
+describe("findDependents", () => {
+  it("returns the extensions that depend on the given id", () => {
+    const exts = [
+      metricExt({ id: "base" }),
+      metricExt({ id: "uses-base", dependencies: ["base"] }),
+      metricExt({ id: "also-uses-base", dependencies: ["base", "other"] }),
+      metricExt({ id: "unrelated" }),
+    ];
+    expect(findDependents("base", exts).map((e) => e.id)).toEqual(["uses-base", "also-uses-base"]);
+    expect(findDependents("other", exts).map((e) => e.id)).toEqual(["also-uses-base"]);
+    expect(findDependents("base", [])).toEqual([]);
+    expect(findDependents("unrelated", exts)).toEqual([]); // nothing depends on it
   });
 });
 

@@ -31,7 +31,7 @@ const ru = {
   settingsHeading: "Настройки Advanced Word Count",
   settingsDescription: "Данный плагин позволяет создавать сложные пресеты счётчиков слов для строки состояния или правой боковой панели, переключаться между ними одним нажатием, ставить цели и предупреждения о достижении лимитов и многое другое. Плагин создан с в академическом контексте, поэтому доступна тонкая настройка подсчёта [@цитирований], [[викиссылок]], сносок и других элементов оформления.",
   settingsSectionGeneral: "Основные",
-  settingsSectionPresets: "Пресеты",
+  settingsSectionPresets: "Пресеты и расширения",
   settingsPresetsName: "Создать пресет счётчика",
   settingsPresetsDesc: "Позволяют создавать индивидуальные наборы метрик для разных писательских целей",
   settingsAddPreset: "Новый пресет",
@@ -115,9 +115,21 @@ const ru = {
   extUninstall: "Удалить",
   extByAuthor: (author: string) => `Автор: ${author}`,
   extInstalledNotice: (name: string) => `Установлено: "${name}"`,
+  extInstalledWithDepsNotice: (name: string, deps: number) => {
+    const m10 = deps % 10, m100 = deps % 100;
+    const word = m10 === 1 && m100 !== 11 ? "зависимость"
+      : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? "зависимости"
+      : "зависимостей";
+    return `Установлено: "${name}" и ${deps} ${word}`;
+  },
   extInstallFailed: (msg: string) => `Ошибка установки: ${msg}`,
   extUninstalledNotice: (name: string) => `Удалено: "${name}"`,
   extUninstallFailed: (msg: string) => `Ошибка удаления: ${msg}`,
+  extUninstallConfirmTitle: "Удалить расширение?",
+  extUninstallConfirmMessage: (name: string, dependents: string) =>
+    `Расширение "${name}" требуется для ${dependents}. После удаления ${dependents.indexOf(",") === -1 ? "оно может" : "они могут"} перестать работать.`,
+  extUninstallConfirmYes: "Всё равно удалить",
+  extUninstallConfirmNo: "Отмена",
 
   // Browse modal — type filter chips
   extFilterAll: "Все",

@@ -6,6 +6,8 @@ import {
   ExtensionIndex,
   ExtensionIndexEntry,
   ExtensionRegistry,
+  findDependents,
+  resolveInstallOrder,
   validateExtension,
 } from "./extensions";
 
@@ -38,6 +40,11 @@ export class ExtensionManager {
 
   isInstalled(id: string): boolean {
     return this.installed().some((e) => e.id === id);
+  }
+
+  /** Installed extensions that depend on `id` — i.e. would break if it's removed. */
+  dependents(id: string): Extension[] {
+    return findDependents(id, this.installed());
   }
 
   /** The `updated` date of the installed copy, or null. Used for update detection. */
@@ -114,8 +121,22 @@ export class ExtensionManager {
     await this.persist(this.installed().filter((e) => e.id !== id));
   }
 
-  /** Download an extension by catalogue entry and install it in one step. */
-  async installFromIndex(entry: ExtensionIndexEntry): Promise<Extension> {
-    return this.install(await this.fetchExtension(entry));
+  /**
+   * Download an extension by catalogue entry and install it, pulling in any
+   * required dependencies first. `index` is the catalogue used to resolve the
+   * dependency tree; it's fetched if not supplied. Returns every extension newly
+   * installed in this call, dependencies first and the requested one last.
+   */
+  async installFromIndex(entry: ExtensionIndexEntry, index?: ExtensionIndexEntry[]): Promise<Extension[]> {
+    const catalogue = index ?? (await this.fetchIndex());
+    const { order, missing } = resolveInstallOrder(entry.id, catalogue, (id) => this.isInstalled(id));
+    if (missing.length > 0) {
+      throw new Error(`Missing required dependencies: ${missing.join(", ")}`);
+    }
+    const installed: Extension[] = [];
+    for (const e of order) {
+      installed.push(await this.install(await this.fetchExtension(e)));
+    }
+    return installed;
   }
 }

@@ -421,6 +421,17 @@ export class WordCountSettingTab extends PluginSettingTab {
     new Setting(containerEl).setName(t.settingsSectionPresets).setHeading();
 
     new Setting(containerEl)
+      .setName(t.settingsAddExtensionsName)
+      .setDesc(t.settingsAddExtensionsDesc)
+      .addButton((btn: ButtonComponent) =>
+        btn.setButtonText(t.settingsBrowseExtensions).onClick(() => {
+          // Re-render the settings page after an install so newly downloaded
+          // extensions appear in each preset's "Connect extensions" dropdown.
+          new ExtensionBrowserModal(this.plugin, () => this.display()).open();
+        })
+      );
+
+    new Setting(containerEl)
       .setName(t.settingsPresetsName)
       .setDesc(t.settingsPresetsDesc)
       .addButton((btn: ButtonComponent) =>
@@ -434,17 +445,6 @@ export class WordCountSettingTab extends PluginSettingTab {
           if (!this.plugin.getActivePreset()) this.plugin.settings.activePresetId = preset.id;
           await this.save();
           this.display();
-        })
-      );
-
-    new Setting(containerEl)
-      .setName(t.settingsAddExtensionsName)
-      .setDesc(t.settingsAddExtensionsDesc)
-      .addButton((btn: ButtonComponent) =>
-        btn.setButtonText(t.settingsBrowseExtensions).onClick(() => {
-          // Re-render the settings page after an install so newly downloaded
-          // extensions appear in each preset's "Connect extensions" dropdown.
-          new ExtensionBrowserModal(this.plugin, () => this.display()).open();
         })
       );
 
@@ -827,6 +827,44 @@ export class DeleteConfirmModal extends Modal {
   }
 }
 
+// ── Uninstall confirmation modal ──────────────────────────────────────────────
+//
+// Shown when removing an extension that other installed extensions depend on, so
+// the user can back out before breaking them. `dependents` is the already-
+// localized, comma-joined list of the dependent extensions' names.
+
+export class ExtUninstallConfirmModal extends Modal {
+  constructor(
+    app: App,
+    private extName: string,
+    private dependents: string,
+    private onConfirm: () => void,
+  ) {
+    super(app);
+  }
+
+  onOpen() {
+    const { contentEl } = this;
+    contentEl.createEl("h3", { text: t.extUninstallConfirmTitle });
+    contentEl.createEl("p", { text: t.extUninstallConfirmMessage(this.extName, this.dependents) });
+
+    const btnRow = contentEl.createDiv({ cls: "wcp-modal-buttons" });
+    btnRow.createEl("button", { text: t.extUninstallConfirmNo })
+      .addEventListener("click", () => this.close());
+
+    const confirmBtn = btnRow.createEl("button", { text: t.extUninstallConfirmYes });
+    confirmBtn.addClass("mod-warning");
+    confirmBtn.addEventListener("click", () => {
+      this.onConfirm();
+      this.close();
+    });
+  }
+
+  onClose() {
+    this.contentEl.empty();
+  }
+}
+
 // ── Extension browser modal ───────────────────────────────────────────────────
 
 type ExtTypeFilter = "all" | "metric" | "setting";
@@ -976,8 +1014,10 @@ export class ExtensionBrowserModal extends Modal {
         primary.disabled = true;
         setTooltip(primary, t.extInstalling, { placement: "top" });
         try {
-          await this.plugin.extensionManager.installFromIndex(entry);
-          new Notice(t.extInstalledNotice(entry.name));
+          // Pass the loaded catalogue so dependencies resolve without a re-fetch.
+          const installed = await this.plugin.extensionManager.installFromIndex(entry, this.entries);
+          const deps = installed.length - 1; // the rest of the batch are pulled-in dependencies
+          new Notice(deps > 0 ? t.extInstalledWithDepsNotice(entry.name, deps) : t.extInstalledNotice(entry.name));
           this.onChanged();
           this.renderList(); // rebuild so install states refresh
         } catch (e) {
@@ -992,7 +1032,8 @@ export class ExtensionBrowserModal extends Modal {
       const uninstall = actions.createEl("button", { cls: "wcp-ext-uninstall" });
       setIcon(uninstall, "trash-2");
       setTooltip(uninstall, t.extUninstall, { placement: "top" });
-      uninstall.addEventListener("click", handle(async () => {
+
+      const doUninstall = handle(async () => {
         uninstall.disabled = true;
         try {
           await this.plugin.extensionManager.uninstall(entry.id);
@@ -1003,7 +1044,20 @@ export class ExtensionBrowserModal extends Modal {
           new Notice(t.extUninstallFailed(message(e)));
           this.renderList();
         }
-      }));
+      });
+
+      uninstall.addEventListener("click", () => {
+        // Warn first if other installed extensions depend on this one.
+        const dependents = this.plugin.extensionManager.dependents(entry.id);
+        if (dependents.length === 0) {
+          doUninstall();
+          return;
+        }
+        const names = dependents
+          .map((d) => this.plugin.extensions.loc(d, "name") ?? d.name)
+          .join(", ");
+        new ExtUninstallConfirmModal(this.plugin.app, entry.name, names, doUninstall).open();
+      });
     }
   }
 

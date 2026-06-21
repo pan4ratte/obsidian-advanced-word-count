@@ -117,9 +117,16 @@ const en = {
   extUninstall: "Uninstall",
   extByAuthor: (author: string) => `by ${author}`,
   extInstalledNotice: (name: string) => `Installed "${name}"`,
+  extInstalledWithDepsNotice: (name: string, deps: number) =>
+    `Installed "${name}" and ${deps} ${deps === 1 ? "dependency" : "dependencies"}`,
   extInstallFailed: (msg: string) => `Install failed: ${msg}`,
   extUninstalledNotice: (name: string) => `Uninstalled "${name}"`,
   extUninstallFailed: (msg: string) => `Uninstall failed: ${msg}`,
+  extUninstallConfirmTitle: "Remove extension?",
+  extUninstallConfirmMessage: (name: string, dependents: string) =>
+    `"${name}" is required by ${dependents}. Removing it may stop ${dependents.indexOf(",") === -1 ? "it" : "them"} from working.`,
+  extUninstallConfirmYes: "Remove anyway",
+  extUninstallConfirmNo: "Cancel",
 
   // Browse modal — type filter chips
   extFilterAll: "All",
