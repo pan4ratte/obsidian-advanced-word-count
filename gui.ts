@@ -17,7 +17,11 @@ import {
   effectiveMetricOrder,
   reorderMetrics,
 } from "./metrics";
-import { Extension, ExtensionIndexEntry } from "./extensions";
+import { ExtensionIndexEntry, MetricExtension, SettingExtension, presetDependencyIds, presetExtensionFrom } from "./extensions";
+
+// Extensions that live in the registry and can be connected to a preset — i.e.
+// everything except shareable presets (which install as user presets, not toggles).
+type RegistryExtension = MetricExtension | SettingExtension;
 
 // Wrap an async callback so it satisfies Obsidian's void-returning event/handler
 // types without leaving a floating promise.
@@ -468,6 +472,27 @@ export class WordCountSettingTab extends PluginSettingTab {
     }
   }
 
+  /**
+   * Export a preset as a catalogue-ready `type: "preset"` extension and download it
+   * as a JSON file, so the user can open a PR suggesting it for the community store.
+   * Dependencies are the installed extensions the preset uses; `author`/
+   * `description` are left blank for the contributor to fill in.
+   */
+  private exportPreset(preset: Preset) {
+    const deps = presetDependencyIds(preset, (id) => this.plugin.extensions.has(id));
+    const updated = new Date().toISOString().slice(0, 10);
+    const ext = presetExtensionFrom(preset, deps, updated);
+    const json = JSON.stringify(ext, null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = activeDocument.createElement("a");
+    a.href = url;
+    a.download = `${ext.id}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    new Notice(t.presetExportedNotice(preset.name));
+  }
+
   renderPreset(containerEl: HTMLElement, preset: Preset) {
     const isActive = preset.id === this.plugin.settings.activePresetId;
     const card = containerEl.createDiv({ cls: `wcp-preset-card${isActive ? " is-active" : ""}` });
@@ -498,6 +523,12 @@ export class WordCountSettingTab extends PluginSettingTab {
       preset.name = nameInput.value.trim() || t.unnamedPreset;
       await this.save();
     }));
+
+    const shareBtn = header.createEl("button");
+    setIcon(shareBtn, "share-2");
+    setTooltip(shareBtn, t.btnShareTooltip, { placement: "top" });
+    shareBtn.addClass("wcp-btn", "wcp-btn-share");
+    shareBtn.addEventListener("click", () => this.exportPreset(preset));
 
     const delBtn = header.createEl("button");
     setIcon(delBtn, "trash-2");
@@ -599,14 +630,14 @@ export class WordCountSettingTab extends PluginSettingTab {
   // ── Extension connections ───────────────────────────────────────────────────
 
   /** Whether an extension is enabled (connected) for this preset. */
-  private extConnected(preset: Preset, def: Extension): boolean {
+  private extConnected(preset: Preset, def: RegistryExtension): boolean {
     return def.type === "metric"
       ? this.plugin.extensions.metricEnabled(preset, def.id)
       : this.plugin.extensions.settingEnabled(preset, def.id);
   }
 
   /** Set an extension's connected/enabled flag for this preset. */
-  private setExtConnected(preset: Preset, def: Extension, on: boolean): void {
+  private setExtConnected(preset: Preset, def: RegistryExtension, on: boolean): void {
     if (def.type === "metric") {
       if (!preset.extMetrics) preset.extMetrics = {};
       preset.extMetrics[def.id] = on;
@@ -655,7 +686,7 @@ export class WordCountSettingTab extends PluginSettingTab {
   }
 
   /** A connected extension shown as a toggle in a grid; turning it off disconnects. */
-  private renderExtToggle(grid: HTMLElement, preset: Preset, def: Extension) {
+  private renderExtToggle(grid: HTMLElement, preset: Preset, def: RegistryExtension) {
     const row = grid.createDiv({ cls: "wcp-toggle-chip" });
     const hint = this.plugin.extensions.loc(def, "hint") ?? def.hint;
     if (hint) setTooltip(row, hint, { placement: "top" });
@@ -882,7 +913,7 @@ export class ExtUninstallConfirmModal extends Modal {
 
 // ── Extension browser modal ───────────────────────────────────────────────────
 
-type ExtTypeFilter = "all" | "metric" | "setting";
+type ExtTypeFilter = "all" | "metric" | "setting" | "preset";
 
 export class ExtensionBrowserModal extends Modal {
   private plugin: WordCountPlugin;
@@ -923,13 +954,14 @@ export class ExtensionBrowserModal extends Modal {
     void this.load();
   }
 
-  /** Type filter chips: All / Metrics / Advanced settings. */
+  /** Type filter chips: All / Metrics / Advanced settings / Presets. */
   private renderChips() {
     this.chipsEl.empty();
     const chips: { value: ExtTypeFilter; label: string }[] = [
       { value: "all", label: t.extFilterAll },
       { value: "metric", label: t.extFilterMetrics },
       { value: "setting", label: t.extFilterSettings },
+      { value: "preset", label: t.extFilterPresets },
     ];
     for (const { value, label } of chips) {
       const chip = this.chipsEl.createEl("button", { text: label, cls: "wcp-ext-filter" });
@@ -1002,10 +1034,19 @@ export class ExtensionBrowserModal extends Modal {
     const head = main.createDiv({ cls: "wcp-ext-card-head" });
     head.createEl("span", { text: this.plugin.extensions.loc(entry, "name") ?? entry.name, cls: "wcp-ext-name" });
     const icon = head.createSpan({ cls: "wcp-ext-type-icon" });
-    setIcon(icon, entry.type === "metric" ? "whole-word" : "sliders-horizontal");
-    setTooltip(icon, entry.type === "metric" ? t.extTypeMetric : t.extTypeSetting, { placement: "top" });
+    const typeIcon = entry.type === "metric" ? "whole-word" : entry.type === "preset" ? "package" : "sliders-horizontal";
+    const typeLabel = entry.type === "metric" ? t.extTypeMetric : entry.type === "preset" ? t.extTypePreset : t.extTypeSetting;
+    setIcon(icon, typeIcon);
+    setTooltip(icon, typeLabel, { placement: "top" });
     main.createEl("span", { text: t.extByAuthor(entry.author), cls: "wcp-ext-author" });
     main.createEl("p", { text: this.plugin.extensions.loc(entry, "description") ?? entry.description, cls: "wcp-ext-desc" });
+
+    // Presets install differently (they add a preset + pull in the extensions they
+    // use), so they get their own single "Add" action and skip the install-state UI.
+    if (entry.type === "preset") {
+      this.renderPresetActions(card, entry);
+      return;
+    }
 
     const installed = this.plugin.extensionManager.isInstalled(entry.id);
     // Highlight installed extensions: the type icon and title pick up the accent color.
@@ -1074,6 +1115,37 @@ export class ExtensionBrowserModal extends Modal {
         new ExtUninstallConfirmModal(this.plugin.app, entry.name, names, doUninstall).open();
       });
     }
+  }
+
+  /**
+   * A preset card's single "Add" action: download the extensions the preset uses,
+   * then add the preset to the user's preset list (activating it if none is active).
+   */
+  private renderPresetActions(card: HTMLElement, entry: ExtensionIndexEntry) {
+    const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
+    const actions = card.createDiv({ cls: "wcp-ext-actions" });
+    const add = actions.createEl("button", { cls: "wcp-ext-install" });
+    setIcon(add, "download");
+    setTooltip(add, t.extInstallPreset, { placement: "top" });
+    add.addEventListener("click", handle(async () => {
+      add.disabled = true;
+      setTooltip(add, t.extInstalling, { placement: "top" });
+      try {
+        // Pass the loaded catalogue so the preset's extensions resolve without a re-fetch.
+        const { preset, extCount } = await this.plugin.extensionManager.installPresetFromIndex(entry, this.entries);
+        this.plugin.settings.presets.unshift(preset);
+        if (!this.plugin.getActivePreset()) this.plugin.settings.activePresetId = preset.id;
+        this.plugin.refreshPresetCommands();
+        await this.plugin.saveSettings();
+        this.plugin.updateCount();
+        new Notice(t.extPresetInstalledNotice(entry.name, extCount));
+        this.onChanged();
+        this.renderList();
+      } catch (e) {
+        new Notice(t.extInstallFailed(message(e)));
+        this.renderList();
+      }
+    }));
   }
 
   onClose() {

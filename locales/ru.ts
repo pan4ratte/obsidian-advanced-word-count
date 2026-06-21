@@ -58,8 +58,11 @@ const ru = {
   // Preset card header
   badgeActive: "Активный",
   badgeInactive: "Неактивный",
+  btnShareTooltip: "Поделиться пресетом (экспорт файла для предложения в каталог)",
   btnDeleteTooltip: "Удалить пресет",
   inputNamePlaceholder: "Введите имя пресета",
+  presetExportedNotice: (name: string) =>
+    `Пресет "${name}" экспортирован. Заполните автора/описание и откройте pull request, чтобы предложить его.`,
 
   // Words per page row
   wppLabel: "Считать",
@@ -118,10 +121,12 @@ const ru = {
   extNoResults: "Нет расширений по вашему запросу",
   extEmptyCatalogue: "Пока нет доступных расширений",
   extInstall: "Установить",
+  extInstallPreset: "Добавить пресет",
   extUpdate: "Обновить",
   extInstalling: "Установка…",
   extTypeMetric: "Метрика",
   extTypeSetting: "Настройка",
+  extTypePreset: "Пресет",
   extUninstall: "Удалить",
   extByAuthor: (author: string) => `Автор: ${author}`,
   extInstalledNotice: (name: string) => `Установлено: "${name}"`,
@@ -131,6 +136,14 @@ const ru = {
       : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? "зависимости"
       : "зависимостей";
     return `Установлено: "${name}" и ${deps} ${word}`;
+  },
+  extPresetInstalledNotice: (name: string, exts: number) => {
+    if (exts === 0) return `Добавлен пресет "${name}"`;
+    const m10 = exts % 10, m100 = exts % 100;
+    const word = m10 === 1 && m100 !== 11 ? "расширение"
+      : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? "расширения"
+      : "расширений";
+    return `Добавлен пресет "${name}" и ${exts} ${word}`;
   },
   extInstallFailed: (msg: string) => `Ошибка установки: ${msg}`,
   extUninstalledNotice: (name: string) => `Удалено: "${name}"`,
@@ -145,6 +158,7 @@ const ru = {
   extFilterAll: "Все",
   extFilterMetrics: "Метрики",
   extFilterSettings: "Расширенные настройки",
+  extFilterPresets: "Пресеты",
 
   // Per-preset connect (dropdowns in the metric / setting section headers)
   connectAddMetric: "Расширения сообщества…",

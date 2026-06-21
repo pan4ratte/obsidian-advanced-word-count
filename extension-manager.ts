@@ -1,5 +1,6 @@
 import { requestUrl } from "obsidian";
 import type WordCountPlugin from "./main";
+import type { Preset } from "./metrics";
 import { DEFAULT_EXTENSION_REPO_URL } from "./metrics";
 import {
   Extension,
@@ -7,6 +8,7 @@ import {
   ExtensionIndexEntry,
   ExtensionRegistry,
   findDependents,
+  materializePreset,
   resolveInstallOrder,
   validateExtension,
 } from "./extensions";
@@ -138,6 +140,36 @@ export class ExtensionManager {
       installed.push(await this.install(await this.fetchExtension(e)));
     }
     return installed;
+  }
+
+  /**
+   * Install a shareable preset: download every community extension it uses (and
+   * their transitive dependencies), skipping anything already installed, then
+   * return a fresh `Preset` for the caller to add to `settings.presets`. The
+   * preset itself is NOT stored in `installedExtensions` — it becomes a normal
+   * user preset. Returns the new preset plus how many extensions were downloaded.
+   */
+  async installPresetFromIndex(
+    entry: ExtensionIndexEntry,
+    index?: ExtensionIndexEntry[],
+  ): Promise<{ preset: Preset; extCount: number }> {
+    const catalogue = index ?? (await this.fetchIndex());
+    const ext = await this.fetchExtension(entry);
+    if (ext.type !== "preset") throw new Error(`"${entry.id}" is not a preset extension`);
+
+    let extCount = 0;
+    for (const depId of ext.dependencies || []) {
+      if (this.isInstalled(depId)) continue; // already have it (and, with it, its deps)
+      const { order, missing } = resolveInstallOrder(depId, catalogue, (id) => this.isInstalled(id));
+      if (missing.length > 0) {
+        throw new Error(`Missing required extensions in catalogue: ${missing.join(", ")}`);
+      }
+      for (const e of order) {
+        await this.install(await this.fetchExtension(e));
+        extCount++;
+      }
+    }
+    return { preset: materializePreset(ext), extCount };
   }
 
   /**

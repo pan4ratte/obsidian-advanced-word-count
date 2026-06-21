@@ -3,11 +3,15 @@ import {
   compileRegex,
   findDependents,
   localize,
+  materializePreset,
+  presetDependencyIds,
+  presetExtensionFrom,
   resolveInstallOrder,
   validateExtension,
   ExtensionIndexEntry,
   ExtensionRegistry,
   MetricExtension,
+  PresetExtension,
   SettingExtension,
 } from "../extensions";
 import { defaultPreset, Preset } from "../metrics";
@@ -35,6 +39,16 @@ const settingExt = (overrides: Partial<SettingExtension> = {}): SettingExtension
   label: "Ignore highlights",
   title: "Ignore highlights",
   transform: { pattern: "==[^=]+==", flags: "g", replacement: "" },
+  ...overrides,
+});
+
+const presetExt = (overrides: Partial<PresetExtension> = {}): PresetExtension => ({
+  id: "academic-paper",
+  name: "Academic paper",
+  description: "A preset for academic writing",
+  author: "tester",
+  type: "preset",
+  preset: { showCitekeys: true, extMetrics: { "distinct-citekeys": true } },
   ...overrides,
 });
 
@@ -127,6 +141,28 @@ describe("validateExtension", () => {
     expect(validateExtension({ ...metricExt(), dependencies: ["footnotes"] }).ok).toBe(false);       // lowercase built-in
     expect(validateExtension({ ...metricExt(), dependencies: ["wordsWithSpaces"] }).ok).toBe(false); // camelCase built-in
   });
+
+  it("accepts a well-formed preset extension (no label/title required)", () => {
+    expect(validateExtension(presetExt()).ok).toBe(true);
+    // A preset may carry dependencies (the extensions it uses).
+    expect(validateExtension({ ...presetExt(), dependencies: ["distinct-citekeys"] }).ok).toBe(true);
+  });
+
+  it("rejects a preset extension without a valid preset object", () => {
+    expect(validateExtension({ ...presetExt(), preset: undefined }).ok).toBe(false);
+    expect(validateExtension({ ...presetExt(), preset: [] }).ok).toBe(false);
+    expect(validateExtension({ ...presetExt(), preset: "nope" }).ok).toBe(false);
+  });
+
+  it("validates a preset's embedded warning/goal rules", () => {
+    const withRules = (rules: unknown) => ({ ...presetExt(), preset: { rules } });
+    expect(validateExtension(withRules([{ metric: "pages", threshold: 5, kind: "warning" }])).ok).toBe(true);
+    expect(validateExtension(withRules([{ metric: "pages", threshold: 5, kind: "goal" }])).ok).toBe(true);
+    expect(validateExtension(withRules([{ metric: "pages", threshold: 5, kind: "bogus" }])).ok).toBe(false);
+    expect(validateExtension(withRules([{ threshold: 5, kind: "warning" }])).ok).toBe(false); // no metric
+    expect(validateExtension(withRules([{ metric: "pages", kind: "warning" }])).ok).toBe(false); // no threshold
+    expect(validateExtension(withRules("not-an-array")).ok).toBe(false);
+  });
 });
 
 // ── resolveInstallOrder ───────────────────────────────────────────────────────
@@ -190,6 +226,73 @@ describe("findDependents", () => {
   });
 });
 
+// ── Preset extensions (shareable presets) ─────────────────────────────────────────
+
+describe("materializePreset", () => {
+  it("merges the payload over defaults, with a fresh id and name fallback", () => {
+    const ext = presetExt({ name: "Paper", preset: { showCitekeys: true, wordsPerPage: 300 } });
+    const p = materializePreset(ext);
+    expect(p.showCitekeys).toBe(true);        // payload override
+    expect(p.wordsPerPage).toBe(300);         // payload override
+    expect(p.showWordsWithSpaces).toBe(true); // default preserved
+    expect(p.name).toBe("Paper");             // payload has no name → ext.name
+    expect(typeof p.id).toBe("string");
+    expect(p.id.length).toBeGreaterThan(0);
+  });
+
+  it("prefers a name embedded in the payload", () => {
+    expect(materializePreset(presetExt({ name: "Ext", preset: { name: "Payload" } })).name).toBe("Payload");
+  });
+
+  it("always assigns a new id, ignoring any id carried in the payload", () => {
+    expect(materializePreset(presetExt({ preset: { id: "leftover" } })).id).not.toBe("leftover");
+  });
+});
+
+describe("presetDependencyIds", () => {
+  const isExt = (id: string) => ["distinct-citekeys", "sentence-count", "ignore-math"].indexOf(id) !== -1;
+
+  it("collects enabled extension ids from metrics, settings and rules (sorted, deduped)", () => {
+    const preset = defaultPreset({
+      extMetrics: { "distinct-citekeys": true, "sentence-count": false },
+      extSettings: { "ignore-math": true },
+      rules: [{ metric: "sentence-count", threshold: 10, kind: "warning" }],
+    });
+    // sentence-count is disabled as a metric but referenced by a rule → still pulled in.
+    expect(presetDependencyIds(preset, isExt)).toEqual(["distinct-citekeys", "ignore-math", "sentence-count"]);
+  });
+
+  it("ignores built-in metric ids and disabled extensions", () => {
+    const preset = defaultPreset({
+      extMetrics: { "distinct-citekeys": false },
+      rules: [{ metric: "pages", threshold: 5, kind: "warning" }], // built-in, not an extension
+    });
+    expect(presetDependencyIds(preset, isExt)).toEqual([]);
+  });
+});
+
+describe("presetExtensionFrom", () => {
+  it("builds a catalogue-ready preset extension (valid once author/description are filled)", () => {
+    const preset = defaultPreset({ name: "Academic Paper!", extMetrics: { "distinct-citekeys": true } });
+    const ext = presetExtensionFrom(preset, ["distinct-citekeys"], "2026-06-21");
+    expect(ext.type).toBe("preset");
+    expect(ext.id).toBe("academic-paper"); // slugified from the name
+    expect(ext.dependencies).toEqual(["distinct-citekeys"]);
+    expect(ext.preset.id).toBeUndefined(); // runtime id stripped
+    expect(ext.preset.name).toBe("Academic Paper!");
+    // Author/description are left blank for the contributor, so it isn't valid yet…
+    expect(validateExtension(ext).ok).toBe(false);
+    // …but it's otherwise sound: filling those in yields a valid extension.
+    expect(validateExtension({ ...ext, author: "me", description: "A preset" }).ok).toBe(true);
+  });
+
+  it("falls back to a safe id when the name has no ascii slug, and omits empty deps", () => {
+    const ext = presetExtensionFrom(defaultPreset({ name: "Статья" }), [], "2026-06-21");
+    expect(ext.id).toBe("preset");
+    expect(ext.dependencies).toBeUndefined();
+  });
+});
+
 // ── ExtensionRegistry ───────────────────────────────────────────────────────────
 
 describe("ExtensionRegistry", () => {
@@ -205,6 +308,14 @@ describe("ExtensionRegistry", () => {
     expect(reg.isEmpty()).toBe(false);
     reg.remove("ignore-highlights");
     expect(reg.isEmpty()).toBe(true);
+  });
+
+  it("does not register preset extensions as live metrics/settings", () => {
+    const reg = new ExtensionRegistry();
+    reg.set([metricExt(), settingExt(), presetExt()]);
+    expect(reg.metricList().map((d) => d.id)).toEqual(["sentence-count"]);
+    expect(reg.settingList().map((d) => d.id)).toEqual(["ignore-highlights"]);
+    expect(reg.has("academic-paper")).toBe(false); // presets aren't registry items
   });
 
   it("counts matches for an enabled metric, and skips disabled ones", () => {

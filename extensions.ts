@@ -1,5 +1,5 @@
 import type { Preset, WarnLevel } from "./metrics";
-import { METRIC_ORDER, ruleLevel } from "./metrics";
+import { METRIC_ORDER, defaultPreset, ruleLevel } from "./metrics";
 
 // Built-in metric ids (e.g. "wordsWithSpaces", "pages"). They're always computed,
 // so they're valid ratio operands but must never appear in `dependencies` — there
@@ -22,7 +22,7 @@ const BUILTIN_METRIC_IDS: string[] = METRIC_ORDER;
 
 // ── Definition types ────────────────────────────────────────────────────────────
 
-export type ExtensionType = "metric" | "setting";
+export type ExtensionType = "metric" | "setting" | "preset";
 
 /**
  * How a metric's number is derived. Each mode mirrors a generic operation used by
@@ -89,8 +89,9 @@ export interface ExtensionManifestBase {
   name: string;          // display name (shown in the browse modal)
   description: string;
   author: string;
-  // Short title shown in the preset's connect toggle (required, no fallback).
-  title: string;
+  // Short title shown in the preset's connect toggle. Required (no fallback) for
+  // metric/setting extensions; not used by preset extensions, hence optional here.
+  title?: string;
   // ISO date (YYYY-MM-DD) of the last change. A catalogue entry with a newer
   // `updated` than the installed copy surfaces an available update.
   updated?: string;
@@ -136,6 +137,7 @@ export interface CountSpec {
 
 export interface MetricExtension extends ExtensionManifestBase {
   type: "metric";
+  title: string;         // required for metric extensions (toggle text)
   label: string;         // toggle / block label, e.g. "Sentences"
   hint?: string;         // optional tooltip
   statusLabel?: string;  // status-bar label prefix; defaults to `label`
@@ -153,13 +155,28 @@ export interface TransformSpec {
 
 export interface SettingExtension extends ExtensionManifestBase {
   type: "setting";
+  title: string;         // required for setting extensions (toggle text)
   label: string;
   hint?: string;
   defaultEnabled?: boolean;
   transform: TransformSpec;
 }
 
-export type Extension = MetricExtension | SettingExtension;
+/**
+ * A shareable preset: a full preset configuration (toggles, advanced settings,
+ * warning/goal rules, and the per-preset extension enable-flags) plus the ids of
+ * every community extension it uses (`dependencies`). Installing one downloads
+ * those extensions and adds the preset to the user's preset list — it is NOT a
+ * live registry item like a metric/setting. `preset` is kept loosely typed so this
+ * schema doesn't couple to the exact Preset shape; the manager merges it over
+ * `defaultPreset()` and always assigns a fresh id on install.
+ */
+export interface PresetExtension extends ExtensionManifestBase {
+  type: "preset";
+  preset: Record<string, unknown>;
+}
+
+export type Extension = MetricExtension | SettingExtension | PresetExtension;
 
 // ── Repo index ──────────────────────────────────────────────────────────────────
 
@@ -228,6 +245,62 @@ export function resolveInstallOrder(
 /** Installed extensions that list `id` among their dependencies (its dependents). */
 export function findDependents(id: string, exts: Extension[]): Extension[] {
   return exts.filter((e) => (e.dependencies || []).indexOf(id) !== -1);
+}
+
+// ── Preset extensions (shareable presets) ─────────────────────────────────────────
+
+/**
+ * Turn a `PresetExtension`'s payload into a live `Preset`: merge it over the
+ * defaults (so every field exists), keep the author's choices, but always assign a
+ * fresh id and fall back to the extension's name when the payload omits one.
+ */
+export function materializePreset(ext: PresetExtension): Preset {
+  const base = defaultPreset();
+  const payload = ext.preset || {};
+  const name = typeof payload.name === "string" && payload.name.trim() ? payload.name.trim() : ext.name;
+  return { ...base, ...payload, id: base.id, name };
+}
+
+/**
+ * The community-extension ids a preset depends on: every *installed* extension it
+ * enables (via `extMetrics`/`extSettings`) or references in a warning/goal rule.
+ * `isExtension` distinguishes extension ids from built-in metric ids. Used when
+ * exporting a preset so the installer knows what to download.
+ */
+export function presetDependencyIds(preset: Preset, isExtension: (id: string) => boolean): string[] {
+  const deps = new Set<string>();
+  const addEnabled = (flags: Record<string, boolean> | undefined) => {
+    for (const id of Object.keys(flags || {})) if (flags![id] && isExtension(id)) deps.add(id);
+  };
+  addEnabled(preset.extMetrics);
+  addEnabled(preset.extSettings);
+  for (const r of preset.rules || []) if (isExtension(r.metric)) deps.add(r.metric);
+  return Array.from(deps).sort();
+}
+
+/**
+ * Build a shareable `PresetExtension` from a live preset — a catalogue-ready file.
+ * The runtime `id` is dropped from the payload (a fresh one is generated on
+ * install), the manifest `id` is slugified from the name, and `dependencies` lists
+ * the extensions the preset uses. `author`/`description` are left blank for the
+ * contributor to fill in before opening a pull request.
+ */
+export function presetExtensionFrom(preset: Preset, dependencies: string[], updated: string): PresetExtension {
+  const slug = preset.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  const id = /^[a-z0-9]/.test(slug) ? slug : "preset";
+  const payload: Record<string, unknown> = { ...preset };
+  delete payload.id;
+  const ext: PresetExtension = {
+    id,
+    name: preset.name,
+    description: "",
+    author: "",
+    type: "preset",
+    updated,
+    preset: payload,
+  };
+  if (dependencies.length > 0) ext.dependencies = dependencies;
+  return ext;
 }
 
 // ── A computed extension-metric row (parallel to metrics.ts MetricRow) ──────────
@@ -361,9 +434,16 @@ export function validateExtension(value: unknown): ValidationResult {
   if (typeof value !== "object" || value === null) return fail("not a JSON object");
   const o = value as Record<string, unknown>;
 
-  for (const k of ["id", "name", "description", "author", "type", "label", "title"]) {
+  for (const k of ["id", "name", "description", "author", "type"]) {
     const v = o[k];
     if (typeof v !== "string" || v.length === 0) return fail(`missing or invalid "${k}"`);
+  }
+  // `label`/`title` are the toggle texts — required for metric/setting, unused by
+  // preset extensions.
+  if (o.type === "metric" || o.type === "setting") {
+    for (const k of ["label", "title"]) {
+      if (typeof o[k] !== "string" || o[k].length === 0) return fail(`missing or invalid "${k}"`);
+    }
   }
 
   const id = o.id as string;
@@ -485,7 +565,30 @@ export function validateExtension(value: unknown): ValidationResult {
     return { ok: true, ext: value as SettingExtension };
   }
 
-  return fail(`invalid type "${show(o.type)}" (expected "metric" or "setting")`);
+  if (o.type === "preset") {
+    const p = o.preset;
+    if (typeof p !== "object" || p === null || Array.isArray(p)) {
+      return fail(`preset extension needs a "preset" object`);
+    }
+    // Light shape check of the embedded warning/goal rules (the rest of the payload
+    // is merged over defaultPreset() on install, so missing fields are harmless).
+    const rules = (p as Record<string, unknown>).rules;
+    if (rules !== undefined) {
+      if (!Array.isArray(rules)) return fail(`preset.rules must be an array`);
+      const arr: unknown[] = rules;
+      for (let i = 0; i < arr.length; i++) {
+        const r = arr[i];
+        if (typeof r !== "object" || r === null) return fail(`preset.rules[${i}] must be an object`);
+        const ro = r as Record<string, unknown>;
+        if (typeof ro.metric !== "string" || ro.metric.length === 0) return fail(`preset.rules[${i}].metric must be a non-empty string`);
+        if (typeof ro.threshold !== "number" || !isFinite(ro.threshold)) return fail(`preset.rules[${i}].threshold must be a number`);
+        if (ro.kind !== "warning" && ro.kind !== "goal") return fail(`preset.rules[${i}].kind must be "warning" or "goal"`);
+      }
+    }
+    return { ok: true, ext: value as PresetExtension };
+  }
+
+  return fail(`invalid type "${show(o.type)}" (expected "metric", "setting" or "preset")`);
 }
 
 // ── Registry ────────────────────────────────────────────────────────────────────
@@ -524,7 +627,8 @@ export class ExtensionRegistry {
 
   add(ext: Extension): void {
     if (ext.type === "metric") this.metricDefs.set(ext.id, ext);
-    else this.settingDefs.set(ext.id, ext);
+    else if (ext.type === "setting") this.settingDefs.set(ext.id, ext);
+    // Preset extensions aren't live registry items — they install as user presets.
   }
 
   remove(id: string): void {

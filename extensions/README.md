@@ -21,6 +21,11 @@ and validates each extension file on demand.
   pane (e.g. sentences, headings, distinct citekeys, a ratio of two other metrics).
 - **A setting** (`type: "setting"`) — an advanced toggle that transforms the text
   before word/character counting (e.g. "ignore highlights", "ignore math").
+- **A preset** (`type: "preset"`) — a ready-made preset bundling toggle states,
+  advanced settings, warning/goal rules and the metric/setting extensions it uses.
+  Installing it adds the preset and downloads those extensions automatically. The
+  easiest way to make one is the **Share** button on a preset (see
+  [Preset extensions](#preset-extensions-type-preset)).
 
 If the plugin's existing count [modes](#metric-extensions-type-metric) can express
 what you want, you can almost certainly ship it as an extension without touching the
@@ -61,9 +66,9 @@ plugin's code.
 | `name`           | yes      | Display name shown in the browse modal              |
 | `description`    | yes      | One-line summary                                    |
 | `author`         | yes      | Your name or handle                                 |
-| `type`           | yes      | `"metric"` or `"setting"`                           |
-| `label`          | yes      | Name shown in the right-pane metric block and the connect dropdown |
-| `title`          | yes      | Short title shown in the preset's connect toggle    |
+| `type`           | yes      | `"metric"`, `"setting"` or `"preset"`               |
+| `label`          | metric/setting | Name shown in the right-pane metric block and the connect dropdown (not used by presets) |
+| `title`          | metric/setting | Short title shown in the preset's connect toggle (not used by presets) |
 | `updated`        | no       | ISO date (`YYYY-MM-DD`); a date newer than the installed copy surfaces an "Update" |
 | `hint`           | no       | Tooltip (use `\n` for a second line)                |
 | `defaultEnabled` | no       | Whether new presets enable it by default (`false`)  |
@@ -224,6 +229,51 @@ Example — `ignore-highlights.json`:
   "label": "Ignore highlights",
   "title": "Ignore highlights",
   "transform": { "pattern": "==[^=]+==", "flags": "g", "replacement": "" }
+}
+```
+
+### Preset extensions (`type: "preset"`)
+
+A preset extension bundles a whole preset — its toggle states, advanced settings,
+warning/goal rules and the per-preset extension enable-flags — together with the
+ids of the metric/setting extensions it uses. Installing one **adds the preset** to
+the user's preset list and **downloads every extension it depends on** (and their
+transitive dependencies) automatically. Unlike metric/setting extensions, a preset
+is not a live "registry" item and is not connected to other presets, so it doesn't
+need `label`/`title`.
+
+Extra field:
+
+| Field    | Required | Notes                                                              |
+| -------- | -------- | ------------------------------------------------------------------ |
+| `preset` | yes      | The preset configuration object (toggles, advanced settings, `rules`, `extMetrics`/`extSettings`, `wordsPerPage`, …). Any `id` inside is ignored — a fresh one is generated on install; a missing `name` falls back to the extension's `name`. |
+
+List the extensions the preset relies on in [`dependencies`](#dependencies) so they
+download with it.
+
+**The easy way: the Share button.** You don't have to write a preset file by hand.
+Configure a preset in the plugin's settings, then click the **Share** (↗) button in
+its header — the plugin exports a ready-to-edit `type: "preset"` file with
+`dependencies` already filled in from the extensions you connected. Add your
+`author` and `description`, then submit it (the file is intentionally left invalid
+until those two fields are filled).
+
+```json
+{
+  "id": "academic-paper",
+  "name": "Academic paper",
+  "description": "Citations, sentences and a 8-page goal for journal submissions.",
+  "author": "you",
+  "updated": "2026-06-21",
+  "type": "preset",
+  "dependencies": ["distinct-citekeys", "sentence-count"],
+  "preset": {
+    "name": "Academic paper",
+    "showCitekeys": true,
+    "wordsPerPage": 300,
+    "extMetrics": { "distinct-citekeys": true, "sentence-count": true },
+    "rules": [{ "metric": "pages", "threshold": 8, "kind": "goal" }]
+  }
 }
 ```
 

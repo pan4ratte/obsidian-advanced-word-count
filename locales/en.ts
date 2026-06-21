@@ -58,8 +58,11 @@ const en = {
   // Preset card header
   badgeActive: "Active",
   badgeInactive: "Inactive",
+  btnShareTooltip: "Share preset (export a file to suggest for the catalogue)",
   btnDeleteTooltip: "Delete preset",
   inputNamePlaceholder: "Enter preset name",
+  presetExportedNotice: (name: string) =>
+    `Exported "${name}". Fill in author/description and open a pull request to suggest it.`,
 
   // Words per page row
   wppLabel: "Count",
@@ -115,15 +118,21 @@ const en = {
   extNoResults: "No extensions match your search",
   extEmptyCatalogue: "No extensions are available yet",
   extInstall: "Install",
+  extInstallPreset: "Add preset",
   extUpdate: "Update",
   extInstalling: "Installing…",
   extTypeMetric: "Metric",
   extTypeSetting: "Setting",
+  extTypePreset: "Preset",
   extUninstall: "Uninstall",
   extByAuthor: (author: string) => `by ${author}`,
   extInstalledNotice: (name: string) => `Installed "${name}"`,
   extInstalledWithDepsNotice: (name: string, deps: number) =>
     `Installed "${name}" and ${deps} ${deps === 1 ? "dependency" : "dependencies"}`,
+  extPresetInstalledNotice: (name: string, exts: number) =>
+    exts > 0
+      ? `Added preset "${name}" and ${exts} ${exts === 1 ? "extension" : "extensions"}`
+      : `Added preset "${name}"`,
   extInstallFailed: (msg: string) => `Install failed: ${msg}`,
   extUninstalledNotice: (name: string) => `Uninstalled "${name}"`,
   extUninstallFailed: (msg: string) => `Uninstall failed: ${msg}`,
@@ -137,6 +146,7 @@ const en = {
   extFilterAll: "All",
   extFilterMetrics: "Metrics",
   extFilterSettings: "Advanced settings",
+  extFilterPresets: "Presets",
 
   // Per-preset connect (dropdowns in the metric / setting section headers)
   connectAddMetric: "Add metric…",

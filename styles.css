@@ -120,6 +120,31 @@
   background: var(--text-error);
 }
 
+/* Icon-only share button */
+.wcp-btn-share {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  background: transparent;
+  color: var(--text-muted);
+  border-color: transparent;
+}
+
+.wcp-btn-share svg {
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
+}
+
+.wcp-btn-share:hover {
+  background: var(--interactive-accent);
+  border-color: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
 /* ── Words per page row ──────────────────────────────────────────────────────── */
 
 .wcp-wpp-row {
