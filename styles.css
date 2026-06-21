@@ -78,6 +78,37 @@
   border-bottom-color: var(--interactive-accent);
 }
 
+/* Combined "Presets & extensions" setting: the heading title + description sit on
+   top, with the two full-width accent buttons (store + create preset) on their own
+   row below — so let the setting item stack its contents. */
+.wcp-presets-intro {
+  display: block;
+}
+
+.wcp-presets-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.wcp-presets-actions button {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.wcp-presets-actions .wcp-btn-icon {
+  display: inline-flex;
+  align-items: center;
+}
+
+.wcp-presets-actions .wcp-btn-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
 /* ── Header buttons ──────────────────────────────────────────────────────────── */
 
 .wcp-btn {

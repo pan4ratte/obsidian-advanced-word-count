@@ -1,4 +1,4 @@
-import { App, ItemView, Modal, Notice, Platform, PluginSettingTab, Setting, WorkspaceLeaf, ButtonComponent, ToggleComponent, setIcon, setTooltip } from "obsidian";
+import { App, ItemView, Modal, Notice, Platform, PluginSettingTab, Setting, WorkspaceLeaf, ToggleComponent, setIcon, setTooltip } from "obsidian";
 import { t } from "./locales";
 import type WordCountPlugin from "./main";
 import {
@@ -422,19 +422,10 @@ export class WordCountSettingTab extends PluginSettingTab {
           })
       );
 
-    // ── Presets ───────────────────────────────────────────────────────────────
+    // ── Presets & extensions ──────────────────────────────────────────────────
+    // The section title, then one setting with the description + two full-width
+    // actions on their own row — open the community store, or create a new preset.
     new Setting(containerEl).setName(t.settingsSectionPresets).setHeading();
-
-    new Setting(containerEl)
-      .setName(t.settingsAddExtensionsName)
-      .setDesc(t.settingsAddExtensionsDesc)
-      .addButton((btn: ButtonComponent) =>
-        btn.setButtonText(t.settingsBrowseExtensions).onClick(() => {
-          // Re-render the settings page after an install so newly downloaded
-          // extensions appear in each preset's "Connect extensions" dropdown.
-          new ExtensionBrowserModal(this.plugin, () => this.display()).open();
-        })
-      );
 
     new Setting(containerEl)
       .setName(t.settingsAutoUpdateExtensionsName)
@@ -451,22 +442,36 @@ export class WordCountSettingTab extends PluginSettingTab {
           })
       );
 
-    new Setting(containerEl)
-      .setName(t.settingsPresetsName)
-      .setDesc(t.settingsPresetsDesc)
-      .addButton((btn: ButtonComponent) =>
-        btn.setButtonText(t.settingsAddPreset).setCta().onClick(async () => {
-          const preset = defaultPreset({
-            name: t.newPresetName(this.plugin.settings.presets.length + 1),
-          });
-          this.plugin.settings.presets.unshift(preset);
-          // If nothing is active (e.g. the very first preset on a fresh install),
-          // make this one active so counts show up immediately.
-          if (!this.plugin.getActivePreset()) this.plugin.settings.activePresetId = preset.id;
-          await this.save();
-          this.display();
-        })
-      );
+    const intro = new Setting(containerEl)
+      .setName(t.settingsPresetsStoreName)
+      .setDesc(t.settingsPresetsStoreDesc);
+    intro.settingEl.addClass("wcp-presets-intro");
+
+    const actions = intro.settingEl.createDiv({ cls: "wcp-presets-actions" });
+
+    const storeBtn = actions.createEl("button", { cls: "mod-cta" });
+    setIcon(storeBtn.createSpan({ cls: "wcp-btn-icon" }), "store");
+    storeBtn.createSpan({ text: t.settingsBrowseExtensions });
+    storeBtn.addEventListener("click", () => {
+      // Re-render the settings page after an install so newly downloaded
+      // extensions appear in each preset's "Connect extensions" dropdown.
+      new ExtensionBrowserModal(this.plugin, () => this.display()).open();
+    });
+
+    const createBtn = actions.createEl("button", { cls: "mod-cta" });
+    setIcon(createBtn.createSpan({ cls: "wcp-btn-icon" }), "plus");
+    createBtn.createSpan({ text: t.settingsAddPreset });
+    createBtn.addEventListener("click", handle(async () => {
+      const preset = defaultPreset({
+        name: t.newPresetName(this.plugin.settings.presets.length + 1),
+      });
+      this.plugin.settings.presets.unshift(preset);
+      // If nothing is active (e.g. the very first preset on a fresh install),
+      // make this one active so counts show up immediately.
+      if (!this.plugin.getActivePreset()) this.plugin.settings.activePresetId = preset.id;
+      await this.save();
+      this.display();
+    }));
 
     for (const preset of this.plugin.settings.presets) {
       this.renderPreset(containerEl, preset);

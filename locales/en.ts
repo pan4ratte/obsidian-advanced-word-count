@@ -31,9 +31,9 @@ const en = {
   settingsHeading: "Advanced Word Count settings",
   settingsDescription: "This plugin allows you to create complex word counting presets for the status bar and right pane tab, cycle them with one click, set goals and limit warnings ставить and more. Plugin was created in the academic context and you can fine-tune [@citekeys], [[wikilinks]], footnotes and other fomatting elements counting methods.",
   settingsSectionGeneral: "General",
-  settingsSectionPresets: "Presets",
-  settingsPresetsName: "Create preset",
-  settingsPresetsDesc: "Allow to create individual metric sets for different writing purposes",
+  settingsSectionPresets: "Presets & extensions",
+  settingsPresetsStoreName: "Add a preset or extension",
+  settingsPresetsStoreDesc: "Create your own counter presets, or install community extensions that add new metrics and advanced settings.",
   settingsAddPreset: "New preset",
   settingsSeparatorName: "Status bar metrics separator",
   settingsSeparatorDesc: "Specify the look of metrics separator by typing anything",
@@ -114,9 +114,6 @@ const en = {
   deleteConfirmNo: "Cancel",
 
   // ── Extensions ─────────────────────────────────────────────────────────────
-  settingsAddExtensionsName: "Add extensions",
-  settingsAddExtensionsDesc:
-    "Browse community extensions that add new metrics or advanced settings, then connect them to your presets below",
   settingsBrowseExtensions: "Browse extensions",
   settingsAutoUpdateExtensionsName: "Automatically update installed community extensions",
   settingsAutoUpdateExtensionsDesc:
