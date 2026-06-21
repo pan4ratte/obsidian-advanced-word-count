@@ -1,0 +1,78 @@
+{
+  "id": "telegram-rich-text-post",
+  "name": "Telegram rich-text post",
+  "description": "Preset for rich-text posts in Telegram: with limit warnings and all metrics set up to count symbols like Telegram does.",
+  "author": "pan4ratte",
+  "type": "preset",
+  "updated": "2026-06-21",
+  "preset": {
+    "name": "Telegram rich-text post",
+    "wordsPerPage": 0,
+    "showWordsWithSpaces": false,
+    "showCharsWithSpaces": true,
+    "showCharsWithoutSpaces": false,
+    "showPages": false,
+    "showLines": false,
+    "showParagraphs": true,
+    "showMarkdownLinks": true,
+    "showWikiLinks": false,
+    "showCitekeys": false,
+    "countMdLinksAsWords": true,
+    "countWikiLinkDisplayText": false,
+    "ignoreWikiLinks": true,
+    "countCitekeysAsWords": false,
+    "ignoreComments": true,
+    "ignoreHtmlTags": true,
+    "showEmbeds": true,
+    "rules": [
+      {
+        "metric": "paragraphs",
+        "threshold": 500,
+        "kind": "warning"
+      },
+      {
+        "metric": "charsWithSpaces",
+        "threshold": 32768,
+        "kind": "warning"
+      },
+      {
+        "metric": "embeds",
+        "threshold": 50,
+        "kind": "warning"
+      }
+    ],
+    "showFootnotes": true,
+    "readingWpm": 250,
+    "showReadingTime": true,
+    "metricOrder": [
+      "pages",
+      "lines",
+      "wordsWithSpaces",
+      "charsWithoutSpaces",
+      "embeds",
+      "markdownLinks",
+      "wikiLinks",
+      "citekeys",
+      "charsWithSpaces",
+      "readingTime",
+      "paragraphs",
+      "tables",
+      "tags",
+      "footnotes"
+    ],
+    "extMetrics": {},
+    "extSettings": {
+      "ignore-code": true
+    }
+  },
+  "i18n": {
+    "en": {
+      "name": "Telegram rich-text post",
+      "description": "Preset for rich-text posts in Telegram: with limit warnings and all metrics set up to count symbols like Telegram does"
+    },
+    "ru": {
+      "name": "Пост в Telegram с rich-text форматированием",
+      "description": "Пресет для rich-text постов в Telegram: с предупреждениями о лимитах и всеми метриками, настроенными для подсчёта символов так же, как это делает Telegram."
+    }
+  }
+}

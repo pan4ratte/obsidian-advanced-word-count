@@ -1,0 +1,64 @@
+{
+  "id": "telegram-user-post",
+  "name": "Telegram user post",
+  "description": "Preset for posts, made by user in Telegram: with limit warnings and all metrics set up to count symbols like Telegram does.",
+  "author": "pan4ratte",
+  "type": "preset",
+  "updated": "2026-06-21",
+  "preset": {
+    "name": "Telegram user post",
+    "wordsPerPage": 0,
+    "readingWpm": 250,
+    "showWordsWithSpaces": false,
+    "showCharsWithSpaces": true,
+    "showCharsWithoutSpaces": false,
+    "showPages": false,
+    "showReadingTime": true,
+    "showLines": false,
+    "showParagraphs": true,
+    "showMarkdownLinks": true,
+    "showWikiLinks": false,
+    "showCitekeys": false,
+    "showEmbeds": true,
+    "showFootnotes": false,
+    "countMdLinksAsWords": true,
+    "countWikiLinkDisplayText": false,
+    "ignoreWikiLinks": true,
+    "countCitekeysAsWords": false,
+    "ignoreComments": true,
+    "ignoreHtmlTags": true,
+    "rules": [
+      {
+        "metric": "charsWithSpaces",
+        "threshold": 4097,
+        "kind": "warning"
+      }
+    ],
+    "metricOrder": [
+      "wordsWithSpaces",
+      "charsWithSpaces",
+      "charsWithoutSpaces",
+      "pages",
+      "readingTime",
+      "lines",
+      "paragraphs",
+      "markdownLinks",
+      "wikiLinks",
+      "citekeys",
+      "embeds",
+      "footnotes"
+    ],
+    "extMetrics": {},
+    "extSettings": {}
+  },
+  "i18n": {
+    "en": {
+      "name": "Telegram user post",
+      "description": "Preset for posts, made by user in Telegram: with limit warnings and all metrics set up to count symbols like Telegram does"
+    },
+    "ru": {
+      "name": "Пост в Telegram от лица пользователя",
+      "description": "Пресет для постов, сделанных от лица пользователя Telegram: с предупреждениями о лимитах и всеми метриками, настроенными для подсчёта символов так же, как это делает Telegram."
+    }
+  }
+}
