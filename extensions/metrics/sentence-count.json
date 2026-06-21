@@ -1,7 +1,7 @@
 {
   "id": "sentence-count",
-  "name": "Sentence count",
-  "description": "Counts sentences by their terminating punctuation (. ! ?). Consecutive terminators (e.g. \"?!\") count as one sentence.",
+  "name": "Sentences",
+  "description": "Counts the number of sentences in a note.",
   "author": "pan4ratte",
   "updated": "2026-06-20",
   "type": "metric",
@@ -12,8 +12,8 @@
   "defaultEnabled": false,
   "i18n": {
     "ru": {
-      "name": "Подсчёт предложений",
-      "description": "Считает предложения по завершающей пунктуации (. ! ?). Несколько подряд (например, «?!») считаются одним предложением.",
+      "name": "Предложения",
+      "description": "Считает количество предложений в заметке.",
       "title": "Предложения",
       "label": "Предложения",
       "hint": "Считает группы завершающей пунктуации (. ! ?)",

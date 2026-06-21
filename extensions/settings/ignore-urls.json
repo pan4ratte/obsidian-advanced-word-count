@@ -1,7 +1,7 @@
 {
   "id": "ignore-urls",
   "name": "Ignore URLs",
-  "description": "Excludes bare http(s) URLs from word and character counts.",
+  "description": "When counting words and characters, excludes bare http(s) links.",
   "author": "pan4ratte",
   "updated": "2026-06-20",
   "type": "setting",
@@ -12,7 +12,7 @@
   "i18n": {
     "ru": {
       "name": "Игнорировать URL",
-      "description": "Исключает «голые» http(s)-ссылки из подсчёта слов и символов.",
+      "description": "При подсчёте слов и символов, исключает «голые» http(s)-ссылки.",
       "title": "Игнорировать URL",
       "label": "Игнорировать URL",
       "hint": "Выкл.: «голые» URL подсчитываются\nВкл.: «голые» http(s)-URL игнорируются"

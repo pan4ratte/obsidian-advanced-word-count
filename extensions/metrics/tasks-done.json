@@ -1,7 +1,7 @@
 {
   "id": "tasks-done",
-  "name": "Tasks done",
-  "description": "Counts completed task checkboxes (- [x] or - [X]).",
+  "name": "Completed tasks",
+  "description": "Counts only completed task checkboxes (- [x] or - [X]).",
   "author": "pan4ratte",
   "updated": "2026-06-20",
   "type": "metric",
@@ -13,7 +13,7 @@
   "i18n": {
     "ru": {
       "name": "Выполненные задачи",
-      "description": "Считает выполненные чекбоксы задач (- [x] или - [X]).",
+      "description": "Считает только чекбоксы выполненных задач (- [x] или - [X]).",
       "title": "Выполненные задачи",
       "label": "Выполненные задачи",
       "hint": "Считает отмеченные чекбоксы задач",

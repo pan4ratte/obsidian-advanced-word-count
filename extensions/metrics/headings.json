@@ -1,7 +1,7 @@
 {
   "id": "headings",
-  "name": "Heading count",
-  "description": "Counts Markdown headings (lines starting with # to ######).",
+  "name": "Headings",
+  "description": "Counts the number of Markdown headings (# … ######) in a note.",
   "author": "pan4ratte",
   "updated": "2026-06-20",
   "type": "metric",
@@ -12,8 +12,8 @@
   "defaultEnabled": false,
   "i18n": {
     "ru": {
-      "name": "Подсчёт заголовков",
-      "description": "Считает Markdown-заголовки (строки, начинающиеся с # … ######).",
+      "name": "Заголовки",
+      "description": "Считает количество Markdown-заголовков (# … ######) в заметке.",
       "title": "Заголовки",
       "label": "Заголовки",
       "hint": "Считает Markdown-заголовки (# … ######)",

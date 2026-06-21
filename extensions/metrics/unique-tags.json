@@ -1,7 +1,7 @@
 {
   "id": "unique-tags",
-  "name": "Distinct tags",
-  "description": "Counts how many *different* #tags appear, ignoring repeats and purely numeric tags. Demonstrates the \"captureUnique\" mode with an exclude filter.",
+  "name": "Unique tags",
+  "description": "Counts the number of unique #tags in a note, ignoring repeats.",
   "author": "pan4ratte",
   "updated": "2026-06-20",
   "type": "metric",
@@ -13,7 +13,7 @@
   "i18n": {
     "ru": {
       "name": "Уникальные теги",
-      "description": "Считает, сколько разных #тегов встречается, игнорируя повторы и чисто числовые теги.",
+      "description": "Считает количество уникальных #тегов в заметке, игнорируя повторы.",
       "title": "Уникальные теги",
       "label": "Уникальные теги",
       "hint": "Считает разные #теги (повторы — один раз, числовые игнорируются)",

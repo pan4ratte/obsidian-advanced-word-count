@@ -1,7 +1,7 @@
 {
   "id": "ignore-code",
   "name": "Ignore code",
-  "description": "Excludes fenced code blocks (``` … ```) and inline code (`…`) from word and character counts.",
+  "description": "When counting words and characters, excludes block and inline code.",
   "author": "pan4ratte",
   "updated": "2026-06-20",
   "type": "setting",
@@ -12,7 +12,7 @@
   "i18n": {
     "ru": {
       "name": "Игнорировать код",
-      "description": "Исключает блоки кода (``` … ```) и строчный код (`…`) из подсчёта слов и символов.",
+      "description": "При подсчёте слов и символов, исключает блочный и строчный код.",
       "title": "Игнорировать код",
       "label": "Игнорировать код",
       "hint": "Выкл.: строчный код `…` и блоки ``` … ``` подсчитываются\nВкл.: код игнорируется"

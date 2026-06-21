@@ -1,7 +1,7 @@
 {
   "id": "ignore-math",
   "name": "Ignore math",
-  "description": "Excludes LaTeX math from counts — block $$…$$ and inline $…$ — using Pandoc's rules so currency like $5 and $20,000 is left alone.",
+  "description": "When counting words and characters, excludes LaTeX math — block $$…$$ and inline $…$.",
   "author": "pan4ratte",
   "updated": "2026-06-20",
   "type": "setting",
@@ -12,7 +12,7 @@
   "i18n": {
     "ru": {
       "name": "Игнорировать формулы",
-      "description": "Исключает формулы LaTeX из подсчёта — блочные $$…$$ и строчные $…$ — по правилам Pandoc, так что валюта вроде $5 и $20,000 сохраняется.",
+      "description": "При подсчёте слов и символов, исключает формулы LaTeX — блочные $$…$$ и строчные $…$.",
       "title": "Игнорировать формулы",
       "label": "Игнорировать формулы",
       "hint": "Выкл.: формулы вида $x+y$ и $$…$$ подсчитываются\nВкл.: формулы игнорируются (валюта вроде $5 сохраняется)"

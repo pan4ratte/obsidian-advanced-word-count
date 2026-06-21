@@ -1,7 +1,7 @@
 {
   "id": "citations-per-page",
-  "name": "Citations per page",
-  "description": "Average number of citations per page (total @citekeys ÷ pages). Uses the built-in citekey and page metrics.",
+  "name": "Average citations per page",
+  "description": "Calculates the average number of citations per page.",
   "author": "pan4ratte",
   "updated": "2026-06-20",
   "type": "metric",
@@ -12,8 +12,8 @@
   "defaultEnabled": false,
   "i18n": {
     "ru": {
-      "name": "Цитат на страницу",
-      "description": "Среднее число цитат на страницу (всего @ключей ÷ страницы).",
+      "name": "Среднее количество цитирований на страницу",
+      "description": "Рассчитывает среднее число цитат на страницу.",
       "title": "Цитат/стр.",
       "label": "Цитат на страницу",
       "hint": "Всего ключей цитирования, делённое на число страниц",

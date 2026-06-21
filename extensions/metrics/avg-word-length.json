@@ -1,7 +1,7 @@
 {
   "id": "avg-word-length",
   "name": "Average word length",
-  "description": "Average number of characters per word (characters without spaces ÷ words). Demonstrates the \"ratio\" mode using two built-in metrics.",
+  "description": "Calculates the average number of characters per word in a note.",
   "author": "pan4ratte",
   "updated": "2026-06-20",
   "type": "metric",
@@ -12,8 +12,8 @@
   "defaultEnabled": false,
   "i18n": {
     "ru": {
-      "name": "Средняя длина слова",
-      "description": "Среднее число символов в слове (символы без пробелов ÷ слова).",
+      "name": "Средняя длина слов",
+      "description": "Рассчитывает среднее число символов в словах в заметке.",
       "title": "Ср. длина слова",
       "label": "Средняя длина слова",
       "hint": "Символы (без пробелов), делённые на число слов",

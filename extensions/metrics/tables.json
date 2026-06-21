@@ -1,7 +1,7 @@
 {
   "id": "tables",
-  "name": "Table count",
-  "description": "Counts complete Markdown tables (a header row followed by a |---|---| delimiter row).",
+  "name": "Tables",
+  "description": "Counts the number of complete Markdown tables (header + delimiter row) in a note.",
   "author": "pan4ratte",
   "updated": "2026-06-20",
   "type": "metric",
@@ -12,8 +12,8 @@
   "defaultEnabled": false,
   "i18n": {
     "ru": {
-      "name": "Подсчёт таблиц",
-      "description": "Считает полные Markdown-таблицы (строка заголовка и строка-разделитель |---|---|).",
+      "name": "Таблицы",
+      "description": "Считает количество полных Markdown-таблиц (заголовок + разделитель) в заметке.",
       "title": "Таблицы",
       "label": "Таблицы",
       "hint": "Считает полные таблицы (заголовок + строка-разделитель)",

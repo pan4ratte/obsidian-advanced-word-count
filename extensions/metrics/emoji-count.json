@@ -1,7 +1,7 @@
 {
   "id": "emoji-count",
-  "name": "Emoji count",
-  "description": "Counts emoji and other pictographic characters in the note.",
+  "name": "Emoji",
+  "description": "Counts the number of emoji and other pictographic characters in a note.",
   "author": "pan4ratte",
   "updated": "2026-06-20",
   "type": "metric",
@@ -12,8 +12,8 @@
   "defaultEnabled": false,
   "i18n": {
     "ru": {
-      "name": "Подсчёт эмодзи",
-      "description": "Считает эмодзи и другие пиктографические символы в заметке.",
+      "name": "Эмодзи",
+      "description": "Считает количество эмодзи и других пиктографических символов в заметке.",
       "title": "Эмодзи",
       "label": "Эмодзи",
       "hint": "Считает эмодзи и пиктографические символы",

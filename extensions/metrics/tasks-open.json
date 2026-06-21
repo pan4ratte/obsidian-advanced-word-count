@@ -1,7 +1,7 @@
 {
   "id": "tasks-open",
-  "name": "Tasks open",
-  "description": "Counts unchecked task checkboxes (- [ ]).",
+  "name": "Incomplete tasks",
+  "description": "Counts only incomplete task checkboxes (- [ ]).",
   "author": "pan4ratte",
   "updated": "2026-06-20",
   "type": "metric",
@@ -13,7 +13,7 @@
   "i18n": {
     "ru": {
       "name": "Невыполненные задачи",
-      "description": "Считает невыполненные чекбоксы задач (- [ ]).",
+      "description": "Считает только чекбоксы невыполненных задач (- [ ]).",
       "title": "Невыполненные задачи",
       "label": "Невыполненные задачи",
       "hint": "Считает неотмеченные чекбоксы задач",

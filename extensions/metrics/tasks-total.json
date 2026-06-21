@@ -1,7 +1,7 @@
 {
   "id": "tasks-total",
-  "name": "Tasks (total)",
-  "description": "Counts all task checkboxes, checked or unchecked (- [ ], - [x]).",
+  "name": "Tasks (all)",
+  "description": "Counts all task checkboxes — checked and unchecked.",
   "author": "pan4ratte",
   "updated": "2026-06-20",
   "type": "metric",
@@ -12,8 +12,8 @@
   "defaultEnabled": false,
   "i18n": {
     "ru": {
-      "name": "Задачи (всего)",
-      "description": "Считает все чекбоксы задач — отмеченные и неотмеченные (- [ ], - [x]).",
+      "name": "Задачи (все)",
+      "description": "Считает все чекбоксы задач — отмеченные и неотмеченные.",
       "title": "Задачи (всего)",
       "label": "Задачи (всего)",
       "hint": "Считает все чекбоксы задач",

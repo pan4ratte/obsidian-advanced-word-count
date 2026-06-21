@@ -1,7 +1,7 @@
 {
   "id": "distinct-citekeys",
-  "name": "Distinct citekeys",
-  "description": "Counts how many different @citekeys are cited, ignoring repeats. Strips code, wikilinks and Markdown links first, and ignores email addresses (an @ inside a word).",
+  "name": "Unique citekeys",
+  "description": "Counts the number of unique @citekeys in a note.",
   "author": "pan4ratte",
   "updated": "2026-06-20",
   "type": "metric",
@@ -13,7 +13,7 @@
   "i18n": {
     "ru": {
       "name": "Уникальные ключи цитирования",
-      "description": "Считает, сколько разных @ключей цитирования упомянуто, игнорируя повторы. Сначала вырезает код, викиссылки и Markdown-ссылки и игнорирует адреса эл. почты (@ внутри слова).",
+      "description": "Считает количество уникальных @ключей цитирования в замекте.",
       "title": "Уникальные цитаты",
       "label": "Уникальные цитаты",
       "hint": "Считает уникальные @ключи (повторы — один раз; эл. почта игнорируется)",
@@ -24,10 +24,22 @@
     "mode": "captureUnique",
     "source": "raw",
     "strip": [
-      { "pattern": "```[\\s\\S]*?```", "flags": "g" },
-      { "pattern": "`[^`]*`", "flags": "g" },
-      { "pattern": "\\[\\[[^\\]]*\\]\\]", "flags": "g" },
-      { "pattern": "\\[[^\\]]*\\]\\([^)]*\\)", "flags": "g" }
+      {
+        "pattern": "```[\\s\\S]*?```",
+        "flags": "g"
+      },
+      {
+        "pattern": "`[^`]*`",
+        "flags": "g"
+      },
+      {
+        "pattern": "\\[\\[[^\\]]*\\]\\]",
+        "flags": "g"
+      },
+      {
+        "pattern": "\\[[^\\]]*\\]\\([^)]*\\)",
+        "flags": "g"
+      }
     ],
     "pattern": "(?<![\\p{L}\\p{N}])@([\\p{L}][\\p{L}\\p{N}_:-]*)",
     "flags": "gu"

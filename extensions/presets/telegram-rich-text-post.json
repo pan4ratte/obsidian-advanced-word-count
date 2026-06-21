@@ -1,7 +1,7 @@
 {
   "id": "telegram-rich-text-post",
   "name": "Telegram rich-text post",
-  "description": "Preset for rich-text posts in Telegram: with limit warnings and all metrics set up to count symbols like Telegram does.",
+  "description": "Preset for rich-text posts in Telegram: with limit warnings and all metrics set up to count characters the way Telegram does.",
   "author": "pan4ratte",
   "type": "preset",
   "updated": "2026-06-21",

@@ -1,7 +1,7 @@
 {
   "id": "ignore-highlights",
   "name": "Ignore highlights",
-  "description": "Removes ==highlighted== spans before counting so highlighted text is excluded from word and character counts.",
+  "description": "When counting words and characters, ignores ==highlighted== spans.",
   "author": "pan4ratte",
   "updated": "2026-06-20",
   "type": "setting",
@@ -12,7 +12,7 @@
   "i18n": {
     "ru": {
       "name": "Игнорировать выделения",
-      "description": "Удаляет ==выделенные== фрагменты перед подсчётом, исключая выделенный текст из подсчёта слов и символов.",
+      "description": "При подсчёте слов и символов, игнорирует ==выделенные== фрагменты.",
       "title": "Игнорировать выделения",
       "label": "Игнорировать выделения",
       "hint": "Выкл.: выделенный ==текст== подсчитывается\nВкл.: выделенный текст игнорируется"

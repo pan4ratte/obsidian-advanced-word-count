@@ -1,7 +1,7 @@
 {
   "id": "words-per-sentence",
-  "name": "Words per sentence",
-  "description": "Average number of words per sentence (words ÷ sentences). The \"Sentence count\" extension (sentence-count) is installed automatically as a dependency and supplies the denominator — you don't need to connect it to the preset.",
+  "name": "Average words per sentence",
+  "description": "Calculates the average number of words per sentence in a note.",
   "author": "pan4ratte",
   "updated": "2026-06-21",
   "type": "metric",
@@ -12,15 +12,17 @@
   "defaultEnabled": false,
   "i18n": {
     "ru": {
-      "name": "Слов в предложении",
-      "description": "Среднее число слов в предложении (слова ÷ предложения). Расширение «Подсчёт предложений» устанавливается автоматически как зависимость и задаёт знаменатель — подключать его к пресету не нужно.",
+      "name": "Среднее количество слов в предложениях",
+      "description": "Рассчитывает среднее число слов в предложениях в заметке.",
       "title": "Слов/предл.",
       "label": "Слов в предложении",
       "hint": "Слова, делённые на число предложений. «Подсчёт предложений» устанавливается автоматически, подключать не нужно.",
       "statusLabel": "Слов/предл."
     }
   },
-  "dependencies": ["sentence-count"],
+  "dependencies": [
+    "sentence-count"
+  ],
   "count": {
     "mode": "ratio",
     "numerator": "wordsWithSpaces",
