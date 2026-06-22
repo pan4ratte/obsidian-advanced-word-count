@@ -425,8 +425,25 @@ npm run docs:catalogue
 `npm test` includes a guard that fails if the tables are out of sync, so commit the
 regenerated READMEs alongside your change.
 
-**Try it live (optional).** There's no settings UI for the catalogue source, but you
-can point the plugin at your fork by editing the vault's
+**Try it live — the Local filter (easiest, recommended).** The quickest way to test a
+**metric** or **setting** you're writing is to load its JSON straight from disk — no
+fork, push or network needed. Open **Browse extensions** and select the **Local**
+filter chip. It pins a *"Test your community extension locally"* card with a
+folder-open button: click it, pick your `<id>.json` file, and the plugin validates and
+installs it just like a downloaded extension. From there it behaves like any installed
+extension — connect it to a preset and watch it count against real notes.
+
+- Each extension you add this way is listed under the **Local** filter with a **trash**
+  button, so you can remove it when you're done.
+- To iterate, edit the JSON and pick the file again — re-installing replaces the
+  previous copy (matched by `id`).
+- The Local filter is **desktop-only** (it's a developer feature) and accepts **metric**
+  and **setting** extensions only. To test a **preset** extension — or the full
+  catalogue install flow, including dependency resolution and the browse cards — use
+  the repo-URL method below.
+
+**Try it live — point at your fork (full catalogue flow).** There's no settings UI for
+the catalogue source, but you can point the plugin at your fork by editing the vault's
 `.obsidian/plugins/obsidian-advanced-word-count/data.json` and setting:
 
 ```json
