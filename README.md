@@ -109,7 +109,7 @@ The official catalogue currently includes:
 | Telegram user post | Preset for posts made as a Telegram user: with limit warnings and all metrics set up to count characters the way Telegram does. |
 | Telegram rich-text post | Preset for rich-text posts in Telegram: with limit warnings and all metrics set up to count characters the way Telegram does. |
 
-Want to build your own? See the [extension contributor guide](https://github.com/pan4ratte/obsidian-advanced-word-count/blob/main/extensions/README.md).
+Want to build your own? See the [extension contributor guide](https://github.com/pan4ratte/obsidian-advanced-word-count/blob/main/CONTRIBUTING.md).
 
 
 ## Installation
