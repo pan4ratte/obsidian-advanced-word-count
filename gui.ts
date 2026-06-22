@@ -1058,11 +1058,17 @@ export class ExtensionBrowserModal extends Modal {
   private chipsEl: HTMLElement;
   private listEl: HTMLElement;
   private state: "loading" | "ready" | "error" = "loading";
+  // Set whenever an install/uninstall changes the registry. The settings page is
+  // re-rendered again on close (see onClose): calling display() while this modal is
+  // still on top doesn't reliably refresh the dropdowns behind it.
+  private dirty = false;
 
   constructor(plugin: WordCountPlugin, onChanged: () => void) {
     super(plugin.app);
     this.plugin = plugin;
-    this.onChanged = onChanged;
+    // Wrap the page-refresh callback so every install/uninstall also flags the modal
+    // dirty; onClose then re-renders the settings page once this modal is gone.
+    this.onChanged = () => { this.dirty = true; onChanged(); };
   }
 
   onOpen() {
@@ -1382,5 +1388,9 @@ export class ExtensionBrowserModal extends Modal {
 
   onClose() {
     this.contentEl.empty();
+    // Re-render the settings page now the modal is closed (and the settings tab is
+    // front-most again), so freshly installed extensions — local or from the
+    // catalogue — reliably show up in each preset's connect dropdowns.
+    if (this.dirty) this.onChanged();
   }
 }
