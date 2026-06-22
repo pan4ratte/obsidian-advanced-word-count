@@ -1,5 +1,23 @@
 # Changelog
 
+## 4.1.0
+
+### New features
+
+* **New metric: HTTP(S) links.** A community metric that counts every `http(s)` link in a note, wherever it appears — bare, inside a Markdown link, in angle brackets or any other brackets.
+* **New preset: Scientific article.** A ready-made preset with the basic metrics and a page goal for academic writing, including the *Average citations per page* metric.
+* **Test extensions locally.** A new **Local** filter in the extensions store lets extension developers load a metric or setting straight from a JSON file on disk — no fork or upload needed — then connect it to a preset and test it against real notes. Locally added extensions are listed under the filter and can be removed at any time.
+
+### Enhancements and bug fixes
+
+* **Embeds metric updated to count HTML embeds.** Now it also recognises HTML embedded content — `<img>`, `<iframe>`, `<embed>`, `<object>`, `<video>` and `<audio>` — alongside the Obsidian wiki (`![[…]]`) and Markdown image (`![](…)`) forms.
+* **Store search matches translations.** Searching the extensions store now also matches localized names and descriptions, so you can find extensions by the text shown in your Obsidian language.
+
+### Other
+
+* Contribution guide updated with instructions for testing extensions live, including the new Local filter.
+
+
 ## 4.0.0
 
 ### Major update: Community extensions store
