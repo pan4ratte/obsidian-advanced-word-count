@@ -627,6 +627,14 @@
   color: var(--text-on-accent);
 }
 
+/* The "(N)" match count after each filter label — slightly dimmed, inherits the
+   chip's active/hover colour. The margin gives the gap (a text-node space would be
+   collapsed away). */
+.wcp-ext-filter-count {
+  margin-left: 0.35em;
+  opacity: 0.65;
+}
+
 .wcp-ext-list {
   display: flex;
   flex-direction: column;

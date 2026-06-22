@@ -1076,6 +1076,7 @@ export class ExtensionBrowserModal extends Modal {
     search.placeholder = t.extSearchPlaceholder;
     search.addEventListener("input", () => {
       this.filter = search.value.trim().toLowerCase();
+      this.renderChips();
       this.renderList();
     });
 
@@ -1087,9 +1088,30 @@ export class ExtensionBrowserModal extends Modal {
     void this.load();
   }
 
-  /** Type filter chips: All / Metrics / Advanced settings / Presets. */
+  /** Whether an entry matches the current search text (type filter aside). */
+  private matchesSearch(e: ExtensionIndexEntry): boolean {
+    const f = this.filter;
+    if (!f) return true;
+    return (
+      e.storeName.toLowerCase().includes(f) ||
+      e.description.toLowerCase().includes(f) ||
+      e.author.toLowerCase().includes(f) ||
+      e.id.toLowerCase().includes(f)
+    );
+  }
+
+  /**
+   * Type filter chips: All / Metrics / Advanced settings / Presets. Each chip shows
+   * how many catalogue entries it would yield for the current search — e.g.
+   * "Metrics (12)" — so the count is independent of the selected type and updates as
+   * you type. Counts are only shown once the catalogue has loaded.
+   */
   private renderChips() {
     this.chipsEl.empty();
+    const ready = this.state === "ready";
+    const matched = ready ? this.entries.filter((e) => this.matchesSearch(e)) : [];
+    const countOf = (value: ExtTypeFilter) =>
+      value === "all" ? matched.length : matched.filter((e) => e.type === value).length;
     const chips: { value: ExtTypeFilter; label: string }[] = [
       { value: "all", label: t.extFilterAll },
       { value: "metric", label: t.extFilterMetrics },
@@ -1097,7 +1119,9 @@ export class ExtensionBrowserModal extends Modal {
       { value: "preset", label: t.extFilterPresets },
     ];
     for (const { value, label } of chips) {
-      const chip = this.chipsEl.createEl("button", { text: label, cls: "wcp-ext-filter" });
+      const chip = this.chipsEl.createEl("button", { cls: "wcp-ext-filter" });
+      chip.appendText(label);
+      if (ready) chip.createSpan({ text: `(${countOf(value)})`, cls: "wcp-ext-filter-count" });
       if (this.typeFilter === value) chip.addClass("is-active");
       chip.addEventListener("click", () => {
         this.typeFilter = value;
@@ -1117,6 +1141,7 @@ export class ExtensionBrowserModal extends Modal {
     } catch {
       this.state = "error";
     }
+    this.renderChips(); // counts become available once the catalogue is loaded
     this.renderList();
   }
 
@@ -1140,17 +1165,10 @@ export class ExtensionBrowserModal extends Modal {
       return;
     }
 
-    const f = this.filter;
-    const matchesSearch = (e: ExtensionIndexEntry) =>
-      !f ||
-      e.storeName.toLowerCase().includes(f) ||
-      e.description.toLowerCase().includes(f) ||
-      e.author.toLowerCase().includes(f) ||
-      e.id.toLowerCase().includes(f);
     const matchesType = (e: ExtensionIndexEntry) =>
       this.typeFilter === "all" || e.type === this.typeFilter;
 
-    const shown = this.entries.filter((e) => matchesSearch(e) && matchesType(e));
+    const shown = this.entries.filter((e) => this.matchesSearch(e) && matchesType(e));
     if (shown.length === 0) {
       list.createEl("p", { text: t.extNoResults, cls: "wcp-ext-status" });
       return;
