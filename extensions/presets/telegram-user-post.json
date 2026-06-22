@@ -1,6 +1,6 @@
 {
   "id": "telegram-user-post",
-  "name": "Telegram user post",
+  "storeName": "Telegram user post",
   "description": "Preset for posts made as a Telegram user: with limit warnings and all metrics set up to count characters the way Telegram does.",
   "author": "pan4ratte",
   "type": "preset",
@@ -53,11 +53,11 @@
   },
   "i18n": {
     "en": {
-      "name": "Telegram user post",
+      "storeName": "Telegram user post",
       "description": "Preset for posts, made by user in Telegram: with limit warnings and all metrics set up to count symbols like Telegram does"
     },
     "ru": {
-      "name": "Пост в Telegram от лица пользователя",
+      "storeName": "Пост в Telegram от лица пользователя",
       "description": "Пресет для постов, сделанных от лица пользователя Telegram: с предупреждениями о лимитах и всеми метриками, настроенными для подсчёта символов так же, как это делает Telegram."
     }
   }

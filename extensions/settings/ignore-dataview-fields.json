@@ -1,20 +1,18 @@
 {
   "id": "ignore-dataview-fields",
-  "name": "Ignore Dataview fields",
+  "storeName": "Ignore Dataview fields",
   "description": "When counting words and characters, excludes inline Dataview fields — [key:: value] and (key:: value).",
   "author": "pan4ratte",
   "updated": "2026-06-20",
   "type": "setting",
-  "label": "Ignore Dataview fields",
-  "title": "Ignore Dataview fields",
+  "toggleLabel": "Ignore Dataview fields",
   "hint": "Off: inline [key:: value] fields are counted\nOn: inline Dataview fields are ignored",
   "defaultEnabled": false,
   "i18n": {
     "ru": {
-      "name": "Игнорировать поля Dataview",
+      "storeName": "Игнорировать поля Dataview",
       "description": "При подсчёте слов и символов, исключает строчные поля Dataview — [key:: value] и (key:: value).",
-      "title": "Игнорировать поля Dataview",
-      "label": "Игнорировать поля Dataview",
+      "toggleLabel": "Игнорировать поля Dataview",
       "hint": "Выкл.: строчные поля [key:: value] подсчитываются\nВкл.: строчные поля Dataview игнорируются"
     }
   },

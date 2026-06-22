@@ -22,31 +22,29 @@ import { defaultPreset, Preset } from "../metrics";
 
 const metricExt = (overrides: Partial<MetricExtension> = {}): MetricExtension => ({
   id: "sentence-count",
-  name: "Sentence count",
+  storeName: "Sentence count",
   description: "Counts sentences",
   author: "tester",
   type: "metric",
-  label: "Sentences",
-  title: "Sentences",
+  toggleLabel: "Sentences",
   count: { pattern: "[.!?]+(?=\\s|$)", flags: "g", source: "preprocessed" },
   ...overrides,
 });
 
 const settingExt = (overrides: Partial<SettingExtension> = {}): SettingExtension => ({
   id: "ignore-highlights",
-  name: "Ignore highlights",
+  storeName: "Ignore highlights",
   description: "Removes highlights",
   author: "tester",
   type: "setting",
-  label: "Ignore highlights",
-  title: "Ignore highlights",
+  toggleLabel: "Ignore highlights",
   transform: { pattern: "==[^=]+==", flags: "g", replacement: "" },
   ...overrides,
 });
 
 const presetExt = (overrides: Partial<PresetExtension> = {}): PresetExtension => ({
   id: "academic-paper",
-  name: "Academic paper",
+  storeName: "Academic paper",
   description: "A preset for academic writing",
   author: "tester",
   type: "preset",
@@ -103,8 +101,8 @@ describe("validateExtension", () => {
     expect(validateExtension(null).ok).toBe(false);
     expect(validateExtension("nope").ok).toBe(false);
     expect(validateExtension({ ...metricExt(), id: "" }).ok).toBe(false);
-    expect(validateExtension({ ...metricExt(), label: undefined }).ok).toBe(false);
-    expect(validateExtension({ ...metricExt(), title: undefined }).ok).toBe(false); // title is mandatory
+    expect(validateExtension({ ...metricExt(), toggleLabel: undefined }).ok).toBe(false); // toggleLabel is mandatory
+    expect(validateExtension({ ...metricExt(), storeName: undefined }).ok).toBe(false);
   });
 
   it("accepts an optional updated date", () => {
@@ -144,7 +142,7 @@ describe("validateExtension", () => {
     expect(validateExtension({ ...metricExt(), dependencies: ["wordsWithSpaces"] }).ok).toBe(false); // camelCase built-in
   });
 
-  it("accepts a well-formed preset extension (no label/title required)", () => {
+  it("accepts a well-formed preset extension (no toggleLabel required)", () => {
     expect(validateExtension(presetExt()).ok).toBe(true);
     // A preset may carry dependencies (the extensions it uses).
     expect(validateExtension({ ...presetExt(), dependencies: ["distinct-citekeys"] }).ok).toBe(true);
@@ -172,7 +170,7 @@ describe("validateExtension", () => {
 describe("resolveInstallOrder", () => {
   // A minimal catalogue entry; only id/dependencies matter to the resolver.
   const entry = (id: string, dependencies?: string[]): ExtensionIndexEntry => ({
-    id, name: id, description: "", author: "t", type: "metric", dependencies,
+    id, storeName: id, description: "", author: "t", type: "metric", dependencies,
   });
   const ids = (es: ExtensionIndexEntry[]) => es.map((e) => e.id);
   const none = () => false;
@@ -232,18 +230,18 @@ describe("findDependents", () => {
 
 describe("materializePreset", () => {
   it("merges the payload over defaults, with a fresh id and name fallback", () => {
-    const ext = presetExt({ name: "Paper", preset: { showCitekeys: true, wordsPerPage: 300 } });
+    const ext = presetExt({ storeName: "Paper", preset: { showCitekeys: true, wordsPerPage: 300 } });
     const p = materializePreset(ext);
     expect(p.showCitekeys).toBe(true);        // payload override
     expect(p.wordsPerPage).toBe(300);         // payload override
     expect(p.showWordsWithSpaces).toBe(true); // default preserved
-    expect(p.name).toBe("Paper");             // payload has no name → ext.name
+    expect(p.name).toBe("Paper");             // payload has no name → ext.storeName
     expect(typeof p.id).toBe("string");
     expect(p.id.length).toBeGreaterThan(0);
   });
 
   it("prefers a name embedded in the payload", () => {
-    expect(materializePreset(presetExt({ name: "Ext", preset: { name: "Payload" } })).name).toBe("Payload");
+    expect(materializePreset(presetExt({ storeName: "Ext", preset: { name: "Payload" } })).name).toBe("Payload");
   });
 
   it("always assigns a new id, ignoring any id carried in the payload", () => {
@@ -282,7 +280,7 @@ describe("presetExtensionFrom", () => {
     const ext = presetExtensionFrom(preset, ["distinct-citekeys"], "2026-06-21", meta());
     expect(ext.type).toBe("preset");
     expect(ext.id).toBe("academic-paper"); // slugified from meta.name
-    expect(ext.name).toBe("Academic Paper!");
+    expect(ext.storeName).toBe("Academic Paper!");
     expect(ext.author).toBe("me");
     expect(ext.description).toBe("A preset");
     expect(ext.dependencies).toEqual(["distinct-citekeys"]);
@@ -299,7 +297,7 @@ describe("presetExtensionFrom", () => {
 
   it("omits i18n when none is supplied, and carries it through when given", () => {
     expect(presetExtensionFrom(defaultPreset(), [], "2026-06-21", meta()).i18n).toBeUndefined();
-    const i18n = { ru: { name: "Научная статья", description: "Описание" } };
+    const i18n = { ru: { storeName: "Научная статья", description: "Описание" } };
     expect(presetExtensionFrom(defaultPreset(), [], "2026-06-21", meta({ i18n })).i18n).toBe(i18n);
   });
 });
@@ -309,7 +307,7 @@ describe("presetIndexEntryFrom", () => {
     ({ name: "Academic Paper!", author: "me", description: "A preset", ...o });
 
   it("derives the catalogue entry: subfolder path, shared meta, no payload", () => {
-    const i18n = { ru: { name: "Научная статья" } };
+    const i18n = { ru: { storeName: "Научная статья" } };
     const ext = presetExtensionFrom(defaultPreset(), ["distinct-citekeys"], "2026-06-21", meta({ i18n }));
     const entry = presetIndexEntryFrom(ext);
     expect(entry).toMatchObject({
@@ -487,7 +485,7 @@ describe("ExtensionRegistry count modes", () => {
 // ── Ratio mode ──────────────────────────────────────────────────────────────────
 
 describe("ratio mode", () => {
-  const ratioExt = (count: MetricExtension["count"]) => metricExt({ id: "r", label: "R", count });
+  const ratioExt = (count: MetricExtension["count"]) => metricExt({ id: "r", toggleLabel: "R", count });
 
   it("validates operands and decimals", () => {
     expect(validateExtension(ratioExt({ mode: "ratio", numerator: "a", denominator: "b" })).ok).toBe(true);
@@ -508,8 +506,8 @@ describe("ratio mode", () => {
   it("computeRatios divides, rounds, and guards zero/missing operands", () => {
     const reg = new ExtensionRegistry();
     reg.set([
-      metricExt({ id: "avg", label: "Avg", count: { mode: "ratio", numerator: "chars", denominator: "words", decimals: 1 } }),
-      metricExt({ id: "zero", label: "Zero", count: { mode: "ratio", numerator: "chars", denominator: "missing" } }),
+      metricExt({ id: "avg", toggleLabel: "Avg", count: { mode: "ratio", numerator: "chars", denominator: "words", decimals: 1 } }),
+      metricExt({ id: "zero", toggleLabel: "Zero", count: { mode: "ratio", numerator: "chars", denominator: "missing" } }),
     ]);
     const out = reg.computeRatios(withEnabled(["avg", "zero"]), { chars: 47, words: 10 });
     expect(out.avg).toBe(4.7);
@@ -529,11 +527,11 @@ describe("ratio operands from installed dependencies", () => {
   // sentence-count is an ordinary split metric; words-per-sentence is a ratio that
   // divides the built-in word count by it and declares it as a dependency.
   const sentences = metricExt({
-    id: "sentence-count", label: "Sentences",
+    id: "sentence-count", toggleLabel: "Sentences",
     count: { mode: "split", source: "raw", separator: "[.!?]+(?=\\s|$)" },
   });
   const wps = metricExt({
-    id: "words-per-sentence", label: "Words/sentence", dependencies: ["sentence-count"],
+    id: "words-per-sentence", toggleLabel: "Words per sentence", dependencies: ["sentence-count"],
     count: { mode: "ratio", numerator: "wordsWithSpaces", denominator: "sentence-count", decimals: 1 },
   });
   const text = "One two three. Four five."; // two sentences
@@ -562,7 +560,7 @@ describe("ratio operands from installed dependencies", () => {
 
   it("computes an operand even if the dependencies field is omitted (operands are inspected too)", () => {
     const wpsNoDep = metricExt({
-      id: "words-per-sentence", label: "Words/sentence",
+      id: "words-per-sentence", toggleLabel: "Words per sentence",
       count: { mode: "ratio", numerator: "wordsWithSpaces", denominator: "sentence-count", decimals: 1 },
     });
     const reg = new ExtensionRegistry();
@@ -581,18 +579,18 @@ describe("ratio operands from installed dependencies", () => {
 // ── Localization ────────────────────────────────────────────────────────────────
 
 describe("localization", () => {
-  const i18n = { ru: { label: "Заголовки", hint: "Считает заголовки" }, "zh-tw": { label: "標題" } };
+  const i18n = { ru: { toggleLabel: "Заголовки", hint: "Считает заголовки" }, "zh-tw": { toggleLabel: "標題" } };
 
   it("localize picks the most specific tag, then falls back to base", () => {
-    expect(localize("Headings", i18n, "label", ["ru"])).toBe("Заголовки");
-    expect(localize("Headings", i18n, "label", ["en"])).toBe("Headings"); // no ru → base
+    expect(localize("Headings", i18n, "toggleLabel", ["ru"])).toBe("Заголовки");
+    expect(localize("Headings", i18n, "toggleLabel", ["en"])).toBe("Headings"); // no ru → base
     expect(localize("Counts…", i18n, "hint", ["zh-tw", "zh"])).toBe("Counts…"); // zh-tw lacks hint → base
-    expect(localize("Headings", i18n, "label", ["zh-tw", "zh"])).toBe("標題"); // full tag before base
-    expect(localize("Headings", undefined, "label", ["ru"])).toBe("Headings"); // no i18n → base
+    expect(localize("Headings", i18n, "toggleLabel", ["zh-tw", "zh"])).toBe("標題"); // full tag before base
+    expect(localize("Headings", undefined, "toggleLabel", ["ru"])).toBe("Headings"); // no i18n → base
   });
 
   it("rejects i18n whose field values aren't strings", () => {
-    const m = metricExt({ i18n: { ru: { label: 5 } } as never });
+    const m = metricExt({ i18n: { ru: { toggleLabel: 5 } } as never });
     expect(validateExtension(m).ok).toBe(false);
   });
 
@@ -600,9 +598,9 @@ describe("localization", () => {
     const reg = new ExtensionRegistry();
     reg.set([
       metricExt({
-        id: "headings", label: "Headings", title: "Headings", statusLabel: "Headings",
+        id: "headings", toggleLabel: "Headings", statusBarLabel: "Headings",
         count: { pattern: "^#", flags: "gm" },
-        i18n: { ru: { label: "Заголовки", title: "Заголовки", statusLabel: "Заголовков" } },
+        i18n: { ru: { toggleLabel: "Заголовки", statusBarLabel: "Заголовков" } },
       }),
     ]);
     const preset = defaultPreset({ extMetrics: { headings: true } });
@@ -611,7 +609,7 @@ describe("localization", () => {
     const row = reg.metricRows(preset, { headings: 3 })[0];
     expect(row.label).toBe("Заголовки");
     expect(row.statusText).toBe("Заголовков: 3");
-    expect(reg.loc({ ...metricExt(), i18n: { ru: { title: "Заголовки" } }, title: "Headings" }, "title")).toBe("Заголовки");
+    expect(reg.loc({ ...metricExt(), i18n: { ru: { toggleLabel: "Заголовки" } }, toggleLabel: "Headings" }, "toggleLabel")).toBe("Заголовки");
 
     reg.setLocale(["en"]);
     expect(reg.metricRows(preset, { headings: 3 })[0].label).toBe("Headings");

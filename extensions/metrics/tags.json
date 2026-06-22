@@ -1,23 +1,21 @@
 {
   "id": "tags",
-  "name": "Tags",
+  "storeName": "Tags",
   "description": "Counts the number of #tags in a note.",
   "author": "pan4ratte",
   "updated": "2026-06-20",
   "type": "metric",
-  "label": "Tags",
-  "title": "Tags",
+  "toggleLabel": "Tags",
   "hint": "Counts #tags (numeric-only tags ignored)",
-  "statusLabel": "Tags",
+  "statusBarLabel": "Tags",
   "defaultEnabled": false,
   "i18n": {
     "ru": {
-      "name": "Теги",
+      "storeName": "Теги",
       "description": "Считает количество #тегов в заметке.",
-      "title": "Теги",
-      "label": "Теги",
+      "toggleLabel": "Теги",
       "hint": "Считает #теги (числовые теги игнорируются)",
-      "statusLabel": "Тегов"
+      "statusBarLabel": "Тегов"
     }
   },
   "count": {

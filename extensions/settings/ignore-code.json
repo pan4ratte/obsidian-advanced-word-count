@@ -1,20 +1,18 @@
 {
   "id": "ignore-code",
-  "name": "Ignore code",
+  "storeName": "Ignore code",
   "description": "When counting words and characters, excludes block and inline code.",
   "author": "pan4ratte",
   "updated": "2026-06-20",
   "type": "setting",
-  "label": "Ignore code",
-  "title": "Ignore code",
+  "toggleLabel": "Ignore code",
   "hint": "Off: inline code `…` and code blocks ``` … ``` are counted\nOn: code is ignored",
   "defaultEnabled": false,
   "i18n": {
     "ru": {
-      "name": "Игнорировать код",
+      "storeName": "Игнорировать код",
       "description": "При подсчёте слов и символов, исключает блочный и строчный код.",
-      "title": "Игнорировать код",
-      "label": "Игнорировать код",
+      "toggleLabel": "Игнорировать код",
       "hint": "Выкл.: строчный код `…` и блоки ``` … ``` подсчитываются\nВкл.: код игнорируется"
     }
   },

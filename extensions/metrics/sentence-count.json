@@ -1,23 +1,21 @@
 {
   "id": "sentence-count",
-  "name": "Sentences",
+  "storeName": "Sentences",
   "description": "Counts the number of sentences in a note.",
   "author": "pan4ratte",
   "updated": "2026-06-20",
   "type": "metric",
-  "label": "Sentences",
-  "title": "Sentences",
+  "toggleLabel": "Sentences",
   "hint": "Counts sentence-ending punctuation runs (. ! ?)",
-  "statusLabel": "Sentences",
+  "statusBarLabel": "Sentences",
   "defaultEnabled": false,
   "i18n": {
     "ru": {
-      "name": "Предложения",
+      "storeName": "Предложения",
       "description": "Считает количество предложений в заметке.",
-      "title": "Предложения",
-      "label": "Предложения",
+      "toggleLabel": "Предложения",
       "hint": "Считает группы завершающей пунктуации (. ! ?)",
-      "statusLabel": "Предложений"
+      "statusBarLabel": "Предложений"
     }
   },
   "count": {

@@ -1,23 +1,21 @@
 {
   "id": "unique-tags",
-  "name": "Unique tags",
+  "storeName": "Unique tags",
   "description": "Counts the number of unique #tags in a note, ignoring repeats.",
   "author": "pan4ratte",
   "updated": "2026-06-20",
   "type": "metric",
-  "label": "Distinct tags",
-  "title": "Distinct tags",
+  "toggleLabel": "Distinct tags",
   "hint": "Counts distinct #tags (repeats counted once, numeric-only tags ignored)",
-  "statusLabel": "Distinct tags",
+  "statusBarLabel": "Distinct tags",
   "defaultEnabled": false,
   "i18n": {
     "ru": {
-      "name": "Уникальные теги",
+      "storeName": "Уникальные теги",
       "description": "Считает количество уникальных #тегов в заметке, игнорируя повторы.",
-      "title": "Уникальные теги",
-      "label": "Уникальные теги",
+      "toggleLabel": "Уникальные теги",
       "hint": "Считает разные #теги (повторы — один раз, числовые игнорируются)",
-      "statusLabel": "Уникальных тегов"
+      "statusBarLabel": "Уникальных тегов"
     }
   },
   "count": {

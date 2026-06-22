@@ -1,20 +1,18 @@
 {
   "id": "ignore-urls",
-  "name": "Ignore URLs",
+  "storeName": "Ignore URLs",
   "description": "When counting words and characters, excludes bare http(s) links.",
   "author": "pan4ratte",
   "updated": "2026-06-20",
   "type": "setting",
-  "label": "Ignore URLs",
-  "title": "Ignore URLs",
+  "toggleLabel": "Ignore URLs",
   "hint": "Off: bare URLs are counted\nOn: bare http(s) URLs are ignored",
   "defaultEnabled": false,
   "i18n": {
     "ru": {
-      "name": "Игнорировать URL",
+      "storeName": "Игнорировать URL",
       "description": "При подсчёте слов и символов, исключает «голые» http(s)-ссылки.",
-      "title": "Игнорировать URL",
-      "label": "Игнорировать URL",
+      "toggleLabel": "Игнорировать URL",
       "hint": "Выкл.: «голые» URL подсчитываются\nВкл.: «голые» http(s)-URL игнорируются"
     }
   },

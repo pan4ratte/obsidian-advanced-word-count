@@ -303,8 +303,8 @@ describe("metric ordering", () => {
     const reg = new ExtensionRegistry();
     reg.set([
       {
-        id: "x-metric", name: "X", description: "", author: "t",
-        type: "metric", label: "X", title: "X", count: { pattern: "x", flags: "g" },
+        id: "x-metric", storeName: "X", description: "", author: "t",
+        type: "metric", toggleLabel: "X", count: { pattern: "x", flags: "g" },
       },
     ]);
     const on = effectiveMetricOrder(defaultPreset({ extMetrics: { "x-metric": true } }), reg);
@@ -322,13 +322,13 @@ describe("extensions integration", () => {
     const reg = new ExtensionRegistry();
     reg.set([
       {
-        id: "ignore-highlights", name: "Ignore highlights", description: "", author: "t",
-        type: "setting", label: "Ignore highlights", title: "Ignore highlights",
+        id: "ignore-highlights", storeName: "Ignore highlights", description: "", author: "t",
+        type: "setting", toggleLabel: "Ignore highlights",
         transform: { pattern: "==[^=]+==", flags: "g", replacement: "" },
       },
       {
-        id: "sentence-count", name: "Sentence count", description: "", author: "t",
-        type: "metric", label: "Sentences", title: "Sentences",
+        id: "sentence-count", storeName: "Sentence count", description: "", author: "t",
+        type: "metric", toggleLabel: "Sentences",
         count: { pattern: "[.!?]+(?=\\s|$)", flags: "g", source: "preprocessed" },
       },
     ]);
@@ -364,8 +364,8 @@ describe("extensions integration", () => {
     const reg = new ExtensionRegistry();
     reg.set([
       {
-        id: "avg-word-length", name: "Avg word length", description: "", author: "t",
-        type: "metric", label: "Avg word length", title: "Avg word length",
+        id: "avg-word-length", storeName: "Avg word length", description: "", author: "t",
+        type: "metric", toggleLabel: "Avg word length",
         count: { mode: "ratio", numerator: "charsWithoutSpaces", denominator: "wordsWithSpaces", decimals: 1 },
       },
     ]);
@@ -378,13 +378,13 @@ describe("extensions integration", () => {
     const reg = new ExtensionRegistry();
     reg.set([
       {
-        id: "sentence-count", name: "Sentence count", description: "", author: "t",
-        type: "metric", label: "Sentences", title: "Sentences",
+        id: "sentence-count", storeName: "Sentence count", description: "", author: "t",
+        type: "metric", toggleLabel: "Sentences",
         count: { mode: "split", source: "preprocessed", separator: "[.!?]+(?=\\s|$)" },
       },
       {
-        id: "words-per-sentence", name: "Words per sentence", description: "", author: "t",
-        type: "metric", label: "Words per sentence", title: "Words per sentence",
+        id: "words-per-sentence", storeName: "Words per sentence", description: "", author: "t",
+        type: "metric", toggleLabel: "Words per sentence",
         count: { mode: "ratio", numerator: "wordsWithSpaces", denominator: "sentence-count", decimals: 1 },
       },
     ]);

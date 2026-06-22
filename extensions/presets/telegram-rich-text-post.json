@@ -1,6 +1,6 @@
 {
   "id": "telegram-rich-text-post",
-  "name": "Telegram rich-text post",
+  "storeName": "Telegram rich-text post",
   "description": "Preset for rich-text posts in Telegram: with limit warnings and all metrics set up to count characters the way Telegram does.",
   "author": "pan4ratte",
   "type": "preset",
@@ -67,11 +67,11 @@
   },
   "i18n": {
     "en": {
-      "name": "Telegram rich-text post",
+      "storeName": "Telegram rich-text post",
       "description": "Preset for rich-text posts in Telegram: with limit warnings and all metrics set up to count symbols like Telegram does"
     },
     "ru": {
-      "name": "Пост в Telegram с rich-text форматированием",
+      "storeName": "Пост в Telegram с rich-text форматированием",
       "description": "Пресет для rich-text постов в Telegram: с предупреждениями о лимитах и всеми метриками, настроенными для подсчёта символов так же, как это делает Telegram."
     }
   }

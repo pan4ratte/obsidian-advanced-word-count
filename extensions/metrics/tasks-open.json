@@ -1,23 +1,21 @@
 {
   "id": "tasks-open",
-  "name": "Incomplete tasks",
+  "storeName": "Incomplete tasks",
   "description": "Counts only incomplete task checkboxes (- [ ]).",
   "author": "pan4ratte",
   "updated": "2026-06-20",
   "type": "metric",
-  "label": "Tasks open",
-  "title": "Tasks open",
+  "toggleLabel": "Tasks open",
   "hint": "Counts unchecked task checkboxes",
-  "statusLabel": "Open",
+  "statusBarLabel": "Open",
   "defaultEnabled": false,
   "i18n": {
     "ru": {
-      "name": "Невыполненные задачи",
+      "storeName": "Невыполненные задачи",
       "description": "Считает только чекбоксы невыполненных задач (- [ ]).",
-      "title": "Невыполненные задачи",
-      "label": "Невыполненные задачи",
+      "toggleLabel": "Невыполненные задачи",
       "hint": "Считает неотмеченные чекбоксы задач",
-      "statusLabel": "Открыто"
+      "statusBarLabel": "Открыто"
     }
   },
   "count": {

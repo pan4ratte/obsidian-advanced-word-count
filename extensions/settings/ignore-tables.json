@@ -1,20 +1,18 @@
 {
   "id": "ignore-tables",
-  "name": "Ignore tables",
+  "storeName": "Ignore tables",
   "description": "When counting words and characters, excludes Markdown table rows.",
   "author": "pan4ratte",
   "updated": "2026-06-20",
   "type": "setting",
-  "label": "Ignore tables",
-  "title": "Ignore tables",
+  "toggleLabel": "Ignore tables",
   "hint": "Off: table cell text is counted\nOn: table rows are ignored",
   "defaultEnabled": false,
   "i18n": {
     "ru": {
-      "name": "Игнорировать таблицы",
+      "storeName": "Игнорировать таблицы",
       "description": "При подсчёте слов и символов, исключает строки Markdown-таблиц.",
-      "title": "Игнорировать таблицы",
-      "label": "Игнорировать таблицы",
+      "toggleLabel": "Игнорировать таблицы",
       "hint": "Выкл.: текст ячеек таблиц подсчитывается\nВкл.: строки таблиц игнорируются"
     }
   },

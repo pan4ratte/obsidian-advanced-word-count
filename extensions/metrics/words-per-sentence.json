@@ -1,28 +1,26 @@
 {
   "id": "words-per-sentence",
-  "name": "Average words per sentence",
+  "storeName": "Average words per sentence",
   "description": "Calculates the average number of words per sentence in a note.",
   "author": "pan4ratte",
   "updated": "2026-06-21",
   "type": "metric",
-  "label": "Words per sentence",
-  "title": "Words/sentence",
+  "toggleLabel": "Words per sentence",
   "hint": "Words divided by sentences. The Sentence count extension is installed automatically; no need to connect it.",
-  "statusLabel": "Words/sentence",
+  "statusBarLabel": "Words/sentence",
   "defaultEnabled": false,
-  "i18n": {
-    "ru": {
-      "name": "Среднее количество слов в предложениях",
-      "description": "Рассчитывает среднее число слов в предложениях в заметке.",
-      "title": "Слов/предл.",
-      "label": "Слов в предложении",
-      "hint": "Слова, делённые на число предложений. «Подсчёт предложений» устанавливается автоматически, подключать не нужно.",
-      "statusLabel": "Слов/предл."
-    }
-  },
   "dependencies": [
     "sentence-count"
   ],
+  "i18n": {
+    "ru": {
+      "storeName": "Среднее количество слов в предложениях",
+      "description": "Рассчитывает среднее число слов в предложениях в заметке.",
+      "toggleLabel": "Слов в предложении",
+      "hint": "Слова, делённые на число предложений. «Подсчёт предложений» устанавливается автоматически, подключать не нужно.",
+      "statusBarLabel": "Слов/предл."
+    }
+  },
   "count": {
     "mode": "ratio",
     "numerator": "wordsWithSpaces",

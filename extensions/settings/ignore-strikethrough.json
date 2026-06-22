@@ -1,20 +1,18 @@
 {
   "id": "ignore-strikethrough",
-  "name": "Ignore strikethrough",
+  "storeName": "Ignore strikethrough",
   "description": "When counting words and characters, excludes ~~struck-through~~ text.",
   "author": "pan4ratte",
   "updated": "2026-06-20",
   "type": "setting",
-  "label": "Ignore strikethrough",
-  "title": "Ignore strikethrough",
+  "toggleLabel": "Ignore strikethrough",
   "hint": "Off: ~~struck-through~~ text is counted\nOn: struck-through text is ignored",
   "defaultEnabled": false,
   "i18n": {
     "ru": {
-      "name": "Игнорировать зачёркивания",
+      "storeName": "Игнорировать зачёркивания",
       "description": "При подсчёте слов и символов, исключает ~~зачёркнутый~~ текст.",
-      "title": "Игнорировать зачёркивание",
-      "label": "Игнорировать зачёркивание",
+      "toggleLabel": "Игнорировать зачёркивание",
       "hint": "Выкл.: ~~зачёркнутый~~ текст подсчитывается\nВкл.: зачёркнутый текст игнорируется"
     }
   },

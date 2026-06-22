@@ -42,10 +42,10 @@ plugin's code.
    ```
 2. **Add your extension file** in the subfolder for its type — `extensions/metrics/`,
    `extensions/settings/` or `extensions/presets/` — as `<your-id>.json` (see
-   [Anatomy of an extension](#anatomy-of-an-extension)). Include a `title` and an
-   `updated` date.
+   [Anatomy of an extension](#anatomy-of-an-extension)). Include a `toggleLabel` and
+   an `updated` date.
 3. **Register it** in [`extensions/index.json`](index.json) — add an entry with the
-   same `id`, `name`, `author`, `type` and `updated`, and a `path` pointing at your
+   same `id`, `storeName`, `author`, `type` and `updated`, and a `path` pointing at your
    file (e.g. `"metrics/<your-id>.json"`). Mirror `dependencies` / translated `i18n`
    if you use them.
 4. **Validate locally:**
@@ -65,18 +65,28 @@ plugin's code.
 | Field            | Required | Notes                                               |
 | ---------------- | -------- | --------------------------------------------------- |
 | `id`             | yes      | Unique, `^[a-z0-9][a-z0-9-]*$` (kebab-case)          |
-| `name`           | yes      | Display name shown in the browse modal              |
+| `storeName`      | yes      | Store/catalogue display name — shown in the browse modal and install/uninstall notices. Can be the longest, most descriptive form. |
 | `description`    | yes      | One-line summary                                    |
 | `author`         | yes      | Your name or handle                                 |
 | `type`           | yes      | `"metric"`, `"setting"` or `"preset"`               |
-| `label`          | metric/setting | Name shown in the right-pane metric block and the connect dropdown (not used by presets) |
-| `title`          | metric/setting | Short title shown in the preset's connect toggle (not used by presets) |
+| `toggleLabel`    | metric/setting | Label shown on the preset's connect toggle, the right-pane metric block, the connect dropdown and the rules picker (not used by presets) |
 | `updated`        | no       | ISO date (`YYYY-MM-DD`); a date newer than the installed copy surfaces an "Update" |
 | `hint`           | no       | Tooltip (use `\n` for a second line)                |
 | `defaultEnabled` | no       | Whether new presets enable it by default (`false`)  |
 | `i18n`           | no       | Per-locale translations of the display fields (see [Localization](#localization-i18n)) |
 | `dependencies`   | no       | Array of other extension `id`s this one needs installed (see [Dependencies](#dependencies)) |
 | `minPluginVersion` | no     | Reserved for future compatibility gating            |
+
+> **The three display labels.** A metric/setting extension carries up to three
+> user-facing labels, each sized for where it appears. Pick names that fit the space
+> each one gets, and **reuse the same string across fields when one size fits** — only
+> `storeName` and `toggleLabel` are required.
+>
+> | Field            | Where it shows                                                            | Sizing |
+> | ---------------- | ------------------------------------------------------------------------- | ------ |
+> | `storeName`      | Browse/store modal + install/uninstall notices                            | Longest, descriptive — e.g. `Average citations per page` |
+> | `toggleLabel`    | Connect toggle, right-pane metric block, connect dropdown, rules picker    | Medium — e.g. `Citations per page` |
+> | `statusBarLabel` | Status bar only *(metric, optional — defaults to `toggleLabel`)*           | Shortest, space is tight — e.g. `Citations/page` |
 
 ### Folder layout
 
@@ -105,7 +115,7 @@ the browse modal needs *before* downloading the file:
   "extensions": [
     {
       "id": "sentence-count",
-      "name": "Sentence count",
+      "storeName": "Sentence count",
       "description": "Counts sentences …",
       "author": "you",
       "type": "metric",
@@ -118,17 +128,17 @@ the browse modal needs *before* downloading the file:
 `path` is the file's location relative to `index.json` (e.g.
 `"metrics/<id>.json"`); it defaults to `<id>.json` at the catalogue root, so with
 the type subfolders you should always set it explicitly. If your extension declares
-`dependencies` or `i18n` (`name`/`description`), mirror those in the entry too.
+`dependencies` or `i18n` (`storeName`/`description`), mirror those in the entry too.
 
 ### Metric extensions (`type: "metric"`)
 
 Adds a counted metric. Extra fields:
 
-| Field         | Required | Notes                                              |
-| ------------- | -------- | -------------------------------------------------- |
-| `statusLabel` | no       | Status-bar label prefix (defaults to `label`)      |
-| `unit`        | no       | Small unit after the value (e.g. `"MIN."`)         |
-| `count`       | yes      | How the number is derived (below)                  |
+| Field            | Required | Notes                                              |
+| ---------------- | -------- | -------------------------------------------------- |
+| `statusBarLabel` | no       | Status-bar label (defaults to `toggleLabel`)       |
+| `unit`           | no       | Small unit after the value (e.g. `"MIN."`)         |
+| `count`          | yes      | How the number is derived (below)                  |
 
 `count` always has:
 
@@ -159,9 +169,9 @@ Example — `sentence-count.json` (a `split` on sentence terminators):
 ```json
 {
   "id": "sentence-count",
-  "name": "Sentence count",
+  "storeName": "Sentence count",
   "type": "metric",
-  "label": "Sentences",
+  "toggleLabel": "Sentences",
   "count": { "mode": "split", "source": "preprocessed", "separator": "[.!?]+(?=\\s|$)" }
 }
 ```
@@ -171,9 +181,9 @@ Example — `reference-links.json` (an `intersect` counting resolved reference-s
 ```json
 {
   "id": "reference-links",
-  "name": "Resolved reference links",
+  "storeName": "Resolved reference links",
   "type": "metric",
-  "label": "Reference links",
+  "toggleLabel": "Reference links",
   "count": {
     "mode": "intersect",
     "primary":   { "pattern": "(?<!!)\\[[^\\]]*\\]\\[([^\\]]+)\\]", "flags": "g" },
@@ -193,9 +203,9 @@ Example — `avg-word-length.json` (a `ratio` of two built-in metrics):
 ```json
 {
   "id": "avg-word-length",
-  "name": "Average word length",
+  "storeName": "Average word length",
   "type": "metric",
-  "label": "Avg word length",
+  "toggleLabel": "Avg word length",
   "count": {
     "mode": "ratio",
     "numerator": "charsWithoutSpaces",
@@ -242,13 +252,12 @@ Example — `ignore-highlights.json`:
 ```json
 {
   "id": "ignore-highlights",
-  "name": "Ignore highlights",
+  "storeName": "Ignore highlights",
   "description": "Excludes ==highlighted== spans from counts.",
   "author": "pan4ratte",
   "updated": "2026-06-20",
   "type": "setting",
-  "label": "Ignore highlights",
-  "title": "Ignore highlights",
+  "toggleLabel": "Ignore highlights",
   "transform": { "pattern": "==[^=]+==", "flags": "g", "replacement": "" }
 }
 ```
@@ -262,13 +271,13 @@ Installing one **adds the preset** to
 the user's preset list and **downloads every extension it depends on** (and their
 transitive dependencies) automatically. Unlike metric/setting extensions, a preset
 is not a live "registry" item and is not connected to other presets, so it doesn't
-need `label`/`title`.
+need `toggleLabel`.
 
 Extra field:
 
 | Field    | Required | Notes                                                              |
 | -------- | -------- | ------------------------------------------------------------------ |
-| `preset` | yes      | The preset configuration object (toggles, advanced settings, `rules`, `metricOrder`, `extMetrics`/`extSettings`, `wordsPerPage`, …). Any `id` inside is ignored — a fresh one is generated on install; a missing `name` falls back to the extension's `name`. |
+| `preset` | yes      | The preset configuration object (toggles, advanced settings, `rules`, `metricOrder`, `extMetrics`/`extSettings`, `wordsPerPage`, …). Any `id` inside is ignored — a fresh one is generated on install; a missing `name` falls back to the extension's `storeName`. |
 
 List the extensions the preset relies on in [`dependencies`](#dependencies) so they
 download with it.
@@ -292,14 +301,14 @@ Both files are valid as exported, so you can submit them as-is.
 ```json
 {
   "id": "academic-paper",
-  "name": "Academic paper",
+  "storeName": "Academic paper",
   "description": "Citations, sentences and an 8-page goal for journal submissions.",
   "author": "you",
   "updated": "2026-06-21",
   "type": "preset",
   "dependencies": ["distinct-citekeys", "sentence-count"],
   "i18n": {
-    "ru": { "name": "Научная статья", "description": "Цитаты, предложения и цель в 8 страниц." }
+    "ru": { "storeName": "Научная статья", "description": "Цитаты, предложения и цель в 8 страниц." }
   },
   "preset": {
     "name": "Academic paper",
@@ -317,8 +326,8 @@ catalogue name and description can be translated per locale (see
 translation for you and writes the `i18n` into **both** exported files — which
 matters because the browse modal localizes from the `index.json` **entry**, so the
 translation has to live there, not just in the preset file. To add other languages
-by hand, extend the `i18n` block (`name`/`description` per BCP-47 tag) in the index
-entry.
+by hand, extend the `i18n` block (`storeName`/`description` per BCP-47 tag) in the
+index entry.
 
 ### Dependencies
 
@@ -356,8 +365,8 @@ Rules:
 
 ### Localization (`i18n`)
 
-The display fields (`name`, `description`, `title`, `label`, `hint`, `statusLabel`,
-`unit`) can be translated per locale. `i18n` maps a BCP-47 tag (e.g. `"ru"`,
+The display fields (`storeName`, `description`, `toggleLabel`, `hint`,
+`statusBarLabel`, `unit`) can be translated per locale. `i18n` maps a BCP-47 tag (e.g. `"ru"`,
 `"zh-tw"`) to an object with any of those fields; the plugin picks the value for the
 user's Obsidian language — trying the full tag, then its base language — and falls
 back to the base (English) value when there's no translation. The logic fields
@@ -366,19 +375,18 @@ back to the base (English) value when there's no translation. The logic fields
 ```json
 {
   "id": "tables",
-  "name": "Table count",
-  "title": "Tables",
-  "label": "Tables",
-  "statusLabel": "Tables",
+  "storeName": "Table count",
+  "toggleLabel": "Tables",
+  "statusBarLabel": "Tables",
   "count": { "mode": "matches", "source": "raw", "pattern": "…", "flags": "gm" },
   "i18n": {
-    "ru": { "name": "Подсчёт таблиц", "title": "Таблицы", "label": "Таблицы", "statusLabel": "Таблиц" }
+    "ru": { "storeName": "Подсчёт таблиц", "toggleLabel": "Таблицы", "statusBarLabel": "Таблиц" }
   }
 }
 ```
 
-Add the same `i18n` (just `name`/`description`) to the matching `index.json` entry
-so the browse modal localizes too.
+Add the same `i18n` (just `storeName`/`description`) to the matching `index.json`
+entry so the browse modal localizes too.
 
 ### Regex safety
 
@@ -421,7 +429,7 @@ notes. Reset `extensionRepoUrl` (or remove the key) when you're done.
 
 - [ ] File named `<id>.json`, in the subfolder for its type (`metrics/`,
       `settings/` or `presets/`), with a unique kebab-case `id` (`^[a-z0-9][a-z0-9-]*$`).
-- [ ] `name`, `description`, `author`, `type` are set (plus `label`/`title` for
+- [ ] `storeName`, `description`, `author`, `type` are set (plus `toggleLabel` for
       metric/setting extensions).
 - [ ] `updated` is today's date (`YYYY-MM-DD`).
 - [ ] A matching entry is added to `index.json` (same `id`, `type`; a `path` into
@@ -443,7 +451,7 @@ notes. Reset `extensionRepoUrl` (or remove the key) when you're done.
   live in the plugin's engine, not in extensions.
 - **Mind performance.** Patterns run on every edit against the whole note; favour
   anchored, linear-time regexes.
-- **Localize if you can.** Adding an `i18n` block (at least `name`/`description`)
+- **Localize if you can.** Adding an `i18n` block (at least `storeName`/`description`)
   helps non-English users discover your extension.
 - **Licensing.** By submitting a pull request you agree to contribute your extension
   under the repository's license.

@@ -1,23 +1,21 @@
 {
   "id": "reference-links",
-  "name": "Reference links",
+  "storeName": "Reference links",
   "description": "Counts reference-style links of the [id]: type.",
   "author": "pan4ratte",
   "updated": "2026-06-20",
   "type": "metric",
-  "label": "Reference links",
-  "title": "Reference links",
+  "toggleLabel": "Reference links",
   "hint": "Counts reference-style links that have a matching [id]: definition",
-  "statusLabel": "Ref links",
+  "statusBarLabel": "Ref links",
   "defaultEnabled": false,
   "i18n": {
     "ru": {
-      "name": "Ссылки со сносками",
+      "storeName": "Ссылки со сносками",
       "description": "Считает ссылки со сносками типа [id]:",
-      "title": "Ссылочные ссылки",
-      "label": "Ссылочные ссылки",
+      "toggleLabel": "Ссылочные ссылки",
       "hint": "Считает ссылки ссылочного стиля с определением [id]:",
-      "statusLabel": "Ссылок"
+      "statusBarLabel": "Ссылок"
     }
   },
   "count": {

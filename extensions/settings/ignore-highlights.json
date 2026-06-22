@@ -1,20 +1,18 @@
 {
   "id": "ignore-highlights",
-  "name": "Ignore highlights",
+  "storeName": "Ignore highlights",
   "description": "When counting words and characters, ignores ==highlighted== spans.",
   "author": "pan4ratte",
   "updated": "2026-06-20",
   "type": "setting",
-  "label": "Ignore highlights",
-  "title": "Ignore highlights",
+  "toggleLabel": "Ignore highlights",
   "hint": "Off: highlighted ==text== is counted\nOn: highlighted text is ignored",
   "defaultEnabled": false,
   "i18n": {
     "ru": {
-      "name": "Игнорировать выделения",
+      "storeName": "Игнорировать выделения",
       "description": "При подсчёте слов и символов, игнорирует ==выделенные== фрагменты.",
-      "title": "Игнорировать выделения",
-      "label": "Игнорировать выделения",
+      "toggleLabel": "Игнорировать выделения",
       "hint": "Выкл.: выделенный ==текст== подсчитывается\nВкл.: выделенный текст игнорируется"
     }
   },

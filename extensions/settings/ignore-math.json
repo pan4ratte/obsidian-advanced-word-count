@@ -1,20 +1,18 @@
 {
   "id": "ignore-math",
-  "name": "Ignore math",
+  "storeName": "Ignore math",
   "description": "When counting words and characters, excludes LaTeX math — block $$…$$ and inline $…$.",
   "author": "pan4ratte",
   "updated": "2026-06-20",
   "type": "setting",
-  "label": "Ignore math",
-  "title": "Ignore math",
+  "toggleLabel": "Ignore math",
   "hint": "Off: math like $x+y$ and $$…$$ is counted\nOn: math is ignored (currency such as $5 is kept)",
   "defaultEnabled": false,
   "i18n": {
     "ru": {
-      "name": "Игнорировать формулы",
+      "storeName": "Игнорировать формулы",
       "description": "При подсчёте слов и символов, исключает формулы LaTeX — блочные $$…$$ и строчные $…$.",
-      "title": "Игнорировать формулы",
-      "label": "Игнорировать формулы",
+      "toggleLabel": "Игнорировать формулы",
       "hint": "Выкл.: формулы вида $x+y$ и $$…$$ подсчитываются\nВкл.: формулы игнорируются (валюта вроде $5 сохраняется)"
     }
   },

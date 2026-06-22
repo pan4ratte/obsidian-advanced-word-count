@@ -1,23 +1,21 @@
 {
   "id": "distinct-citekeys",
-  "name": "Unique citekeys",
+  "storeName": "Unique citekeys",
   "description": "Counts the number of unique @citekeys in a note.",
   "author": "pan4ratte",
   "updated": "2026-06-20",
   "type": "metric",
-  "label": "Distinct citekeys",
-  "title": "Distinct citekeys",
+  "toggleLabel": "Distinct citekeys",
   "hint": "Counts unique @citekeys (repeats counted once; emails ignored)",
-  "statusLabel": "Distinct citekeys",
+  "statusBarLabel": "Distinct citekeys",
   "defaultEnabled": false,
   "i18n": {
     "ru": {
-      "name": "Уникальные ключи цитирования",
+      "storeName": "Уникальные ключи цитирования",
       "description": "Считает количество уникальных @ключей цитирования в замекте.",
-      "title": "Уникальные цитаты",
-      "label": "Уникальные цитаты",
+      "toggleLabel": "Уникальные цитаты",
       "hint": "Считает уникальные @ключи (повторы — один раз; эл. почта игнорируется)",
-      "statusLabel": "Уникальных цитат"
+      "statusBarLabel": "Уникальных цитат"
     }
   },
   "count": {

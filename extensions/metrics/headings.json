@@ -1,23 +1,21 @@
 {
   "id": "headings",
-  "name": "Headings",
+  "storeName": "Headings",
   "description": "Counts the number of Markdown headings (# … ######) in a note.",
   "author": "pan4ratte",
   "updated": "2026-06-20",
   "type": "metric",
-  "label": "Headings",
-  "title": "Headings",
+  "toggleLabel": "Headings",
   "hint": "Counts Markdown headings (# … ######)",
-  "statusLabel": "Headings",
+  "statusBarLabel": "Headings",
   "defaultEnabled": false,
   "i18n": {
     "ru": {
-      "name": "Заголовки",
+      "storeName": "Заголовки",
       "description": "Считает количество Markdown-заголовков (# … ######) в заметке.",
-      "title": "Заголовки",
-      "label": "Заголовки",
+      "toggleLabel": "Заголовки",
       "hint": "Считает Markdown-заголовки (# … ######)",
-      "statusLabel": "Заголовков"
+      "statusBarLabel": "Заголовков"
     }
   },
   "count": {

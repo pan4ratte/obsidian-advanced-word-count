@@ -1,23 +1,21 @@
 {
   "id": "tasks-done",
-  "name": "Completed tasks",
+  "storeName": "Completed tasks",
   "description": "Counts only completed task checkboxes (- [x] or - [X]).",
   "author": "pan4ratte",
   "updated": "2026-06-20",
   "type": "metric",
-  "label": "Tasks done",
-  "title": "Tasks done",
+  "toggleLabel": "Tasks done",
   "hint": "Counts checked task checkboxes",
-  "statusLabel": "Done",
+  "statusBarLabel": "Done",
   "defaultEnabled": false,
   "i18n": {
     "ru": {
-      "name": "Выполненные задачи",
+      "storeName": "Выполненные задачи",
       "description": "Считает только чекбоксы выполненных задач (- [x] или - [X]).",
-      "title": "Выполненные задачи",
-      "label": "Выполненные задачи",
+      "toggleLabel": "Выполненные задачи",
       "hint": "Считает отмеченные чекбоксы задач",
-      "statusLabel": "Выполнено"
+      "statusBarLabel": "Выполнено"
     }
   },
   "count": {

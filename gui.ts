@@ -498,7 +498,7 @@ export class WordCountSettingTab extends PluginSettingTab {
     this.downloadJson(`${ext.id}.json`, ext);
     // Stagger the second download so the two saves don't race in the same tick.
     window.setTimeout(() => this.downloadJson(`${ext.id}-index-entry.json`, entry), 150);
-    new Notice(t.presetExportedNotice(ext.name));
+    new Notice(t.presetExportedNotice(ext.storeName));
   }
 
   /** Download an object as a pretty-printed JSON file. */
@@ -701,7 +701,7 @@ export class WordCountSettingTab extends PluginSettingTab {
     const select = head.createEl("select", { cls: "dropdown wcp-ext-connect-select" });
     select.createEl("option", { text: placeholder, value: "" });
     for (const def of available) {
-      select.createEl("option", { text: this.plugin.extensions.loc(def, "label") ?? def.label, value: def.id });
+      select.createEl("option", { text: this.plugin.extensions.loc(def, "toggleLabel") ?? def.toggleLabel, value: def.id });
     }
     select.value = "";
     select.disabled = available.length === 0;
@@ -719,7 +719,7 @@ export class WordCountSettingTab extends PluginSettingTab {
     const row = grid.createDiv({ cls: "wcp-toggle-chip" });
     const hint = this.plugin.extensions.loc(def, "hint") ?? def.hint;
     if (hint) setTooltip(row, hint, { placement: "top" });
-    row.createEl("span", { text: this.plugin.extensions.loc(def, "title") ?? def.title, cls: "wcp-toggle-label" });
+    row.createEl("span", { text: this.plugin.extensions.loc(def, "toggleLabel") ?? def.toggleLabel, cls: "wcp-toggle-label" });
     row.createDiv({ cls: "checkbox-container is-enabled" });
     row.addEventListener("click", handle(async () => {
       this.setExtConnected(preset, def, false);
@@ -795,7 +795,7 @@ export class WordCountSettingTab extends PluginSettingTab {
     // Installed extension metrics can carry warnings/goals too.
     for (const def of this.plugin.extensions.metricList()) {
       if (taken.has(def.id)) continue;
-      select.createEl("option", { text: def.label, value: def.id });
+      select.createEl("option", { text: this.plugin.extensions.loc(def, "toggleLabel") ?? def.toggleLabel, value: def.id });
     }
     select.value = rule.metric;
     select.addEventListener("change", handle(async () => {
@@ -1034,7 +1034,7 @@ export class PresetExportModal extends Modal {
     const ru: Record<string, string> = {};
     const ruName = this.ruName.trim();
     const ruDescription = this.ruDescription.trim();
-    if (ruName) ru.name = ruName;
+    if (ruName) ru.storeName = ruName;
     if (ruDescription) ru.description = ruDescription;
     return Object.keys(ru).length > 0 ? { ru } : undefined;
   }
@@ -1143,7 +1143,7 @@ export class ExtensionBrowserModal extends Modal {
     const f = this.filter;
     const matchesSearch = (e: ExtensionIndexEntry) =>
       !f ||
-      e.name.toLowerCase().includes(f) ||
+      e.storeName.toLowerCase().includes(f) ||
       e.description.toLowerCase().includes(f) ||
       e.author.toLowerCase().includes(f) ||
       e.id.toLowerCase().includes(f);
@@ -1165,7 +1165,7 @@ export class ExtensionBrowserModal extends Modal {
     // Left: name + type icon, author beneath, then the description.
     const main = card.createDiv({ cls: "wcp-ext-card-main" });
     const head = main.createDiv({ cls: "wcp-ext-card-head" });
-    head.createEl("span", { text: this.plugin.extensions.loc(entry, "name") ?? entry.name, cls: "wcp-ext-name" });
+    head.createEl("span", { text: this.plugin.extensions.loc(entry, "storeName") ?? entry.storeName, cls: "wcp-ext-name" });
     const icon = head.createSpan({ cls: "wcp-ext-type-icon" });
     const typeIcon = entry.type === "metric" ? "whole-word" : entry.type === "preset" ? "package" : "sliders-horizontal";
     const typeLabel = entry.type === "metric" ? t.extTypeMetric : entry.type === "preset" ? t.extTypePreset : t.extTypeSetting;
@@ -1206,7 +1206,7 @@ export class ExtensionBrowserModal extends Modal {
           // Pass the loaded catalogue so dependencies resolve without a re-fetch.
           const installed = await this.plugin.extensionManager.installFromIndex(entry, this.entries);
           const deps = installed.length - 1; // the rest of the batch are pulled-in dependencies
-          new Notice(deps > 0 ? t.extInstalledWithDepsNotice(entry.name, deps) : t.extInstalledNotice(entry.name));
+          new Notice(deps > 0 ? t.extInstalledWithDepsNotice(entry.storeName, deps) : t.extInstalledNotice(entry.storeName));
           this.onChanged();
           this.renderList(); // rebuild so install states refresh
         } catch (e) {
@@ -1226,7 +1226,7 @@ export class ExtensionBrowserModal extends Modal {
         uninstall.disabled = true;
         try {
           await this.plugin.extensionManager.uninstall(entry.id);
-          new Notice(t.extUninstalledNotice(entry.name));
+          new Notice(t.extUninstalledNotice(entry.storeName));
           this.onChanged();
           this.renderList();
         } catch (e) {
@@ -1243,9 +1243,9 @@ export class ExtensionBrowserModal extends Modal {
           return;
         }
         const names = dependents
-          .map((d) => this.plugin.extensions.loc(d, "name") ?? d.name)
+          .map((d) => this.plugin.extensions.loc(d, "storeName") ?? d.storeName)
           .join(", ");
-        new ExtUninstallConfirmModal(this.plugin.app, entry.name, names, doUninstall).open();
+        new ExtUninstallConfirmModal(this.plugin.app, entry.storeName, names, doUninstall).open();
       });
     }
   }
@@ -1271,7 +1271,7 @@ export class ExtensionBrowserModal extends Modal {
         this.plugin.refreshPresetCommands();
         await this.plugin.saveSettings();
         this.plugin.updateCount();
-        new Notice(t.extPresetInstalledNotice(entry.name, extCount));
+        new Notice(t.extPresetInstalledNotice(entry.storeName, extCount));
         this.onChanged();
         this.renderList();
       } catch (e) {

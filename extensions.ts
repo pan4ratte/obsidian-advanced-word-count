@@ -68,12 +68,11 @@ export interface SubPattern {
 
 /** The user-facing text fields an extension can translate. */
 export interface LocalizedFields {
-  name?: string;
+  storeName?: string;     // catalogue/store display name
   description?: string;
-  title?: string;
-  label?: string;
+  toggleLabel?: string;   // toggle / right-pane / dropdown / rules-picker label
   hint?: string;
-  statusLabel?: string;
+  statusBarLabel?: string; // status-bar label (defaults to toggleLabel)
   unit?: string;
 }
 
@@ -86,12 +85,9 @@ export type I18n = Record<string, LocalizedFields>;
 
 export interface ExtensionManifestBase {
   id: string;            // unique, kebab-case (matches /^[a-z0-9][a-z0-9-]*$/)
-  name: string;          // display name (shown in the browse modal)
+  storeName: string;     // store/catalogue display name (browse modal + notices)
   description: string;
   author: string;
-  // Short title shown in the preset's connect toggle. Required (no fallback) for
-  // metric/setting extensions; not used by preset extensions, hence optional here.
-  title?: string;
   // ISO date (YYYY-MM-DD) of the last change. A catalogue entry with a newer
   // `updated` than the installed copy surfaces an available update.
   updated?: string;
@@ -137,11 +133,12 @@ export interface CountSpec {
 
 export interface MetricExtension extends ExtensionManifestBase {
   type: "metric";
-  title: string;         // required for metric extensions (toggle text)
-  label: string;         // toggle / block label, e.g. "Sentences"
-  hint?: string;         // optional tooltip
-  statusLabel?: string;  // status-bar label prefix; defaults to `label`
-  unit?: string;         // small unit shown after the value (e.g. "MIN.")
+  // The label shown on the preset's connect toggle, the right-pane metric block,
+  // the connect dropdown and the rules picker. Required (no fallback).
+  toggleLabel: string;
+  hint?: string;            // optional tooltip
+  statusBarLabel?: string;  // status-bar label; defaults to `toggleLabel`
+  unit?: string;            // small unit shown after the value (e.g. "MIN.")
   defaultEnabled?: boolean;
   count: CountSpec;
 }
@@ -155,8 +152,9 @@ export interface TransformSpec {
 
 export interface SettingExtension extends ExtensionManifestBase {
   type: "setting";
-  title: string;         // required for setting extensions (toggle text)
-  label: string;
+  // The label shown on the preset's connect toggle, the right-pane block and the
+  // connect dropdown. Required (no fallback).
+  toggleLabel: string;
   hint?: string;
   defaultEnabled?: boolean;
   transform: TransformSpec;
@@ -183,12 +181,12 @@ export type Extension = MetricExtension | SettingExtension | PresetExtension;
 /** One row of the repo's extensions/index.json catalogue. */
 export interface ExtensionIndexEntry {
   id: string;
-  name: string;
+  storeName: string;
   description: string;
   author: string;
   // ISO date of the last change; compared with the installed copy to detect updates.
   updated?: string;
-  // Per-locale translations of `name`/`description` for the browse modal.
+  // Per-locale translations of `storeName`/`description` for the browse modal.
   i18n?: I18n;
   type: ExtensionType;
   // Ids of other extensions this one requires (mirrors the manifest's
@@ -257,7 +255,7 @@ export function findDependents(id: string, exts: Extension[]): Extension[] {
 export function materializePreset(ext: PresetExtension): Preset {
   const base = defaultPreset();
   const payload = ext.preset || {};
-  const name = typeof payload.name === "string" && payload.name.trim() ? payload.name.trim() : ext.name;
+  const name = typeof payload.name === "string" && payload.name.trim() ? payload.name.trim() : ext.storeName;
   return { ...base, ...payload, id: base.id, name };
 }
 
@@ -304,7 +302,7 @@ export function presetExtensionFrom(
   delete payload.id;
   const ext: PresetExtension = {
     id,
-    name: meta.name,
+    storeName: meta.name,
     description: meta.description,
     author: meta.author,
     type: "preset",
@@ -325,7 +323,7 @@ export function presetExtensionFrom(
 export function presetIndexEntryFrom(ext: PresetExtension): ExtensionIndexEntry {
   return {
     id: ext.id,
-    name: ext.name,
+    storeName: ext.storeName,
     description: ext.description,
     author: ext.author,
     ...(ext.updated ? { updated: ext.updated } : {}),
@@ -467,15 +465,15 @@ export function validateExtension(value: unknown): ValidationResult {
   if (typeof value !== "object" || value === null) return fail("not a JSON object");
   const o = value as Record<string, unknown>;
 
-  for (const k of ["id", "name", "description", "author", "type"]) {
+  for (const k of ["id", "storeName", "description", "author", "type"]) {
     const v = o[k];
     if (typeof v !== "string" || v.length === 0) return fail(`missing or invalid "${k}"`);
   }
-  // `label`/`title` are the toggle texts — required for metric/setting, unused by
-  // preset extensions.
+  // `toggleLabel` is the toggle/right-pane text — required for metric/setting,
+  // unused by preset extensions.
   if (o.type === "metric" || o.type === "setting") {
-    for (const k of ["label", "title"]) {
-      if (typeof o[k] !== "string" || o[k].length === 0) return fail(`missing or invalid "${k}"`);
+    if (typeof o.toggleLabel !== "string" || o.toggleLabel.length === 0) {
+      return fail(`missing or invalid "toggleLabel"`);
     }
   }
 
@@ -522,7 +520,7 @@ export function validateExtension(value: unknown): ValidationResult {
   }
 
   if (o.type === "metric") {
-    if (!optStr(o.statusLabel)) return fail(`"statusLabel" must be a string`);
+    if (!optStr(o.statusBarLabel)) return fail(`"statusBarLabel" must be a string`);
     if (!optStr(o.unit)) return fail(`"unit" must be a string`);
 
     const c = o.count;
@@ -895,12 +893,12 @@ export class ExtensionRegistry {
       if (!this.metricEnabled(preset, def.id)) continue;
       const value = ext[def.id] || 0;
       const valStr = String(value);
-      const label = this.loc(def, "label") ?? def.label;
-      const statusLabel = this.loc(def, "statusLabel") ?? def.statusLabel ?? label;
+      const toggleLabel = this.loc(def, "toggleLabel") ?? def.toggleLabel;
+      const statusBarLabel = this.loc(def, "statusBarLabel") ?? def.statusBarLabel ?? toggleLabel;
       rows.push({
         id: def.id,
-        label,
-        statusText: `${statusLabel}: ${valStr}`,
+        label: toggleLabel,
+        statusText: `${statusBarLabel}: ${valStr}`,
         value: valStr,
         unit: this.loc(def, "unit") ?? def.unit,
         level: ruleLevel(preset, value, def.id),

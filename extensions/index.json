@@ -2,293 +2,367 @@
   "extensions": [
     {
       "id": "sentence-count",
-      "name": "Sentences",
+      "storeName": "Sentences",
       "description": "Counts the number of sentences in a note.",
       "author": "pan4ratte",
       "updated": "2026-06-20",
       "i18n": {
-        "ru": {"name": "Предложения", "description": "Считает количество предложений в заметке."}
+        "ru": {
+          "storeName": "Предложения",
+          "description": "Считает количество предложений в заметке."
+        }
       },
       "type": "metric",
       "path": "metrics/sentence-count.json"
     },
     {
       "id": "emoji-count",
-      "name": "Emoji",
+      "storeName": "Emoji",
       "description": "Counts the number of emoji and other pictographic characters in a note.",
       "author": "pan4ratte",
       "updated": "2026-06-20",
       "i18n": {
-        "ru": {"name": "Эмодзи", "description": "Считает количество эмодзи и других пиктографических символов в заметке."}
+        "ru": {
+          "storeName": "Эмодзи",
+          "description": "Считает количество эмодзи и других пиктографических символов в заметке."
+        }
       },
       "type": "metric",
       "path": "metrics/emoji-count.json"
     },
     {
       "id": "reference-links",
-      "name": "Reference links",
+      "storeName": "Reference links",
       "description": "Counts reference-style links of the [id]: type.",
       "author": "pan4ratte",
       "updated": "2026-06-20",
       "i18n": {
-        "ru": { "name": "Ссылки со сносками", "description": "Считает ссылки со сносками типа [id]:" }
+        "ru": {
+          "storeName": "Ссылки со сносками",
+          "description": "Считает ссылки со сносками типа [id]:"
+        }
       },
       "type": "metric",
       "path": "metrics/reference-links.json"
     },
     {
       "id": "unique-tags",
-      "name": "Unique tags",
+      "storeName": "Unique tags",
       "description": "Counts the number of unique #tags in a note, ignoring repeats.",
       "author": "pan4ratte",
       "updated": "2026-06-20",
       "i18n": {
-        "ru": {"name": "Уникальные теги", "description": "Считает количество уникальных #тегов в заметке, игнорируя повторы."}
+        "ru": {
+          "storeName": "Уникальные теги",
+          "description": "Считает количество уникальных #тегов в заметке, игнорируя повторы."
+        }
       },
       "type": "metric",
       "path": "metrics/unique-tags.json"
     },
     {
       "id": "avg-word-length",
-      "name": "Average word length",
+      "storeName": "Average word length",
       "description": "Calculates the average number of characters per word in a note.",
       "author": "pan4ratte",
       "updated": "2026-06-20",
       "i18n": {
-        "ru": {"name": "Средняя длина слов", "description": "Рассчитывает среднее число символов в словах в заметке."}
+        "ru": {
+          "storeName": "Средняя длина слов",
+          "description": "Рассчитывает среднее число символов в словах в заметке."
+        }
       },
       "type": "metric",
       "path": "metrics/avg-word-length.json"
     },
     {
       "id": "links-per-page",
-      "name": "Average Markdown links per page",
+      "storeName": "Average Markdown links per page",
       "description": "Calculates the average number of Markdown links per page.",
       "author": "pan4ratte",
       "updated": "2026-06-20",
       "i18n": {
-        "ru": {"name": "Среднее количество md-ссылок на страницу", "description": "Рассчитывает среднее число Markdown-ссылок на страницу."}
+        "ru": {
+          "storeName": "Среднее количество md-ссылок на страницу",
+          "description": "Рассчитывает среднее число Markdown-ссылок на страницу."
+        }
       },
       "type": "metric",
       "path": "metrics/links-per-page.json"
     },
     {
       "id": "words-per-sentence",
-      "name": "Average words per sentence",
+      "storeName": "Average words per sentence",
       "description": "Calculates the average number of words per sentence in a note.",
       "author": "pan4ratte",
       "updated": "2026-06-21",
       "i18n": {
-        "ru": {"name": "Среднее количество слов в предложениях", "description": "Рассчитывает среднее число слов в предложениях в заметке."}
+        "ru": {
+          "storeName": "Среднее количество слов в предложениях",
+          "description": "Рассчитывает среднее число слов в предложениях в заметке."
+        }
       },
       "type": "metric",
-      "dependencies": ["sentence-count"],
+      "dependencies": [
+        "sentence-count"
+      ],
       "path": "metrics/words-per-sentence.json"
     },
     {
       "id": "ignore-highlights",
-      "name": "Ignore highlights",
+      "storeName": "Ignore highlights",
       "description": "When counting words and characters, ignores ==highlighted== spans.",
       "author": "pan4ratte",
       "updated": "2026-06-20",
       "i18n": {
-        "ru": {"name": "Игнорировать выделения", "description": "При подсчёте слов и символов, игнорирует ==выделенные== фрагменты."}
+        "ru": {
+          "storeName": "Игнорировать выделения",
+          "description": "При подсчёте слов и символов, игнорирует ==выделенные== фрагменты."
+        }
       },
       "type": "setting",
       "path": "settings/ignore-highlights.json"
     },
     {
       "id": "headings",
-      "name": "Headings",
+      "storeName": "Headings",
       "description": "Counts the number of Markdown headings (# … ######) in a note.",
       "author": "pan4ratte",
       "updated": "2026-06-20",
       "i18n": {
-        "ru": {"name": "Заголовки", "description": "Считает количество Markdown-заголовков (# … ######) в заметке."}
+        "ru": {
+          "storeName": "Заголовки",
+          "description": "Считает количество Markdown-заголовков (# … ######) в заметке."
+        }
       },
       "type": "metric",
       "path": "metrics/headings.json"
     },
     {
       "id": "tasks-total",
-      "name": "Tasks (all)",
+      "storeName": "Tasks (all)",
       "description": "Counts all task checkboxes — checked and unchecked.",
       "author": "pan4ratte",
       "updated": "2026-06-20",
       "i18n": {
-        "ru": {"name": "Задачи (все)", "description": "Считает все чекбоксы задач — отмеченные и неотмеченные."}
+        "ru": {
+          "storeName": "Задачи (все)",
+          "description": "Считает все чекбоксы задач — отмеченные и неотмеченные."
+        }
       },
       "type": "metric",
       "path": "metrics/tasks-total.json"
     },
     {
       "id": "tasks-done",
-      "name": "Completed tasks",
+      "storeName": "Completed tasks",
       "description": "Counts only completed task checkboxes (- [x] or - [X]).",
       "author": "pan4ratte",
       "updated": "2026-06-20",
       "i18n": {
-        "ru": {"name": "Выполненные задачи", "description": "Считает только чекбоксы выполненных задач (- [x] или - [X])."}
+        "ru": {
+          "storeName": "Выполненные задачи",
+          "description": "Считает только чекбоксы выполненных задач (- [x] или - [X])."
+        }
       },
       "type": "metric",
       "path": "metrics/tasks-done.json"
     },
     {
       "id": "tasks-open",
-      "name": "Incomplete tasks",
+      "storeName": "Incomplete tasks",
       "description": "Counts only incomplete task checkboxes (- [ ]).",
       "author": "pan4ratte",
       "updated": "2026-06-20",
       "i18n": {
-        "ru": {"name": "Невыполненные задачи", "description": "Считает только чекбоксы невыполненных задач (- [ ])."}
+        "ru": {
+          "storeName": "Невыполненные задачи",
+          "description": "Считает только чекбоксы невыполненных задач (- [ ])."
+        }
       },
       "type": "metric",
       "path": "metrics/tasks-open.json"
     },
     {
       "id": "distinct-citekeys",
-      "name": "Unique citekeys",
+      "storeName": "Unique citekeys",
       "description": "Counts the number of unique @citekeys in a note.",
       "author": "pan4ratte",
       "updated": "2026-06-20",
       "i18n": {
-        "ru": {"name": "Уникальные ключи цитирования", "description": "Считает количество уникальных @ключей цитирования в замекте."}
+        "ru": {
+          "storeName": "Уникальные ключи цитирования",
+          "description": "Считает количество уникальных @ключей цитирования в замекте."
+        }
       },
       "type": "metric",
       "path": "metrics/distinct-citekeys.json"
     },
     {
       "id": "citations-per-page",
-      "name": "Average citations per page",
+      "storeName": "Average citations per page",
       "description": "Calculates the average number of citations per page.",
       "author": "pan4ratte",
       "updated": "2026-06-20",
       "i18n": {
-        "ru": {"name": "Среднее количество цитирований на страницу", "description": "Рассчитывает среднее число цитат на страницу."}
+        "ru": {
+          "storeName": "Среднее количество цитирований на страницу",
+          "description": "Рассчитывает среднее число цитат на страницу."
+        }
       },
       "type": "metric",
       "path": "metrics/citations-per-page.json"
     },
     {
       "id": "ignore-math",
-      "name": "Ignore math",
+      "storeName": "Ignore math",
       "description": "When counting words and characters, excludes LaTeX math — block $$…$$ and inline $…$.",
       "author": "pan4ratte",
       "updated": "2026-06-20",
       "i18n": {
-        "ru": {"name": "Игнорировать формулы", "description": "При подсчёте слов и символов, исключает формулы LaTeX — блочные $$…$$ и строчные $…$."}
+        "ru": {
+          "storeName": "Игнорировать формулы",
+          "description": "При подсчёте слов и символов, исключает формулы LaTeX — блочные $$…$$ и строчные $…$."
+        }
       },
       "type": "setting",
       "path": "settings/ignore-math.json"
     },
     {
       "id": "ignore-tables",
-      "name": "Ignore tables",
+      "storeName": "Ignore tables",
       "description": "When counting words and characters, excludes Markdown table rows.",
       "author": "pan4ratte",
       "updated": "2026-06-20",
       "i18n": {
-        "ru": {"name": "Игнорировать таблицы", "description": "При подсчёте слов и символов, исключает строки Markdown-таблиц."}
+        "ru": {
+          "storeName": "Игнорировать таблицы",
+          "description": "При подсчёте слов и символов, исключает строки Markdown-таблиц."
+        }
       },
       "type": "setting",
       "path": "settings/ignore-tables.json"
     },
     {
       "id": "ignore-urls",
-      "name": "Ignore URLs",
+      "storeName": "Ignore URLs",
       "description": "When counting words and characters, excludes bare http(s) links.",
       "author": "pan4ratte",
       "updated": "2026-06-20",
       "i18n": {
-        "ru": {"name": "Игнорировать URL", "description": "При подсчёте слов и символов, исключает «голые» http(s)-ссылки."}
+        "ru": {
+          "storeName": "Игнорировать URL",
+          "description": "При подсчёте слов и символов, исключает «голые» http(s)-ссылки."
+        }
       },
       "type": "setting",
       "path": "settings/ignore-urls.json"
     },
     {
       "id": "ignore-strikethrough",
-      "name": "Ignore strikethrough",
+      "storeName": "Ignore strikethrough",
       "description": "When counting words and characters, excludes ~~struck-through~~ text.",
       "author": "pan4ratte",
       "updated": "2026-06-20",
       "i18n": {
-        "ru": {"name": "Игнорировать зачёркивания", "description": "При подсчёте слов и символов, исключает ~~зачёркнутый~~ текст."}
+        "ru": {
+          "storeName": "Игнорировать зачёркивания",
+          "description": "При подсчёте слов и символов, исключает ~~зачёркнутый~~ текст."
+        }
       },
       "type": "setting",
       "path": "settings/ignore-strikethrough.json"
     },
     {
       "id": "ignore-dataview-fields",
-      "name": "Ignore Dataview fields",
+      "storeName": "Ignore Dataview fields",
       "description": "When counting words and characters, excludes inline Dataview fields — [key:: value] and (key:: value).",
       "author": "pan4ratte",
       "updated": "2026-06-20",
       "i18n": {
-        "ru": {"name": "Игнорировать поля Dataview", "description": "При подсчёте слов и символов, исключает строчные поля Dataview — [key:: value] и (key:: value)."}
+        "ru": {
+          "storeName": "Игнорировать поля Dataview",
+          "description": "При подсчёте слов и символов, исключает строчные поля Dataview — [key:: value] и (key:: value)."
+        }
       },
       "type": "setting",
       "path": "settings/ignore-dataview-fields.json"
     },
     {
       "id": "tables",
-      "name": "Tables",
+      "storeName": "Tables",
       "description": "Counts the number of complete Markdown tables (header + delimiter row) in a note.",
       "author": "pan4ratte",
       "updated": "2026-06-20",
       "i18n": {
-        "ru": { "name": "Таблицы", "description": "Считает количество полных Markdown-таблиц (заголовок + разделитель) в заметке." }
+        "ru": {
+          "storeName": "Таблицы",
+          "description": "Считает количество полных Markdown-таблиц (заголовок + разделитель) в заметке."
+        }
       },
       "type": "metric",
       "path": "metrics/tables.json"
     },
     {
       "id": "tags",
-      "name": "Tags",
+      "storeName": "Tags",
       "description": "Counts the number of #tags in a note.",
       "author": "pan4ratte",
       "updated": "2026-06-20",
       "i18n": {
-        "ru": { "name": "Теги", "description": "Считает количество #тегов в заметке." }
+        "ru": {
+          "storeName": "Теги",
+          "description": "Считает количество #тегов в заметке."
+        }
       },
       "type": "metric",
       "path": "metrics/tags.json"
     },
     {
       "id": "ignore-code",
-      "name": "Ignore code",
+      "storeName": "Ignore code",
       "description": "When counting words and characters, excludes block and inline code.",
       "author": "pan4ratte",
       "updated": "2026-06-20",
       "i18n": {
-        "ru": { "name": "Игнорировать код", "description": "При подсчёте слов и символов, исключает блочный и строчный код." }
+        "ru": {
+          "storeName": "Игнорировать код",
+          "description": "При подсчёте слов и символов, исключает блочный и строчный код."
+        }
       },
       "type": "setting",
       "path": "settings/ignore-code.json"
     },
     {
       "id": "telegram-user-post",
-      "name": "Telegram user post",
+      "storeName": "Telegram user post",
       "description": "Preset for posts made as a Telegram user: with limit warnings and all metrics set up to count characters the way Telegram does.",
       "author": "pan4ratte",
       "updated": "2026-06-21",
+      "i18n": {
+        "ru": {
+          "storeName": "Пост в Telegram от лица пользователя",
+          "description": "Пресет для постов, сделанных от лица пользователя Telegram: с предупреждениями о лимитах и всеми метриками, настроенными для подсчёта символов так же, как это делает Telegram."
+        }
+      },
       "type": "preset",
       "dependencies": [],
-      "i18n": {
-        "ru": { "name": "Пост в Telegram от лица пользователя", "description": "Пресет для постов, сделанных от лица пользователя Telegram: с предупреждениями о лимитах и всеми метриками, настроенными для подсчёта символов так же, как это делает Telegram." }
-      },
       "path": "presets/telegram-user-post.json"
     },
     {
       "id": "telegram-rich-text-post",
-      "name": "Telegram rich-text post",
+      "storeName": "Telegram rich-text post",
       "description": "Preset for rich-text posts in Telegram: with limit warnings and all metrics set up to count characters the way Telegram does.",
       "author": "pan4ratte",
       "updated": "2026-06-21",
+      "i18n": {
+        "ru": {
+          "storeName": "Пост в Telegram с rich-text форматированием",
+          "description": "Пресет для rich-text постов в Telegram: с предупреждениями о лимитах и всеми метриками, настроенными для подсчёта символов так же, как это делает Telegram."
+        }
+      },
       "type": "preset",
       "dependencies": [],
-      "i18n": {
-        "ru": { "name": "Пост в Telegram с rich-text форматированием", "description": "Пресет для rich-text постов в Telegram: с предупреждениями о лимитах и всеми метриками, настроенными для подсчёта символов так же, как это делает Telegram." }
-      },
       "path": "presets/telegram-rich-text-post.json"
     }
   ]

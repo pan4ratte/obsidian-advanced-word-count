@@ -1,23 +1,21 @@
 {
   "id": "links-per-page",
-  "name": "Average Markdown links per page",
+  "storeName": "Average Markdown links per page",
   "description": "Calculates the average number of Markdown links per page.",
   "author": "pan4ratte",
   "updated": "2026-06-20",
   "type": "metric",
-  "label": "Links per page",
-  "title": "Links/page",
+  "toggleLabel": "Links per page",
   "hint": "Markdown links divided by the number of pages",
-  "statusLabel": "Links/page",
+  "statusBarLabel": "Links/page",
   "defaultEnabled": false,
   "i18n": {
     "ru": {
-      "name": "Среднее количество md-ссылок на страницу",
+      "storeName": "Среднее количество md-ссылок на страницу",
       "description": "Рассчитывает среднее число Markdown-ссылок на страницу.",
-      "title": "Ссылок/стр.",
-      "label": "Ссылок на страницу",
+      "toggleLabel": "Ссылок на страницу",
       "hint": "Markdown-ссылки, делённые на число страниц",
-      "statusLabel": "Ссылок/стр."
+      "statusBarLabel": "Ссылок/стр."
     }
   },
   "count": {

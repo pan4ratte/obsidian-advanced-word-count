@@ -1,23 +1,21 @@
 {
   "id": "citations-per-page",
-  "name": "Average citations per page",
+  "storeName": "Average citations per page",
   "description": "Calculates the average number of citations per page.",
   "author": "pan4ratte",
   "updated": "2026-06-20",
   "type": "metric",
-  "label": "Citations per page",
-  "title": "Citations/page",
+  "toggleLabel": "Citations per page",
   "hint": "Total citekeys divided by the number of pages",
-  "statusLabel": "Citations/page",
+  "statusBarLabel": "Citations/page",
   "defaultEnabled": false,
   "i18n": {
     "ru": {
-      "name": "Среднее количество цитирований на страницу",
+      "storeName": "Среднее количество цитирований на страницу",
       "description": "Рассчитывает среднее число цитат на страницу.",
-      "title": "Цитат/стр.",
-      "label": "Цитат на страницу",
+      "toggleLabel": "Цитат на страницу",
       "hint": "Всего ключей цитирования, делённое на число страниц",
-      "statusLabel": "Цитат/стр."
+      "statusBarLabel": "Цитат/стр."
     }
   },
   "count": {
