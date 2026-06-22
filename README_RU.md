@@ -6,6 +6,8 @@
 
 <div align="center">
   <img src="media/1-cover.png"width="100%" />
+  <img src="media/2-right-pane.png"width="48%" />
+  <img src="media/3-community-store.png"width="48%" />  
 </div>
 
 
