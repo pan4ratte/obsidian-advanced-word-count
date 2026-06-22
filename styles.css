@@ -577,11 +577,9 @@
 /* ── Extension browser modal ─────────────────────────────────────────────────── */
 
 /* Remove the padding on the outer .modal element for this modal instance only.
-   Matches whether the class sits on .modal itself or on its .modal-content child,
-   so it works regardless of which element carries it. Specificity (0,2,0) beats
-   the base .modal rule. */
-.modal.wcp-ext-modal,
-.modal:has(.wcp-ext-modal) {
+   The class is added to modalEl (the .modal element) in onOpen, so this matches
+   directly; specificity (0,2,0) beats the base .modal rule. */
+.modal.wcp-ext-modal {
   padding-right: 16px;
   padding-left: 24px;
 }

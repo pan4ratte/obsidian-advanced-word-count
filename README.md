@@ -69,8 +69,6 @@ You can specify, how formatting elements will be counted:
 
 The official catalogue currently includes:
 
-<!-- BEGIN GENERATED CATALOGUE: do not edit by hand; run "npm run docs:catalogue" -->
-
 **Metrics**
 
 | Name | Description |
@@ -110,8 +108,6 @@ The official catalogue currently includes:
 | Telegram user post | Preset for posts made as a Telegram user: with limit warnings and all metrics set up to count characters the way Telegram does. |
 | Telegram rich-text post | Preset for rich-text posts in Telegram: with limit warnings and all metrics set up to count characters the way Telegram does. |
 
-<!-- END GENERATED CATALOGUE -->
-
 Want to build your own? See the [extension contributor guide](https://github.com/pan4ratte/obsidian-advanced-word-count/blob/main/extensions/README.md).
 
 
@@ -136,17 +132,6 @@ If you want to test beta-versions of the plugin or use previous versions, you ca
 3. In the window that appears, paste the link to the `Advanced Word Count` plugin repository: [https://github.com/pan4ratte/obsidian-advanced-word-count](https://github.com/pan4ratte/obsidian-advanced-word-count)
 
 4. Under “Select a version” choose the desired version and click the “Add plugin” button. The plugin will be automatically installed and will be ready to use.
-
-
-## Plugin use case
-
-Let's say, you have three different projects, on which you are working simultaneously: two academic papers for different journals with different formatting requirements/limits and you write posts for your Telegram channel.
-
-Journals have different page limits and use different fonts: that means that you will need two different presets and for each of them page count will be different. You can set it up with this plugin. For academic purposes you may want to count citekeys, e.g. number of references: you can set it up too.
-
-At the same time, Telegram has a strict character limit and you may want to count characters in your posts, but in such a way, that, for example, only display text of your links is counted (Telegram does the same). You can set it up with this plugin. Etc, etc…
-
-Without this plugin, it would be a nightmare to constantly change your preset settings and it would not be possible to adjust counters for academic purposes. Advanced Word Count plugin is a flexible tool, that makes your writing nightmares your sweet dreams :)
 
 
 ## About the Author

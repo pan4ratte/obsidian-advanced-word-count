@@ -2,33 +2,37 @@
  * Regenerates the "official catalogue" tables in README.md / README_RU.md from
  * extensions/index.json, so the docs can't drift from the store.
  *
- * Each README has a generated block delimited by:
- *   <!-- BEGIN GENERATED CATALOGUE ... -->  …  <!-- END GENERATED CATALOGUE -->
- * Everything between the markers is replaced; the surrounding prose is left alone.
+ * The generated tables sit between two fixed prose lines in each README — an intro
+ * ("The official catalogue currently includes:") and an outro ("Want to build your
+ * own?"). Everything between those anchors is replaced; the surrounding prose is
+ * left alone. (Prose anchors are used instead of HTML comment markers because
+ * Obsidian's plugin linter flags `<!-- -->` in a README as leftover template text.)
  *
- * Run:    npm run docs:catalogue            (rewrite the READMEs)
- * Check:  node scripts/gen-catalogue.js --check   (exit 1 if a README is stale)
+ * Run:    npm run docs:catalogue                  (rewrite the READMEs)
+ * Check:  node scripts/gen-catalogue.js --check    (exit 1 if a README is stale)
  */
 const fs = require("fs");
 const path = require("path");
 
 const root = path.join(__dirname, "..");
 
-const BEGIN = "<!-- BEGIN GENERATED CATALOGUE: do not edit by hand; run \"npm run docs:catalogue\" -->";
-const END = "<!-- END GENERATED CATALOGUE -->";
-
 // The three sections, in display order.
 const TYPES = ["metric", "setting", "preset"];
 
-// Per-language section headings and column labels.
+// Per-language anchors (the static lines the tables sit between), section headings
+// and column labels.
 const LANGS = {
   en: {
     file: "README.md",
+    intro: "The official catalogue currently includes:",
+    outro: "Want to build your own?",
     headings: { metric: "Metrics", setting: "Advanced settings", preset: "Presets" },
     cols: ["Name", "Description"],
   },
   ru: {
     file: "README_RU.md",
+    intro: "Официальный каталог на данный момент включает:",
+    outro: "Хотите создать своё?",
     headings: { metric: "Метрики", setting: "Расширенные настройки", preset: "Пресеты" },
     cols: ["Название", "Описание"],
   },
@@ -67,20 +71,23 @@ const table = (entries, lang, type) => {
   ].join("\n");
 };
 
-// The generated block (between the markers) for one language.
+// The generated block (between the anchors) for one language.
 const buildBlock = (lang, index = loadIndex()) =>
   TYPES.map((type) => table(index.extensions, lang, type)).join("\n\n");
 
 const readmePath = (lang) => path.join(root, LANGS[lang].file);
 
-// Splice a freshly built block between the markers; returns the new file text, or
-// null when the markers are missing.
+// Splice a freshly built block between the intro/outro anchors; returns the new
+// file text, or null when either anchor is missing.
 const spliceBlock = (text, lang, index) => {
-  const start = text.indexOf(BEGIN);
-  const end = text.indexOf(END);
-  if (start === -1 || end === -1) return null;
-  const before = text.slice(0, start + BEGIN.length);
-  const after = text.slice(end);
+  const cfg = LANGS[lang];
+  const introIdx = text.indexOf(cfg.intro);
+  if (introIdx === -1) return null;
+  const introEnd = introIdx + cfg.intro.length;
+  const outroIdx = text.indexOf(cfg.outro, introEnd);
+  if (outroIdx === -1) return null;
+  const before = text.slice(0, introEnd);
+  const after = text.slice(outroIdx);
   return `${before}\n\n${buildBlock(lang, index)}\n\n${after}`;
 };
 
@@ -92,7 +99,7 @@ const run = ({ check } = {}) => {
     const text = fs.readFileSync(file, "utf8");
     const next = spliceBlock(text, lang, index);
     if (next === null) {
-      console.error(`! ${LANGS[lang].file}: catalogue markers not found`);
+      console.error(`! ${LANGS[lang].file}: catalogue anchors not found`);
       stale = true;
       continue;
     }
@@ -111,6 +118,6 @@ const run = ({ check } = {}) => {
   if (stale) process.exitCode = 1;
 };
 
-module.exports = { BEGIN, END, LANGS, TYPES, loadIndex, buildBlock, readmePath };
+module.exports = { LANGS, TYPES, loadIndex, buildBlock, readmePath };
 
 if (require.main === module) run({ check: process.argv.includes("--check") });
