@@ -33,13 +33,13 @@
     {
       "id": "reference-links",
       "storeName": "Reference links",
-      "description": "Counts reference-style links of the [id]: type.",
+      "description": "Counts resolved reference-style links — a [text][id] reference that has a matching [id]: URL definition elsewhere in the note.",
       "author": "pan4ratte",
-      "updated": "2026-06-20",
+      "updated": "2026-06-22",
       "i18n": {
         "ru": {
-          "storeName": "Ссылки со сносками",
-          "description": "Считает ссылки со сносками типа [id]:"
+          "storeName": "Ссылки референсного стиля",
+          "description": "Считает разрешённые ссылки референсного стиля — ссылку вида [text][id], для которой в заметке есть определение [id]: URL."
         }
       },
       "type": "metric",

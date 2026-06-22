@@ -5,17 +5,17 @@
   "author": "pan4ratte",
   "updated": "2026-06-20",
   "type": "metric",
-  "toggleLabel": "Citations per page",
+  "toggleLabel": "Avg. citations per page",
   "hint": "Total citekeys divided by the number of pages",
-  "statusBarLabel": "Citations/page",
+  "statusBarLabel": "Avg. citations per page",
   "defaultEnabled": false,
   "i18n": {
     "ru": {
       "storeName": "Среднее количество цитирований на страницу",
       "description": "Рассчитывает среднее число цитат на страницу.",
-      "toggleLabel": "Цитат на страницу",
+      "toggleLabel": "Сред. цитирований на страницу",
       "hint": "Всего ключей цитирования, делённое на число страниц",
-      "statusBarLabel": "Цитат/стр."
+      "statusBarLabel": "Сред. цитирований на страницу"
     }
   },
   "count": {

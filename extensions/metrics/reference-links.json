@@ -1,21 +1,21 @@
 {
   "id": "reference-links",
   "storeName": "Reference links",
-  "description": "Counts reference-style links of the [id]: type.",
+  "description": "Counts resolved reference-style links — a [text][id] reference that has a matching [id]: URL definition elsewhere in the note.",
   "author": "pan4ratte",
-  "updated": "2026-06-20",
+  "updated": "2026-06-22",
   "type": "metric",
   "toggleLabel": "Reference links",
-  "hint": "Counts reference-style links that have a matching [id]: definition",
+  "hint": "Reference-style links keep the URL separate from the text:\n  [text][id]  →  [id]: https://example.com\nOnly references with a matching [id]: definition are counted — not footnotes, which use [^id].",
   "statusBarLabel": "Ref links",
   "defaultEnabled": false,
   "i18n": {
     "ru": {
-      "storeName": "Ссылки со сносками",
-      "description": "Считает ссылки со сносками типа [id]:",
-      "toggleLabel": "Ссылочные ссылки",
-      "hint": "Считает ссылки ссылочного стиля с определением [id]:",
-      "statusBarLabel": "Ссылок"
+      "storeName": "Ссылки референсного стиля",
+      "description": "Считает разрешённые ссылки референсного стиля — вида [text][id], для которой в заметке есть определение [id]: URL.",
+      "toggleLabel": "Референсные ссылки",
+      "hint": "В ссылках ссылочного стиля URL хранится отдельно от текста:\n  [text][id]  →  [id]: https://example.com\nСчитаются только ссылки с определением [id]: — не сноски, которые используют [^id].",
+      "statusBarLabel": "Референсных ссылок"
     }
   },
   "count": {

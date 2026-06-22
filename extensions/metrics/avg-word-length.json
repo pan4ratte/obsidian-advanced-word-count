@@ -5,17 +5,17 @@
   "author": "pan4ratte",
   "updated": "2026-06-20",
   "type": "metric",
-  "toggleLabel": "Avg word length",
+  "toggleLabel": "Avg. word length",
   "hint": "Characters (without spaces) divided by the number of words",
-  "statusBarLabel": "Avg word length",
+  "statusBarLabel": "Avg. word length",
   "defaultEnabled": false,
   "i18n": {
     "ru": {
-      "storeName": "Средняя длина слов",
+      "storeName": "Средняя длина слова",
       "description": "Рассчитывает среднее число символов в словах в заметке.",
       "toggleLabel": "Средняя длина слова",
       "hint": "Символы (без пробелов), делённые на число слов",
-      "statusBarLabel": "Ср. длина слова"
+      "statusBarLabel": "Сред. длина слова"
     }
   },
   "count": {

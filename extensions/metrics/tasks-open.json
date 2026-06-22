@@ -11,11 +11,11 @@
   "defaultEnabled": false,
   "i18n": {
     "ru": {
-      "storeName": "Невыполненные задачи",
+      "storeName": "Открытые задачи",
       "description": "Считает только чекбоксы невыполненных задач (- [ ]).",
-      "toggleLabel": "Невыполненные задачи",
+      "toggleLabel": "Открытые задачи",
       "hint": "Считает неотмеченные чекбоксы задач",
-      "statusBarLabel": "Открыто"
+      "statusBarLabel": "Открыто задач"
     }
   },
   "count": {

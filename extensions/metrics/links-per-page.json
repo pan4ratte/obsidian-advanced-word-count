@@ -5,17 +5,17 @@
   "author": "pan4ratte",
   "updated": "2026-06-20",
   "type": "metric",
-  "toggleLabel": "Links per page",
+  "toggleLabel": "Avg. links per page",
   "hint": "Markdown links divided by the number of pages",
-  "statusBarLabel": "Links/page",
+  "statusBarLabel": "Avg. links per page",
   "defaultEnabled": false,
   "i18n": {
     "ru": {
       "storeName": "Среднее количество md-ссылок на страницу",
       "description": "Рассчитывает среднее число Markdown-ссылок на страницу.",
-      "toggleLabel": "Ссылок на страницу",
-      "hint": "Markdown-ссылки, делённые на число страниц",
-      "statusBarLabel": "Ссылок/стр."
+      "toggleLabel": "Сред. ссылок на страницу",
+      "hint": "Количество Markdown-ссылок, делённых на число страниц",
+      "statusBarLabel": "Сред. ссылок на стр."
     }
   },
   "count": {
