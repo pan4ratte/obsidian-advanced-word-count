@@ -1,7 +1,7 @@
 # Contributing a community extension
 
-Thanks for helping grow **Advanced Word Count**! This folder is the catalogue of
-**community extensions** — small add-ons that each contribute one new **metric** or
+Thanks for helping grow **Advanced Word Count**! The [`extensions/`](extensions) folder
+is the catalogue of **community extensions** — small add-ons that each contribute one new **metric** or
 one new **advanced (word-count) setting** to the plugin's presets. This guide walks
 you through building one and opening a pull request.
 
@@ -9,8 +9,8 @@ Extensions are **pure declarative JSON** — they contain *no executable code*. 
 metric is a regular expression plus a count mode; a setting is a regular-expression
 find/replace applied while a note is preprocessed. That keeps every extension safe
 to download, review and store (no remote-code execution), in line with Obsidian's
-plugin guidelines. The plugin downloads `index.json` from this folder, then fetches
-and validates each extension file on demand.
+plugin guidelines. The plugin downloads `index.json` from the [`extensions/`](extensions)
+folder, then fetches and validates each extension file on demand.
 
 > **No code, no build step.** You only add/edit JSON files. The only tooling you
 > need is Node.js to run the validation tests.
@@ -44,7 +44,7 @@ plugin's code.
    `extensions/settings/` or `extensions/presets/` — as `<your-id>.json` (see
    [Anatomy of an extension](#anatomy-of-an-extension)). Include a `toggleLabel` and
    an `updated` date.
-3. **Register it** in [`extensions/index.json`](index.json) — add an entry with the
+3. **Register it** in [`extensions/index.json`](extensions/index.json) — add an entry with the
    same `id`, `storeName`, `author`, `type` and `updated`, and a `path` pointing at your
    file (e.g. `"metrics/<your-id>.json"`). Mirror `dependencies` / translated `i18n`
    if you use them.
@@ -107,7 +107,7 @@ into the matching subfolder.
 
 ### The catalogue entry (`index.json`)
 
-Every extension also gets a row in [`index.json`](index.json). It carries the fields
+Every extension also gets a row in [`index.json`](extensions/index.json). It carries the fields
 the browse modal needs *before* downloading the file:
 
 ```json
@@ -294,7 +294,7 @@ a fallback). On **Export** the plugin downloads **two files**, fully filled in:
    in `extensions/presets/`.
 2. **`<id>-index-entry.json`** — the matching `index.json` row (with the right
    `path` and the same `i18n`). Paste its contents into the `extensions` array in
-   [`index.json`](index.json).
+   [`index.json`](extensions/index.json).
 
 Both files are valid as exported, so you can submit them as-is.
 
@@ -413,6 +413,18 @@ To iterate on just the catalogue checks:
 npx vitest run tests/catalogue.test.ts
 ```
 
+**Refresh the README catalogue (required).** The extension tables in
+[`README.md`](README.md) and [`README_RU.md`](README_RU.md) are generated from
+`index.json`, not edited by hand. After adding, renaming or removing an extension (or
+changing its `storeName`/`description`, including translations), regenerate them:
+
+```bash
+npm run docs:catalogue
+```
+
+`npm test` includes a guard that fails if the tables are out of sync, so commit the
+regenerated READMEs alongside your change.
+
 **Try it live (optional).** There's no settings UI for the catalogue source, but you
 can point the plugin at your fork by editing the vault's
 `.obsidian/plugins/obsidian-advanced-word-count/data.json` and setting:
@@ -437,6 +449,7 @@ notes. Reset `extensionRepoUrl` (or remove the key) when you're done.
 - [ ] Any `dependencies` reference existing **extensions** (not built-ins, no
       self-reference, no cycles).
 - [ ] Regex patterns use only `g i m s u` flags and don't backtrack catastrophically.
+- [ ] You ran `npm run docs:catalogue` and committed the refreshed README tables.
 - [ ] `npm test` passes.
 - [ ] If you're **updating** an existing extension, you bumped its `updated` date in
       both the file and the `index.json` entry so installs detect the update.

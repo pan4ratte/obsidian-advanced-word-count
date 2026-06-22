@@ -2,7 +2,7 @@
 
 English | [Русский](https://github.com/pan4ratte/obsidian-advanced-word-count/blob/main/README_RU.md)
 
-This plugin allows you to create complex word count presets that are displayed in the status bar or in the right pane tab. You can cycle presets by clicking on the status bar, the right pane header or using command palette. The plugin is made with academic use cases in mind, so you can fine-tune counting of `[@citekeys]` and `[[wikilinks]]`.
+This plugin allows you to create complex word count presets that are displayed in the status bar or in the right pane tab. You can cycle presets by clicking on the status bar, the right pane header or using command palette. Thanks to community extensions — presets, metrics and advanced settings — the plugin flexibly adapts to writing, academic and other purposes.
 
 <div align="center">
   <img src="media/1-cover.png"width="100%" />
@@ -37,8 +37,6 @@ Each separate preset can have its own list of metrics and methods of counting fo
 	* Reading time (estimated from a chosen reading speed)
 	* Markdown links `(url)[label]` and `[label](url)`
   * Embeds `![[note]]` or `![[file.pdf]]`
-  * Complete (rendered) tables *(now an official extension — see §5)*
-  * Any `#tags` that are valid in Obsidian *(now an official extension — see §5)*
   * Footnotes — complete `[^1]` references and inline `^[…]`
 
 * Special "academic" options:
@@ -59,19 +57,62 @@ You can specify, how formatting elements will be counted:
 | **Ignore comments**			         | comments `%% … %%` and `<!-- … -->` text will be counted		  | comments will be ignored 	   		  |
 | **Ignore HTML tags**		         | HTML tags like `<b> … </b>` etc. will be counted		          | HTML tags will be ignored 	   		|
 
-> **Note:** **Complete tables**, **#tags** and **Ignore code** are no longer built in — they now ship as official community extensions. Install them from the catalogue (see below); presets that already used them are migrated automatically, so they keep working once the matching extension is installed.
+### 5. Install community extensions: presets, metrics and advanced settings
 
-### 5. Extend the plugin with community extensions
+**Community extensions** are small add-ons, each of which adds one metric, one advanced (word-count) setting, or a whole ready-made preset.
 
-Beyond the built-in counters, you can install **community extensions** — small add-ons that each contribute one extra metric, one extra advanced (word-count) setting, or a whole ready-made **preset**. Extensions are pure declarative JSON (a regular expression plus a counting rule, or a regex find/replace) and contain **no executable code**, so they are safe to download, review and store.
+* **The extension store** opens in the plugin settings. Search by name, author or description, filter by type (metrics / advanced settings / presets), and install, update or remove any extension with a single click. Installed extensions are highlighted with your accent colour.
+* **Ready-made presets** carry their toggle states, advanced settings, warnings/goals and connected community extensions. Installing one adds it to your presets and downloads the extensions it needs automatically. Made a preset you like? Click the **Share** (↗) icon in its header to export a file you can suggest for the plugin's catalogue.
+* **Connecting installed extensions** is done separately for each of your presets — use the **Add metric…** / **Add setting…** dropdown inside a preset.
+* **Dependencies are installed automatically:** if an extension depends on another, everything it needs is downloaded with it.
+* **Updating extensions** is available manually in the store, or automatically on Obsidian startup when the **Automatically update installed community extensions** setting is enabled.
 
-* **Browse and install.** In the plugin settings, under the **Presets** section, click **Browse extensions** to open the catalogue. Search by name, author or description, filter by type (metrics / advanced settings / presets), and install, update or uninstall any extension with a single click. Installed extensions are highlighted with your accent colour.
-* **Ready-made presets.** Some catalogue entries are complete presets — they carry their toggle states, advanced settings, warnings/goals and the extensions they use. Installing one adds the preset and downloads those extensions for you. Made a preset you like? Click the **Share** (↗) button in its header to export a file you can suggest for the catalogue.
-* **Connect to presets.** A freshly installed extension changes nothing until you connect it: use the **Add metric…** / **Add setting…** dropdown in a preset's metric and advanced-settings section headers. Once connected, an extension metric behaves exactly like a built-in one — it can carry a limit warning and a goal, be reordered by dragging, and appear in the status bar and the right pane. Extension labels are shown in your Obsidian language whenever a translation is provided.
-* **Dependencies are handled for you.** If an extension relies on another (for example, a ratio metric that divides one metric by another), installing it automatically pulls in everything it needs. You only connect the extension you actually want to a preset — its dependencies do their job in the background and don't clutter the metric list. Removing an extension that others depend on shows a warning first so you don't break them.
-* **Keep them up to date.** When a newer version of an installed extension is available, the browser shows an **Update** button. You can also enable **Automatically update installed community extensions** (the toggle right under *Browse extensions*) to check the catalogue on startup and update them quietly in the background.
+The official catalogue currently includes:
 
-The official catalogue already includes extras such as headings, sentence count, tasks (total / done / open), distinct citekeys, emoji and unique tags, average word length and other ratios, and "ignore" settings for math, tables, URLs, strikethrough, highlights and Dataview fields. Want to build your own? See the [extension contributor guide](https://github.com/pan4ratte/obsidian-advanced-word-count/blob/main/extensions/README.md).
+<!-- BEGIN GENERATED CATALOGUE: do not edit by hand; run "npm run docs:catalogue" -->
+
+**Metrics**
+
+| Name | Description |
+| :--- | :---------- |
+| Sentences | Counts the number of sentences in a note. |
+| Emoji | Counts the number of emoji and other pictographic characters in a note. |
+| Reference links | Counts resolved reference-style links — a [text][id] reference that has a matching [id]: URL definition elsewhere in the note. |
+| Unique tags | Counts the number of unique #tags in a note, ignoring repeats. |
+| Average word length | Calculates the average number of characters per word in a note. |
+| Average Markdown links per page | Calculates the average number of Markdown links per page. |
+| Average words per sentence | Calculates the average number of words per sentence in a note. |
+| Headings | Counts the number of Markdown headings (# … ######) in a note. |
+| Tasks (all) | Counts all task checkboxes — checked and unchecked. |
+| Completed tasks | Counts only completed task checkboxes (- [x] or - [X]). |
+| Incomplete tasks | Counts only incomplete task checkboxes (- [ ]). |
+| Unique citekeys | Counts the number of unique @citekeys in a note. |
+| Average citations per page | Calculates the average number of citations per page. |
+| Tables | Counts the number of complete Markdown tables (header + delimiter row) in a note. |
+| Tags | Counts the number of #tags in a note. |
+
+**Advanced settings**
+
+| Name | Description |
+| :--- | :---------- |
+| Ignore highlights | When counting words and characters, ignores `==highlighted==` spans. |
+| Ignore math | When counting words and characters, excludes LaTeX math — block `$$…$$` and inline `$…$`. |
+| Ignore tables | When counting words and characters, excludes Markdown table rows. |
+| Ignore URLs | When counting words and characters, excludes bare http(s) links. |
+| Ignore strikethrough | When counting words and characters, excludes `~~struck-through~~` text. |
+| Ignore Dataview fields | When counting words and characters, excludes inline Dataview fields — [key:: value] and (key:: value). |
+| Ignore code | When counting words and characters, excludes block and inline code. |
+
+**Presets**
+
+| Name | Description |
+| :--- | :---------- |
+| Telegram user post | Preset for posts made as a Telegram user: with limit warnings and all metrics set up to count characters the way Telegram does. |
+| Telegram rich-text post | Preset for rich-text posts in Telegram: with limit warnings and all metrics set up to count characters the way Telegram does. |
+
+<!-- END GENERATED CATALOGUE -->
+
+Want to build your own? See the [extension contributor guide](https://github.com/pan4ratte/obsidian-advanced-word-count/blob/main/extensions/README.md).
 
 
 ## Installation
