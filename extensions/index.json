@@ -379,6 +379,24 @@
       "type": "preset",
       "dependencies": [],
       "path": "presets/telegram-rich-text-post.json"
+    },
+    {
+      "id": "scientific-article",
+      "storeName": "Scientific article",
+      "description": "Preset with all basic metrics and goals, necessary for academic writing purposes.",
+      "author": "pan4ratte",
+      "updated": "2026-06-22",
+      "i18n": {
+        "ru": {
+          "storeName": "Научная статья",
+          "description": "Пресет со всеми основными метриками и целями, необходимыми для написания академических работ."
+        }
+      },
+      "type": "preset",
+      "dependencies": [
+        "citations-per-page"
+      ],
+      "path": "presets/scientific-article.json"
     }
   ]
 }

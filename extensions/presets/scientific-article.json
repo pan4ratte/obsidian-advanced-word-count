@@ -1,0 +1,70 @@
+{
+  "id": "scientific-article",
+  "storeName": "Scientific article",
+  "description": "Preset with all basic metrics and goals, necessary for academic writing purposes.",
+  "author": "pan4ratte",
+  "type": "preset",
+  "updated": "2026-06-22",
+  "preset": {
+    "name": "Scientific article",
+    "wordsPerPage": 250,
+    "readingWpm": 150,
+    "showWordsWithSpaces": true,
+    "showCharsWithSpaces": true,
+    "showCharsWithoutSpaces": false,
+    "showPages": true,
+    "showReadingTime": false,
+    "showLines": false,
+    "showParagraphs": false,
+    "showMarkdownLinks": false,
+    "showWikiLinks": true,
+    "showCitekeys": true,
+    "showEmbeds": false,
+    "showFootnotes": true,
+    "countMdLinksAsWords": true,
+    "countWikiLinkDisplayText": false,
+    "ignoreWikiLinks": true,
+    "countCitekeysAsWords": false,
+    "ignoreComments": true,
+    "ignoreHtmlTags": true,
+    "rules": [
+      {
+        "metric": "pages",
+        "threshold": 25,
+        "kind": "goal"
+      },
+      {
+        "metric": "pages",
+        "threshold": 30,
+        "kind": "warning"
+      }
+    ],
+    "metricOrder": [
+      "wordsWithSpaces",
+      "charsWithSpaces",
+      "charsWithoutSpaces",
+      "pages",
+      "readingTime",
+      "lines",
+      "paragraphs",
+      "markdownLinks",
+      "wikiLinks",
+      "citekeys",
+      "embeds",
+      "footnotes"
+    ],
+    "extMetrics": {
+      "citations-per-page": true
+    },
+    "extSettings": {}
+  },
+  "dependencies": [
+    "citations-per-page"
+  ],
+  "i18n": {
+    "ru": {
+      "storeName": "Научная статья",
+      "description": "Пресет со всеми основными метриками и целями, необходимыми для написания академических работ."
+    }
+  }
+}
