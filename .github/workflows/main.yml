@@ -1,19 +1,60 @@
 name: Build, Attest, and Release
 
+# Releases are driven by the version in manifest.json: bump it and push to main,
+# and this workflow tags that commit and publishes the release. Pushes that touch
+# manifest.json without changing the version are ignored (the release already
+# exists), so editing e.g. minAppVersion is safe.
 on:
   push:
-    tags:
-      - '[0-9]*'
+    branches:
+      - main
+    paths:
+      - 'manifest.json'
   workflow_dispatch:
 
 jobs:
+  # Read the manifest version and decide whether it still needs releasing.
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      should_release: ${{ steps.check.outputs.should_release }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Read version from manifest.json
+        id: version
+        run: echo "version=$(jq -r .version manifest.json)" >> "$GITHUB_OUTPUT"
+
+      - name: Skip if a release for this version already exists
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if gh release view "$VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release $VERSION already exists — nothing to do."
+            echo "should_release=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Release $VERSION not found — will build and release."
+            echo "should_release=true" >> "$GITHUB_OUTPUT"
+          fi
+
   build-and-release:
+    needs: check
+    if: needs.check.outputs.should_release == 'true'
     runs-on: ubuntu-latest
 
     permissions:
       id-token: write      # Required for attestation signing
-      contents: write      # Required to create the GitHub Release
+      contents: write      # Required to create the tag and GitHub Release
       attestations: write  # Required to write the attestation
+
+    env:
+      VERSION: ${{ needs.check.outputs.version }}
 
     steps:
       - name: Checkout code
@@ -43,20 +84,22 @@ jobs:
             manifest.json
             styles.css
 
-      # Step 5: Extract release notes from CHANGELOG.md for this tag
+      # Step 5: Extract release notes from CHANGELOG.md for this version
       - name: Extract release notes
         id: changelog
         run: |
-          VERSION="${{ github.ref_name }}"
           NOTES=$(awk "/^## $VERSION/{flag=1; next} /^## /{flag=0} flag" CHANGELOG.md)
-          echo "notes<<EOF" >> $GITHUB_OUTPUT
-          echo "$NOTES" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          echo "notes<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$NOTES" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
 
-      # Step 6: Create the GitHub Release and attach the attested files
+      # Step 6: Tag this commit and create the GitHub Release with the attested files
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ env.VERSION }}
+          name: ${{ env.VERSION }}
+          target_commitish: ${{ github.sha }}
           body: ${{ steps.changelog.outputs.notes }}
           files: |
             main.js
