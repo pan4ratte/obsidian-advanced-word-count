@@ -414,7 +414,13 @@ function countEmbeds(text: string): number {
   // so the two counts never overlap.
   const wiki = (text.match(/!\[\[[^\]]{0,500}\]\]/g) ?? []).length;
   const markdown = (text.match(/!\[[^\]]{0,500}\]\([^)]{0,2000}\)/g) ?? []).length;
-  return wiki + markdown;
+  // HTML embedded content: <img> (e.g. <img src="…">) and the other elements that
+  // embed media/a document — iframe, embed, object, video, audio. Only opening tags
+  // are matched (closing </…> tags start with "/", which the tag-name list rejects),
+  // and \b stops false positives like <image> or <iframely>. Each element counts once
+  // even when it wraps inner tags (e.g. <video>…<source>…</video>).
+  const html = (text.match(/<(?:img|iframe|embed|object|video|audio)\b[^>]{0,2000}>/gi) ?? []).length;
+  return wiki + markdown + html;
 }
 
 /**

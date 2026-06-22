@@ -230,7 +230,7 @@ const ru = {
     },
     showEmbeds: {
       label: "Вложения",
-      hint: "Считает вложения ![[...]] и ![](...)",
+      hint: "Считает вложения ![[...]], ![](...) и HTML-вложения (<img>, <iframe>, <video>, …)",
     },
     showFootnotes: {
       label: "Сноски",

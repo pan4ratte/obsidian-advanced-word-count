@@ -185,6 +185,20 @@ describe("structural metrics", () => {
     expect(count("[docs](https://x.com)").embeds).toBe(0);
   });
 
+  it("counts HTML embeds (img and other embedded-content tags)", () => {
+    expect(count('<img src="x.png">').embeds).toBe(1);
+    expect(count('<img src="x.png" />').embeds).toBe(1);
+    expect(count('<IMG SRC="x.png">').embeds).toBe(1); // case-insensitive
+    expect(count('<iframe src="https://x.com"></iframe>').embeds).toBe(1); // opening tag only
+    expect(count("<video controls><source src='a.mp4'></video>").embeds).toBe(1); // wraps inner tags
+    expect(count('<embed src="a.pdf"> <audio src="a.mp3"> <object data="a.svg"></object>').embeds).toBe(3);
+    // Not embeds: non-embed HTML, and tags whose name only starts with an embed name.
+    expect(count("<div>text</div>").embeds).toBe(0);
+    expect(count("<image>").embeds).toBe(0);
+    // Combines with wiki + markdown embeds.
+    expect(count('![[B]] ![alt](img.png) <img src="x.png">').embeds).toBe(3);
+  });
+
   it("counts only complete footnotes", () => {
     // Reference + matching definition = one complete footnote.
     expect(count("text[^1] more\n\n[^1]: the definition").footnotes).toBe(1);

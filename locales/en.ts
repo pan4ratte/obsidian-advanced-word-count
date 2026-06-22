@@ -218,7 +218,7 @@ const en = {
     },
     showEmbeds: {
       label: "Embeds",
-      hint: "Counts ![[...]] and ![](...) embeds",
+      hint: "Counts ![[...]], ![](...) and HTML embeds (<img>, <iframe>, <video>, …)",
     },
     showFootnotes: {
       label: "Footnotes",
