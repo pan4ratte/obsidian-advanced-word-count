@@ -159,6 +159,15 @@ const en = {
   extFilterMetrics: "Metrics",
   extFilterSettings: "Advanced settings",
   extFilterPresets: "Presets",
+  extFilterLocal: "Local",
+
+  // Browse modal — "Local" filter (test a self-developed extension from a file)
+  extLocalIntroTitle: "Test your community extension locally",
+  extLocalIntroDesc:
+    "Use this page to add community metrics or settings that you develop to the plugin. After that you can test your extension locally",
+  extLocalAdd: "Add from file",
+  extLocalInstalledNotice: (name: string) => `Added local extension "${name}"`,
+  extLocalInstallFailed: (msg: string) => `Couldn't add extension: ${msg}`,
 
   // Per-preset connect (dropdowns in the metric / setting section headers)
   connectAddMetric: "Community extensions…",

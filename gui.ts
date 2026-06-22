@@ -1046,7 +1046,7 @@ export class PresetExportModal extends Modal {
 
 // ── Extension browser modal ───────────────────────────────────────────────────
 
-type ExtTypeFilter = "all" | "metric" | "setting" | "preset";
+type ExtTypeFilter = "all" | "metric" | "setting" | "preset" | "local";
 
 export class ExtensionBrowserModal extends Modal {
   private plugin: WordCountPlugin;
@@ -1118,18 +1118,27 @@ export class ExtensionBrowserModal extends Modal {
     this.chipsEl.empty();
     const ready = this.state === "ready";
     const matched = ready ? this.entries.filter((e) => this.matchesSearch(e)) : [];
+    const localMatched = this.localEntries().filter((e) => this.matchesSearch(e));
     const countOf = (value: ExtTypeFilter) =>
-      value === "all" ? matched.length : matched.filter((e) => e.type === value).length;
+      value === "local"
+        ? localMatched.length
+        : value === "all"
+          ? matched.length
+          : matched.filter((e) => e.type === value).length;
     const chips: { value: ExtTypeFilter; label: string }[] = [
       { value: "all", label: t.extFilterAll },
       { value: "metric", label: t.extFilterMetrics },
       { value: "setting", label: t.extFilterSettings },
       { value: "preset", label: t.extFilterPresets },
     ];
+    // Local extension testing is a desktop-only developer feature.
+    if (!Platform.isMobile) chips.push({ value: "local", label: t.extFilterLocal });
     for (const { value, label } of chips) {
       const chip = this.chipsEl.createEl("button", { cls: "wcp-ext-filter" });
       chip.appendText(label);
-      if (ready) chip.createSpan({ text: `(${countOf(value)})`, cls: "wcp-ext-filter-count" });
+      // Local counts come from installed files (no network), so they show even while
+      // the remote catalogue is still loading or failed to load.
+      if (ready || value === "local") chip.createSpan({ text: `(${countOf(value)})`, cls: "wcp-ext-filter-count" });
       if (this.typeFilter === value) chip.addClass("is-active");
       chip.addEventListener("click", () => {
         this.typeFilter = value;
@@ -1157,6 +1166,15 @@ export class ExtensionBrowserModal extends Modal {
     const list = this.listEl;
     list.empty();
 
+    // The "Local" filter is independent of the remote catalogue: a pinned "add from
+    // file" card on top, then the locally-installed extensions.
+    if (this.typeFilter === "local") {
+      this.renderLocalIntroCard(list);
+      const locals = this.localEntries().filter((e) => this.matchesSearch(e));
+      for (const entry of locals) this.renderCard(list, entry);
+      return;
+    }
+
     if (this.state === "loading") {
       list.createEl("p", { text: t.extLoading, cls: "wcp-ext-status" });
       return;
@@ -1183,6 +1201,60 @@ export class ExtensionBrowserModal extends Modal {
     }
 
     for (const entry of shown) this.renderCard(list, entry);
+  }
+
+  /**
+   * Locally-installed extensions as catalogue-shaped rows. A stored Extension carries
+   * every field a card reads (id, names, author, type, i18n), so the existing card
+   * renderer handles them unchanged.
+   */
+  private localEntries(): ExtensionIndexEntry[] {
+    return this.plugin.extensionManager.localExtensions();
+  }
+
+  /**
+   * The pinned card at the top of the "Local" filter: explains the flow and offers a
+   * folder-open button that picks a JSON file and installs it as a local extension.
+   * Reuses the standard card markup so it sits flush with the list below.
+   */
+  private renderLocalIntroCard(parent: HTMLElement) {
+    const card = parent.createDiv({ cls: "wcp-ext-card wcp-ext-local-intro" });
+    const main = card.createDiv({ cls: "wcp-ext-card-main" });
+    const head = main.createDiv({ cls: "wcp-ext-card-head" });
+    head.createEl("span", { text: t.extLocalIntroTitle, cls: "wcp-ext-name" });
+    main.createEl("p", { text: t.extLocalIntroDesc, cls: "wcp-ext-desc" });
+
+    const actions = card.createDiv({ cls: "wcp-ext-actions" });
+    const add = actions.createEl("button", { cls: "wcp-ext-install" });
+    setIcon(add, "folder-open");
+    setTooltip(add, t.extLocalAdd, { placement: "top" });
+    add.addEventListener("click", () => this.pickLocalFile());
+  }
+
+  /**
+   * Open a file picker, read the chosen JSON and install it as a local extension.
+   * The hidden input is created on demand (so the native dialog opens from this user
+   * gesture) and removed once it fires.
+   */
+  private pickLocalFile() {
+    const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
+    const input = this.contentEl.createEl("input", { type: "file", cls: "wcp-ext-file-input" });
+    input.accept = ".json,application/json";
+    input.addEventListener("change", handle(async () => {
+      const file = input.files?.[0];
+      input.remove();
+      if (!file) return;
+      try {
+        const ext = await this.plugin.extensionManager.installLocal(JSON.parse(await file.text()));
+        new Notice(t.extLocalInstalledNotice(ext.storeName));
+        this.onChanged();
+        this.renderChips();
+        this.renderList();
+      } catch (e) {
+        new Notice(t.extLocalInstallFailed(message(e)));
+      }
+    }));
+    input.click();
   }
 
   private renderCard(parent: HTMLElement, entry: ExtensionIndexEntry) {
@@ -1254,6 +1326,7 @@ export class ExtensionBrowserModal extends Modal {
           await this.plugin.extensionManager.uninstall(entry.id);
           new Notice(t.extUninstalledNotice(entry.storeName));
           this.onChanged();
+          this.renderChips(); // local count chip reflects the removal
           this.renderList();
         } catch (e) {
           new Notice(t.extUninstallFailed(message(e)));

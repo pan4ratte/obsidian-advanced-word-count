@@ -44,6 +44,11 @@ export class ExtensionManager {
     return this.installed().some((e) => e.id === id);
   }
 
+  /** Installed extensions added from a local file (developer testing, not the catalogue). */
+  localExtensions(): Extension[] {
+    return this.installed().filter((e) => e.local === true);
+  }
+
   /** Installed extensions that depend on `id` — i.e. would break if it's removed. */
   dependents(id: string): Extension[] {
     return findDependents(id, this.installed());
@@ -105,6 +110,23 @@ export class ExtensionManager {
     this.registry.add(valid);
     await this.persist(next);
     return valid;
+  }
+
+  /**
+   * Install an extension from a locally-chosen JSON file (developer testing). The
+   * parsed value is validated exactly like a download, marked `local` so it surfaces
+   * under the browse modal's "Local" filter, then registered and persisted. Only
+   * metric/setting extensions are supported — they're the live registry items you
+   * connect to a preset; preset extensions install through their own catalogue path.
+   */
+  async installLocal(value: unknown): Promise<Extension> {
+    const result = validateExtension(value);
+    if (!result.ok) throw new Error(result.error);
+    if (result.ext.type === "preset") {
+      throw new Error("preset extensions can't be tested as a local file");
+    }
+    result.ext.local = true;
+    return this.install(result.ext);
   }
 
   /**

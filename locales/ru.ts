@@ -171,6 +171,15 @@ const ru = {
   extFilterMetrics: "Метрики",
   extFilterSettings: "Расширенные настройки",
   extFilterPresets: "Пресеты",
+  extFilterLocal: "Локальные",
+
+  // Browse modal — "Local" filter (test a self-developed extension from a file)
+  extLocalIntroTitle: "Протестируйте расширение сообщества локально",
+  extLocalIntroDesc:
+    "Используйте эту страницу, чтобы добавить в плагин разрабатываемые вами метрики или настройки. После этого вы сможете протестировать расширение локально",
+  extLocalAdd: "Добавить из файла",
+  extLocalInstalledNotice: (name: string) => `Добавлено локальное расширение "${name}"`,
+  extLocalInstallFailed: (msg: string) => `Не удалось добавить расширение: ${msg}`,
 
   // Per-preset connect (dropdowns in the metric / setting section headers)
   connectAddMetric: "Расширения сообщества…",

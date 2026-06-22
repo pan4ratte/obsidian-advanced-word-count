@@ -597,14 +597,24 @@
 }
 
 /* Install-state filter pills */
+/* Single non-wrapping row; overflow scrolls horizontally so adding chips never
+   pushes them onto a second line. The scrollbar itself is hidden. */
 .wcp-ext-filters {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 4px;
   margin-bottom: 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.wcp-ext-filters::-webkit-scrollbar {
+  display: none;
 }
 
 .wcp-ext-filter {
+  flex: 0 0 auto;
+  white-space: nowrap;
   font-size: var(--font-ui-smaller);
   padding: 4px 12px;
   border: none;
@@ -691,6 +701,17 @@
 .wcp-ext-card.is-installed .wcp-ext-type-icon,
 .wcp-ext-card.is-installed .wcp-ext-name {
   color: var(--text-accent);
+}
+
+/* The pinned "add a local extension from a file" card on the Local filter. */
+.wcp-ext-local-intro {
+  border-style: dashed;
+  border-color: var(--background-modifier-border-hover);
+}
+
+/* Hidden picker the folder-open button drives. */
+.wcp-ext-file-input {
+  display: none;
 }
 
 .wcp-ext-author {

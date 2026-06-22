@@ -97,6 +97,10 @@ export interface ExtensionManifestBase {
   // reads another metric's value). Installing this extension pulls them in too.
   dependencies?: string[];
   minPluginVersion?: string;
+  // Set when the extension was added from a local JSON file via the browse modal's
+  // "Local" filter (for testing one you're developing). Local extensions are never
+  // part of the remote catalogue and only show up under that filter.
+  local?: boolean;
 }
 
 export interface CountSpec {
