@@ -1,0 +1,27 @@
+{
+  "id": "http-links",
+  "storeName": "HTTP(S) links",
+  "description": "Counts every http(s) link in a note, wherever it appears — bare, inside a Markdown link, angle brackets or any other brackets.",
+  "author": "pan4ratte",
+  "updated": "2026-06-22",
+  "type": "metric",
+  "toggleLabel": "HTTP(S) links",
+  "hint": "Counts all http(s) links, regardless of their position",
+  "statusBarLabel": "Links",
+  "defaultEnabled": false,
+  "i18n": {
+    "ru": {
+      "storeName": "HTTP(S)-ссылки",
+      "description": "Считает все http(s)-ссылки в заметке, где бы они ни находились — «голые», внутри Markdown-ссылки, в угловых или любых других скобках.",
+      "toggleLabel": "HTTP(S)-ссылки",
+      "hint": "Считает все http(s)-ссылки независимо от их положения",
+      "statusBarLabel": "Ссылки"
+    }
+  },
+  "count": {
+    "mode": "matches",
+    "source": "raw",
+    "pattern": "https?://[^\\s<>()\\[\\]{}\"']+",
+    "flags": "gi"
+  }
+}

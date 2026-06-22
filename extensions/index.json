@@ -46,6 +46,21 @@
       "path": "metrics/reference-links.json"
     },
     {
+      "id": "http-links",
+      "storeName": "HTTP(S) links",
+      "description": "Counts every http(s) link in a note, wherever it appears — bare, inside a Markdown link, angle brackets or any other brackets.",
+      "author": "pan4ratte",
+      "updated": "2026-06-22",
+      "i18n": {
+        "ru": {
+          "storeName": "HTTP(S)-ссылки",
+          "description": "Считает все http(s)-ссылки в заметке, где бы они ни находились — «голые», внутри Markdown-ссылки, в угловых или любых других скобках."
+        }
+      },
+      "type": "metric",
+      "path": "metrics/http-links.json"
+    },
+    {
       "id": "unique-tags",
       "storeName": "Unique tags",
       "description": "Counts the number of unique #tags in a note, ignoring repeats.",
