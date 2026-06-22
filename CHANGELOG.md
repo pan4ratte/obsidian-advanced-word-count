@@ -1,5 +1,27 @@
 # Changelog
 
+## 4.0.0
+
+### Major update: Community extensions store
+
+**Community extensions** are small, declarative add-ons that extend the plugin with no executable code, so they're safe to download, review and store.
+
+* **Extensions store.** A new catalogue in the plugin settings (the **Presets** section → **Browse extensions**). Search by name, author or description, filter by type, and install, update or uninstall any extension with a single click.
+* **Metric and setting extensions.** Install new counter metrics and additional word/character advanced counting options, then connect them to any preset — they behave exactly like the built-in ones (limit warnings, goals, drag-to-reorder, status bar and right pane).
+* **Ready-made presets.** Some catalogue entries are complete presets (for example, the Telegram post presets) that carry their toggles, warnings/goals and the extensions they use. Installing one adds the preset and downloads everything it needs. Made a preset you like? Use the **Share** (↗) button to export it for the catalogue.
+* **Dependencies handled for you.** Installing an extension automatically pulls in anything it relies on; removing one that others depend on warns you first.
+* **Automatic updates.** Turn on "Automatically update installed community extensions" option to refresh them quietly on startup, or update them by hand from the store.
+* **Localized.** Extension names and labels appear in your Obsidian language whenever a translation is provided.
+
+### Breaking changes
+
+* **Tables, Tags and Ignore code are now community extensions.** These three used to be built in; they've moved to the catalogue to keep the core lean. After updating, install them from **Browse extensions** to keep using them. Your presets remember whether each was enabled and reconnect it automatically as soon as the extension is installed — no reconfiguration needed.
+
+### Bug fixes
+
+* **Embeds.** The Embeds metric now also counts Markdown image embeds (`![alt](url)`) alongside Obsidian wiki embeds (`![[…]]`), so notes using image-style embeds are no longer undercounted.
+
+
 ## 3.1.0
 
 ### New features
