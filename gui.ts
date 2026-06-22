@@ -1088,15 +1088,23 @@ export class ExtensionBrowserModal extends Modal {
     void this.load();
   }
 
-  /** Whether an entry matches the current search text (type filter aside). */
+  /**
+   * Whether an entry matches the current search text (type filter aside). Matches
+   * against the localized name/description shown in the list as well as the base
+   * (English) values, so typing in the active locale finds what's on screen.
+   */
   private matchesSearch(e: ExtensionIndexEntry): boolean {
     const f = this.filter;
     if (!f) return true;
+    const loc = this.plugin.extensions;
+    const hit = (s: string | undefined) => !!s && s.toLowerCase().includes(f);
     return (
-      e.storeName.toLowerCase().includes(f) ||
-      e.description.toLowerCase().includes(f) ||
-      e.author.toLowerCase().includes(f) ||
-      e.id.toLowerCase().includes(f)
+      hit(e.storeName) ||
+      hit(loc.loc(e, "storeName")) ||
+      hit(e.description) ||
+      hit(loc.loc(e, "description")) ||
+      hit(e.author) ||
+      hit(e.id)
     );
   }
 
