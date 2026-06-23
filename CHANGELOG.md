@@ -1,5 +1,18 @@
 # Changelog
 
+## 4.1.1
+
+### New community extensions
+
+* **New metric: Pandoc footnotes.** Counts Markdown footnotes combined with `@citekey` citation groups that will generate footnotes after Pandoc export. Complete footnotes (`[^1]` with a `[^1]: …` definition, or inline `^[…]`) are counted, plus each body citation bracket (`[@key]`) — however many keys it bundles, it becomes one footnote when exported with a footnote citation style (e.g. Chicago notes). Citations already inside a footnote aren't double-counted. Useful if you export with a footnote citation style.
+* **New setting: Ignore backslash commands.** When enabled, lines consisting solely of a backslash command — such as `\pagebreak` or `\newpage` — are excluded from word and character counts.
+
+### Enhancements and bug fixes
+
+* **Community store desktop UX improvements.** Added mouse scroll for the filters row in the extensions store. Plus, various interaction and layout improvements were implemented.
+* **Mobile UI optimizations.** Several CSS fixes for a better experience on mobile.
+
+
 ## 4.1.0
 
 ### New features
