@@ -89,6 +89,7 @@
   display: flex;
   gap: 8px;
   margin-top: 12px;
+  flex-wrap: wrap;
 }
 
 .wcp-presets-actions button {
@@ -495,6 +496,19 @@
   flex: 1;
 }
 
+/* Narrow screens: stack the add-warning / add-goal buttons onto their own rows. The
+   row layout gives them flex:1 (basis 0), which in a column would collapse their
+   height — reset to natural height; they still stretch full width (align stretch). */
+@media (max-width: 600px) {
+  .wcp-limit-buttons {
+    flex-direction: column;
+  }
+
+  .wcp-limit-buttons button {
+    flex: none;
+  }
+}
+
 /* Warnings / Goals subsection titles */
 .wcp-limit-subhead {
   font-size: var(--font-smaller);
@@ -522,6 +536,23 @@
 .wcp-preset-card .wcp-limit-item input[type="number"] {
   width: 96px;
   flex: none;
+}
+
+/* Narrow screens: split the rule onto two rows — the metric dropdown on the first,
+   the threshold input (filling the width) and the delete button on the second. */
+@media (max-width: 600px) {
+  .wcp-preset-card .wcp-limit-item {
+    flex-wrap: wrap;
+  }
+
+  .wcp-preset-card .wcp-limit-item .dropdown {
+    flex-basis: 100%;
+  }
+
+  .wcp-preset-card .wcp-limit-item input[type="number"] {
+    flex: 1;
+    width: auto;
+  }
 }
 
 /* ── Delete confirmation modal ───────────────────────────────────────────────── */
@@ -900,4 +931,18 @@
 
 .wcp-ext-connect-select:disabled {
   opacity: 0.6;
+}
+
+/* On narrow widths the title/description and the connect dropdown can't sit side by
+   side without squishing both — stack them, each spanning the full width. */
+@media (max-width: 600px) {
+  .wcp-section-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .wcp-ext-connect-select {
+    max-width: none;
+    width: 100%;
+  }
 }
