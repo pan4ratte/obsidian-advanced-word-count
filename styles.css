@@ -586,6 +586,14 @@
   scrollbar-gutter: stable both-edges;
 }
 
+/* Breathing room after the last card so the end of the list isn't flush against the
+   modal's bottom edge when scrolled all the way down. Padding (not margin) on the
+   scrolled content is required: a scroll container trims a trailing child's margin,
+   but never its own padding. */
+.wcp-ext-modal .modal-content {
+  padding-bottom: 24px;
+}
+
 /* Modal title ("Browse extensions"). The `.wcp-ext-modal h3` selector also matches
    before main.js is rebuilt (when the h3 has no class yet). */
 .wcp-ext-title,
@@ -649,7 +657,6 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-height: 55vh;
 }
 
 .wcp-ext-status {
