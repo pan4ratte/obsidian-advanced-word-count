@@ -900,26 +900,30 @@
 
 /* ── Section head: title + description + connect dropdown stacked in one container */
 
+/* Header on its own row, with the description + dropdown grouped on the row below. */
 .wcp-section-head {
   display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  gap: 4px;
   margin-top: 24px;
   margin-bottom: 12px;
 }
 
-/* Title + description take the available width; the dropdown sits beside them. */
-.wcp-section-head-text {
+.wcp-section-head .wcp-section-header {
+  margin: 0;
+}
+
+/* Description takes the available width; the dropdown sits beside it. */
+.wcp-section-head-body {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.wcp-section-head-body .wcp-section-note {
   flex: 1;
   min-width: 0;
-}
-
-.wcp-section-head .wcp-section-header {
-  margin: 0 0 4px;
-}
-
-.wcp-section-head .wcp-section-note {
   margin: 0;
 }
 
@@ -933,10 +937,10 @@
   opacity: 0.6;
 }
 
-/* On narrow widths the title/description and the connect dropdown can't sit side by
-   side without squishing both — stack them, each spanning the full width. */
+/* On narrow widths the description and dropdown can't sit side by side without
+   squishing both — stack them, each spanning the full width. */
 @media (max-width: 600px) {
-  .wcp-section-head {
+  .wcp-section-head-body {
     flex-direction: column;
     align-items: stretch;
   }

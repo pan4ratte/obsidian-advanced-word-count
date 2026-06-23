@@ -101,6 +101,7 @@ The official catalogue currently includes:
 | Ignore tables | When counting words and characters, excludes Markdown table rows. |
 | Ignore URLs | When counting words and characters, excludes bare http(s) links. |
 | Ignore strikethrough | When counting words and characters, excludes `~~struck-through~~` text. |
+| Ignore backslash commands | When counting words and characters, excludes lines consisting solely of a backslash command such as \pagebreak or \newpage. |
 | Ignore Dataview fields | When counting words and characters, excludes inline Dataview fields — [key:: value] and (key:: value). |
 | Ignore code | When counting words and characters, excludes block and inline code. |
 

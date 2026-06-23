@@ -304,6 +304,21 @@
       "path": "settings/ignore-strikethrough.json"
     },
     {
+      "id": "ignore-backslash-commands",
+      "storeName": "Ignore backslash commands",
+      "description": "When counting words and characters, excludes lines consisting solely of a backslash command such as \\pagebreak or \\newpage.",
+      "author": "pan4ratte",
+      "updated": "2026-06-23",
+      "i18n": {
+        "ru": {
+          "storeName": "Игнорировать команды с обратной косой чертой",
+          "description": "При подсчёте слов и символов, исключает строки, состоящие только из команды с обратной косой чертой, такой как \\pagebreak или \\newpage."
+        }
+      },
+      "type": "setting",
+      "path": "settings/ignore-backslash-commands.json"
+    },
+    {
       "id": "ignore-dataview-fields",
       "storeName": "Ignore Dataview fields",
       "description": "When counting words and characters, excludes inline Dataview fields — [key:: value] and (key:: value).",

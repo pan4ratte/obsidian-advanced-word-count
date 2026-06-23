@@ -359,6 +359,33 @@ describe("extensions integration", () => {
     expect(computeMetrics(raw, preset, reg).wordsWithSpaces).toBe(2);
   });
 
+  it("ignore-backslash-commands strips whole-line commands but not inline ones", () => {
+    const reg = new ExtensionRegistry();
+    reg.set([{
+      id: "ignore-backslash-commands", storeName: "Ignore backslash commands",
+      description: "", author: "t", type: "setting",
+      toggleLabel: "Ignore backslash commands",
+      transform: {
+        pattern: "^\\\\[a-zA-Z]+\\*?(?:\\[[^\\]\\n]*\\]|\\{[^\\}\\n]*\\})*[ \\t]*$",
+        flags: "gm", replacement: "",
+      },
+    }]);
+    const preset = defaultPreset({ extSettings: { "ignore-backslash-commands": true } });
+
+    // Whole-line commands are stripped.
+    expect(computeMetrics("word\n\\pagebreak\nword", preset, reg).wordsWithSpaces).toBe(2);
+    // Commands with arguments on their own line are stripped too.
+    expect(computeMetrics("word\n\\vspace{2cm}\nword", preset, reg).wordsWithSpaces).toBe(2);
+    // Optional argument + mandatory argument.
+    expect(computeMetrics("\\setlength[opt]{\\parindent}{0pt}", preset, reg).wordsWithSpaces).toBe(0);
+    // Starred variant.
+    expect(computeMetrics("word\n\\section*{Title}\nword", preset, reg).wordsWithSpaces).toBe(2);
+    // Inline (not whole line) → NOT stripped.
+    expect(computeMetrics("see \\pagebreak here", preset, reg).wordsWithSpaces).toBe(3);
+    // Off: command line counts as a word.
+    expect(computeMetrics("word\n\\pagebreak\nword", defaultPreset(), reg).wordsWithSpaces).toBe(3);
+  });
+
   it("computeFull returns enabled extension metric values", () => {
     const reg = registry();
     const preset = defaultPreset({ extMetrics: { "sentence-count": true } });

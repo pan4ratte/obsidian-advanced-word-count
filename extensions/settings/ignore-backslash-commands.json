@@ -1,0 +1,25 @@
+{
+  "id": "ignore-backslash-commands",
+  "storeName": "Ignore backslash commands",
+  "description": "When counting words and characters, excludes lines consisting solely of a backslash command such as \\pagebreak or \\newpage.",
+  "author": "pan4ratte",
+  "updated": "2026-06-23",
+  "type": "setting",
+  "toggleLabel": "Ignore backslash commands",
+  "hint": "Off: lines like \\pagebreak are counted as a word\nOn: lines that are only a backslash command are ignored",
+  "defaultEnabled": false,
+  "i18n": {
+    "ru": {
+      "storeName": "Игнорировать команды с обратной косой чертой",
+      "description": "При подсчёте слов и символов, исключает строки, состоящие только из команды с обратной косой чертой, такой как \\pagebreak или \\newpage.",
+      "toggleLabel": "Игнорировать команды с обратной косой чертой",
+      "hint": "Выкл.: строки вроде \\pagebreak считаются как слово\nВкл.: строки, состоящие только из команды с обратной косой чертой, игнорируются"
+    }
+  },
+  "transform": {
+    "pattern": "^\\\\[a-zA-Z]+\\*?(?:\\[[^\\]\\n]*\\]|\\{[^\\}\\n]*\\})*[ \\t]*$",
+    "flags": "gm",
+    "replacement": "",
+    "stage": "pre"
+  }
+}

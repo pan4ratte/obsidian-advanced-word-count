@@ -687,9 +687,10 @@ export class WordCountSettingTab extends PluginSettingTab {
     parent: HTMLElement, title: string, note: string, preset: Preset, type: "metric" | "setting"
   ) {
     const head = parent.createDiv({ cls: "wcp-section-head" });
-    const text = head.createDiv({ cls: "wcp-section-head-text" });
-    text.createEl("p", { text: title, cls: "wcp-section-header" });
-    text.createEl("p", { text: note, cls: "wcp-section-note" });
+    head.createEl("p", { text: title, cls: "wcp-section-header" });
+    // Description and the connect dropdown share one row (stacking on narrow screens).
+    const body = head.createDiv({ cls: "wcp-section-head-body" });
+    body.createEl("p", { text: note, cls: "wcp-section-note" });
 
     const installed = type === "metric" ? this.plugin.extensions.metricList() : this.plugin.extensions.settingList();
     const available = installed.filter((def) => !this.extConnected(preset, def));
@@ -698,7 +699,7 @@ export class WordCountSettingTab extends PluginSettingTab {
       ? t.connectInstallFirst
       : type === "metric" ? t.connectAddMetric : t.connectAddSetting;
 
-    const select = head.createEl("select", { cls: "dropdown wcp-ext-connect-select" });
+    const select = body.createEl("select", { cls: "dropdown wcp-ext-connect-select" });
     select.createEl("option", { text: placeholder, value: "" });
     for (const def of available) {
       select.createEl("option", { text: this.plugin.extensions.loc(def, "toggleLabel") ?? def.toggleLabel, value: def.id });
