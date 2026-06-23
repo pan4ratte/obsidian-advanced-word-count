@@ -1,0 +1,51 @@
+{
+  "id": "pandoc-footnotes",
+  "storeName": "Pandoc generated footnotes",
+  "description": "Counts Markdown footnotes combined with @citekey groups that will generate footnotes after Pandoc export of the note. Use if you export with a footnote citation style.",
+  "author": "pan4ratte",
+  "updated": "2026-06-23",
+  "type": "metric",
+  "toggleLabel": "Pandoc footnotes",
+  "hint": "Complete Markdown footnotes ([^1] with a [^1]: definition, or inline ^[…]) plus each body citation group — every [@citekey] bracket, however many keys it bundles, becomes one footnote when you export with a footnote citation style (e.g. Chicago notes). A citation already inside a footnote (inline or definition) isn't counted again.",
+  "statusBarLabel": "Pandoc footnotes",
+  "defaultEnabled": false,
+  "i18n": {
+    "ru": {
+      "storeName": "Сноски, сгенерированные Pandoc",
+      "description": "Считает сноски Markdown вместе с группами @ключей цитирования, которые создадут сноски после экспорта заметки через Pandoc. Используйте, если экспортируете со стилем цитирования в виде сносок.",
+      "toggleLabel": "Сноски Pandoc",
+      "hint": "Полные сноски Markdown ([^1] с определением [^1]: или строчные ^[…]) плюс каждая группа цитирования в тексте — каждая скобка [@ключ], сколько бы ключей в ней ни было, становится одной сноской при экспорте со стилем цитирования в виде сносок (например, Chicago notes). Цитирование, уже находящееся внутри сноски (строчной или в определении), повторно не считается.",
+      "statusBarLabel": "Сноски Pandoc"
+    }
+  },
+  "count": {
+    "mode": "intersect",
+    "source": "raw",
+    "strip": [
+      {
+        "pattern": "(?<=^[ \\t]*\\[\\^[^\\]\\s]+\\]:).*",
+        "flags": "gm"
+      },
+      {
+        "pattern": "!?\\[\\[[^\\]]*\\]\\]",
+        "flags": "g"
+      },
+      {
+        "pattern": "\\[[^\\]]*\\]\\([^)]*\\)",
+        "flags": "g"
+      }
+    ],
+    "primary": {
+      "pattern": "\\[\\^([^\\]\\s]+)\\](?!:)",
+      "flags": "g"
+    },
+    "secondary": {
+      "pattern": "^[ \\t]*\\[\\^([^\\]\\s]+)\\]:",
+      "flags": "gm"
+    },
+    "extra": {
+      "pattern": "\\^\\[[^\\]]+\\]|\\[[^\\]]*@[^\\s;,\\]][^\\]]*\\]",
+      "flags": "g"
+    }
+  }
+}

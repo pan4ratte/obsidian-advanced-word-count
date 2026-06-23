@@ -112,6 +112,36 @@ describe("shipped extensions behave", () => {
     expect(reg.computeRatios(enableAll(), { citekeys: 6, pages: 2 })["citations-per-page"]).toBe(3);
   });
 
+  it("counts Pandoc generated footnotes: complete footnotes plus citation groups", () => {
+    const pf = (text: string) => metricsOf(text)["pandoc-footnotes"];
+    // Each citation bracket is one footnote, however many @keys it bundles.
+    expect(pf("[@smith2020]")).toBe(1);
+    expect(pf("[@smith2020; @jones2019]")).toBe(1);
+    expect(pf("[see @smith2020, p. 33; also @jones2019]")).toBe(1);
+    expect(pf("[-@smith2020]")).toBe(1);
+    // Separate citation groups each become their own footnote.
+    expect(pf("text [@a] more [@b; @c] end")).toBe(2);
+    // Complete Markdown footnotes (paired + inline) add on top of citation groups.
+    expect(pf("text[^1] [@smith2020]\n\n[^1]: def")).toBe(2);
+    expect(pf("an inline ^[note] and [@a]")).toBe(2);
+    // Orphan footnotes don't count.
+    expect(pf("orphan[^1] reference")).toBe(0);
+    // Citekeys are detected exactly like the built-in citekey counter: only @keys
+    // inside [ ] brackets, with wikilinks and markdown links stripped first.
+    expect(pf("[[@wiki]] and [mail @me](http://x.com)")).toBe(0);
+    expect(pf("a bare @smith2020 outside brackets")).toBe(0);
+    // Like the built-in counter, code is NOT stripped, so a citation in code counts.
+    expect(pf("`[@code]`")).toBe(1);
+    // A citation already inside a footnote doesn't generate a second footnote — it
+    // renders within that note. Definition body: the footnote counts, the citation doesn't.
+    expect(pf("text[^1]\n\n[^1]: See [@smith2020] for details.")).toBe(1);
+    // Inline footnote wrapping a citation: one footnote, citation not counted again.
+    expect(pf("text^[see @smith2020]")).toBe(1);
+    expect(pf("text^[see [@smith2020]]")).toBe(1);
+    // A body citation still counts alongside a footnote whose definition also cites.
+    expect(pf("text[^1] and [@jones2019]\n\n[^1]: See [@smith2020].")).toBe(2);
+  });
+
   it("counts only resolved reference-style links (intersect)", () => {
     // [docs][ref] is defined; [missing][nope] is an orphan; image refs are excluded.
     const text = "See [docs][ref] and [missing][nope], plus ![pic][img].\n\n[ref]: https://example.com";

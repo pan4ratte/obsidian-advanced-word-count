@@ -229,6 +229,21 @@
       "path": "metrics/citations-per-page.json"
     },
     {
+      "id": "pandoc-footnotes",
+      "storeName": "Pandoc generated footnotes",
+      "description": "Counts Markdown footnotes combined with @citekey groups that will generate footnotes after Pandoc export of the note. Use if you export with a footnote citation style.",
+      "author": "pan4ratte",
+      "updated": "2026-06-23",
+      "i18n": {
+        "ru": {
+          "storeName": "Сноски, сгенерированные Pandoc",
+          "description": "Считает сноски Markdown вместе с группами @ключей цитирования, которые создадут сноски после экспорта заметки через Pandoc. Используйте, если экспортируете со стилем цитирования в виде сносок."
+        }
+      },
+      "type": "metric",
+      "path": "metrics/pandoc-footnotes.json"
+    },
+    {
       "id": "ignore-math",
       "storeName": "Ignore math",
       "description": "When counting words and characters, excludes LaTeX math — block $$…$$ and inline $…$.",
