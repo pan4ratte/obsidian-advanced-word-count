@@ -41,7 +41,7 @@
   border-radius: 4px;
   padding: 5px;
   flex-shrink: 0;
-  transition: opacity 0.15s ease, background-color 0.15s ease;
+  transition: opacity 0.2s ease, background-color 0.2s ease;
 }
 
 .wcp-active-badge svg {
@@ -607,13 +607,19 @@
 }
 
 /* Install-state filter pills */
+/* The row and its desktop "more" chevron share a relative wrapper so the chevron
+   can pin to the row's right (cut-off) edge. The row's bottom gap lives here now. */
+.wcp-ext-filters-wrap {
+  position: relative;
+  margin-bottom: 12px;
+}
+
 /* Single non-wrapping row; overflow scrolls horizontally so adding chips never
    pushes them onto a second line. The scrollbar itself is hidden. */
 .wcp-ext-filters {
   display: flex;
   flex-wrap: nowrap;
   gap: 4px;
-  margin-bottom: 12px;
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -621,6 +627,92 @@
 .wcp-ext-filters::-webkit-scrollbar {
   display: none;
 }
+
+/* Edge "more filters" affordances: a chevron pinned to each cut-off edge of the row
+   over a fade, so hidden chips read as "there's more". Created only on desktop
+   (gui.ts) and slid into view by scroll position via .is-visible — the right one
+   while not scrolled to the end, the left one while scrolled away from the start. */
+.wcp-ext-filters-more,
+.wcp-ext-filters-less {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  width: 36px;
+  padding: 0 2px;
+  /* Strip all native + theme button chrome so only our rules paint the button. */
+  appearance: none;
+  -webkit-appearance: none;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  outline: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  /* Reveal by fading opacity. background-color is pinned transparent in every state
+     (wrapper rule below), so the theme's solid button background never bleeds through
+     the gradient — which was the real "solid flash" cause, not opacity. pointer-events
+     keeps the hidden button from blocking the chips beneath it. */
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease-in-out;
+  will-change: opacity;
+}
+
+.wcp-ext-filters-more {
+  right: 0;
+  justify-content: flex-end;
+  background: linear-gradient(to right, transparent, var(--background-primary) 100%);
+}
+
+.wcp-ext-filters-less {
+  left: 0;
+  justify-content: flex-start;
+  background: linear-gradient(to left, transparent, var(--background-primary) 100%);
+}
+
+/* The theme's button rules set a solid background-color (and sometimes a shadow) at
+   a specificity above our single-class rules, so it bleeds through the gradient's
+   transparent half and reads as a solid. Pin them transparent in EVERY state at a
+   matching two-class specificity (wrapper scope) so they never change when
+   .is-visible toggles — that constancy is what kills the solid flash mid-slide. */
+.wcp-ext-filters-wrap .wcp-ext-filters-more,
+.wcp-ext-filters-wrap .wcp-ext-filters-less {
+  background-color: transparent;
+  box-shadow: none;
+  border: none;
+}
+
+/* Toggling visibility changes ONLY opacity + pointer-events. Paint props (esp.
+   background-color, held transparent by the wrapper-scoped rule above) stay constant
+   across states, so the gradient never swaps to a solid as the button fades. */
+.wcp-ext-filters-more.is-visible,
+.wcp-ext-filters-less.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Obsidian's default button :hover/:focus/:active styles outrank the base rule and
+   reintroduce a box-shadow, background-color and border that flicker during the fade.
+   Hold every paintable property constant across all states (these class+pseudo
+   selectors beat the built-in button:hover/:active etc.), so only our rules apply.
+   The gradient lives on background-image and is untouched. */
+.wcp-ext-filters-more:hover,
+.wcp-ext-filters-more:focus,
+.wcp-ext-filters-more:focus-visible,
+.wcp-ext-filters-more:active,
+.wcp-ext-filters-less:hover,
+.wcp-ext-filters-less:focus,
+.wcp-ext-filters-less:focus-visible,
+.wcp-ext-filters-less:active {
+  box-shadow: none;
+  background-color: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-muted);
+}
+
 
 .wcp-ext-filter {
   flex: 0 0 auto;

@@ -1056,6 +1056,12 @@ export class ExtensionBrowserModal extends Modal {
   private filter = "";
   private typeFilter: ExtTypeFilter = "all";
   private chipsEl: HTMLElement;
+  // Desktop-only affordances: chevrons at the edges of the filter row. The right one
+  // shows while the row isn't scrolled to its end, the left one while it's scrolled
+  // away from its start. The observer recomputes their visibility on resize.
+  private chipsMoreBtn?: HTMLElement;
+  private chipsLessBtn?: HTMLElement;
+  private chipsResize?: ResizeObserver;
   private listEl: HTMLElement;
   private state: "loading" | "ready" | "error" = "loading";
   // Set whenever an install/uninstall changes the registry. The settings page is
@@ -1086,7 +1092,8 @@ export class ExtensionBrowserModal extends Modal {
       this.renderList();
     });
 
-    this.chipsEl = contentEl.createDiv({ cls: "wcp-ext-filters" });
+    const filtersWrap = contentEl.createDiv({ cls: "wcp-ext-filters-wrap" });
+    this.chipsEl = filtersWrap.createDiv({ cls: "wcp-ext-filters" });
     // A mouse wheel emits only vertical deltas, which the browser sends to the
     // nearest vertically-scrollable ancestor — so hovering this horizontal-only
     // row and spinning the wheel did nothing. Translate a predominantly-vertical
@@ -1099,6 +1106,27 @@ export class ExtensionBrowserModal extends Modal {
       evt.preventDefault();
       el.scrollLeft += evt.deltaY;
     }, { passive: false });
+
+    // On desktop the filter row can be cut off (the scrollbar is hidden), so themes
+    // with wider chips hide chips at the edges. A chevron at each cut-off edge signals
+    // there's more and scrolls to reveal it on click. Touch devices scroll the row
+    // directly, so the affordances are desktop-only.
+    if (Platform.isDesktop) {
+      this.chipsLessBtn = filtersWrap.createEl("button", { cls: "wcp-ext-filters-less" });
+      setIcon(this.chipsLessBtn, "chevron-left");
+      this.chipsLessBtn.addEventListener("click", () => {
+        this.chipsEl.scrollTo({ left: 0, behavior: "smooth" });
+      });
+      this.chipsMoreBtn = filtersWrap.createEl("button", { cls: "wcp-ext-filters-more" });
+      setIcon(this.chipsMoreBtn, "chevron-right");
+      this.chipsMoreBtn.addEventListener("click", () => {
+        this.chipsEl.scrollTo({ left: this.chipsEl.scrollWidth, behavior: "smooth" });
+      });
+      this.chipsEl.addEventListener("scroll", () => this.updateChipsOverflow());
+      // clientWidth changes (modal/window resize) can create or remove the overflow.
+      this.chipsResize = new ResizeObserver(() => this.updateChipsOverflow());
+      this.chipsResize.observe(this.chipsEl);
+    }
     this.renderChips();
 
     this.listEl = contentEl.createDiv({ cls: "wcp-ext-list" });
@@ -1164,6 +1192,21 @@ export class ExtensionBrowserModal extends Modal {
         this.renderList();
       });
     }
+    // The chip set just changed, so the row's overflow may have too.
+    this.updateChipsOverflow();
+  }
+
+  /**
+   * Toggle the edge chevrons by scroll position: the right one while there's more to
+   * the right, the left one while scrolled away from the start (1px slack absorbs
+   * sub-pixel rounding). A no-op when the buttons don't exist (mobile, or before
+   * they're created).
+   */
+  private updateChipsOverflow() {
+    if (!this.chipsMoreBtn) return;
+    const el = this.chipsEl;
+    this.chipsMoreBtn.toggleClass("is-visible", el.scrollWidth - el.clientWidth - el.scrollLeft > 1);
+    this.chipsLessBtn?.toggleClass("is-visible", el.scrollLeft > 1);
   }
 
   /** Fetch the catalogue index, updating the list through its load states. */
@@ -1399,6 +1442,7 @@ export class ExtensionBrowserModal extends Modal {
   }
 
   onClose() {
+    this.chipsResize?.disconnect();
     this.contentEl.empty();
     // Re-render the settings page now the modal is closed (and the settings tab is
     // front-most again), so freshly installed extensions — local or from the
