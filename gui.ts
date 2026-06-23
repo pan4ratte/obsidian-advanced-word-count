@@ -1087,6 +1087,18 @@ export class ExtensionBrowserModal extends Modal {
     });
 
     this.chipsEl = contentEl.createDiv({ cls: "wcp-ext-filters" });
+    // A mouse wheel emits only vertical deltas, which the browser sends to the
+    // nearest vertically-scrollable ancestor — so hovering this horizontal-only
+    // row and spinning the wheel did nothing. Translate a predominantly-vertical
+    // wheel into horizontal movement; touchpads (horizontal deltas) keep scrolling
+    // the row natively and are left untouched.
+    this.chipsEl.addEventListener("wheel", (evt) => {
+      if (Math.abs(evt.deltaY) <= Math.abs(evt.deltaX)) return;
+      const el = this.chipsEl;
+      if (el.scrollWidth <= el.clientWidth) return; // nothing to scroll
+      evt.preventDefault();
+      el.scrollLeft += evt.deltaY;
+    }, { passive: false });
     this.renderChips();
 
     this.listEl = contentEl.createDiv({ cls: "wcp-ext-list" });
