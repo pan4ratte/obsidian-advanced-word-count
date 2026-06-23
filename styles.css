@@ -576,12 +576,14 @@
 
 /* ── Extension browser modal ─────────────────────────────────────────────────── */
 
-/* Remove the padding on the outer .modal element for this modal instance only.
-   The class is added to modalEl (the .modal element) in onOpen, so this matches
-   directly; specificity (0,2,0) beats the base .modal rule. */
-.modal.wcp-ext-modal {
-  padding-right: 16px;
-  padding-left: 24px;
+/* The modal scrolls vertically once the list is long. Reserve an equal gutter on
+   both edges so the appearing scrollbar doesn't shove the content leftward — the
+   layout stays symmetric whether or not the scrollbar is present. The padding/scroll
+   frame is the outer .modal element (see the note in gui.ts), but cover .modal-content
+   too so the gutter lands on whichever one actually scrolls. */
+.wcp-ext-modal,
+.wcp-ext-modal .modal-content {
+  scrollbar-gutter: stable both-edges;
 }
 
 /* Modal title ("Browse extensions"). The `.wcp-ext-modal h3` selector also matches
