@@ -61,6 +61,21 @@
       "path": "metrics/http-links.json"
     },
     {
+      "id": "comment-count",
+      "storeName": "Comments",
+      "description": "Counts HTML (<!-- … -->) and Obsidian (%% … %%) comments in the note.",
+      "author": "pan4ratte",
+      "updated": "2026-07-06",
+      "i18n": {
+        "ru": {
+          "storeName": "Комментарии",
+          "description": "Считает HTML (<!-- … -->) и Obsidian (%% … %%) комментарии в заметке."
+        }
+      },
+      "type": "metric",
+      "path": "metrics/comment-count.json"
+    },
+    {
       "id": "unique-tags",
       "storeName": "Unique tags",
       "description": "Counts the number of unique #tags in a note, ignoring repeats.",

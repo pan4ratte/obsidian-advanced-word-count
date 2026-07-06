@@ -96,6 +96,16 @@ describe("shipped extensions behave", () => {
     expect(metricsOf("# A\n## B\nnot a heading\n### C")["headings"]).toBe(3);
   });
 
+  it("counts HTML and Obsidian comments", () => {
+    const c = (text: string) => metricsOf(text)["comment-count"];
+    expect(c("a <!-- html comment --> b")).toBe(1);
+    expect(c("a %% obsidian comment %% b")).toBe(1);
+    // Both kinds together, plus a multiline HTML comment.
+    expect(c("<!-- one -->\ntext %% two %%\n<!--\nmultiline\n-->")).toBe(3);
+    // No comments.
+    expect(c("just plain text with no comments")).toBe(0);
+  });
+
   it("counts tasks: total, done and open", () => {
     const e = metricsOf("- [ ] a\n- [x] b\n- [X] c\n- [ ] d");
     expect(e["tasks-total"]).toBe(4);

@@ -78,6 +78,7 @@ The official catalogue currently includes:
 | Emoji | Counts the number of emoji and other pictographic characters in a note. |
 | Reference links | Counts resolved reference-style links — a [text][id] reference that has a matching [id]: URL definition elsewhere in the note. |
 | HTTP(S) links | Counts every http(s) link in a note, wherever it appears — bare, inside a Markdown link, angle brackets or any other brackets. |
+| Comments | Counts HTML (<!-- … -->) and Obsidian (%% … %%) comments in the note. |
 | Unique tags | Counts the number of unique #tags in a note, ignoring repeats. |
 | Average word length | Calculates the average number of characters per word in a note. |
 | Average Markdown links per page | Calculates the average number of Markdown links per page. |
