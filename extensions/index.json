@@ -218,7 +218,7 @@
       "storeName": "Unique citekeys",
       "description": "Counts the number of unique @citekeys in a note.",
       "author": "pan4ratte",
-      "updated": "2026-06-20",
+      "updated": "2026-07-06",
       "i18n": {
         "ru": {
           "storeName": "Уникальные ключи цитирования",
@@ -248,7 +248,7 @@
       "storeName": "Pandoc generated footnotes",
       "description": "Counts Markdown footnotes combined with @citekey groups that will generate footnotes after Pandoc export of the note. Use if you export with a footnote citation style.",
       "author": "pan4ratte",
-      "updated": "2026-06-23",
+      "updated": "2026-07-06",
       "i18n": {
         "ru": {
           "storeName": "Сноски, сгенерированные Pandoc",
