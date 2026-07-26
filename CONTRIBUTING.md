@@ -44,10 +44,12 @@ plugin's code.
    `extensions/settings/` or `extensions/presets/` — as `<your-id>.json` (see
    [Anatomy of an extension](#anatomy-of-an-extension)). Include a `toggleLabel` and
    an `updated` date.
-3. **Register it** in [`extensions/index.json`](extensions/index.json) — add an entry with the
-   same `id`, `storeName`, `author`, `type` and `updated`, and a `path` pointing at your
-   file (e.g. `"metrics/<your-id>.json"`). Mirror `dependencies` / translated `i18n`
-   if you use them.
+3. **Register it** by regenerating the catalogue — your entry in
+   [`extensions/index.json`](extensions/index.json) is derived from your file, not written by hand:
+   ```bash
+   npm run docs:catalogue
+   ```
+   This adds the entry and refreshes the README tables. Commit both alongside your file.
 4. **Validate locally:**
    ```bash
    npm install
@@ -100,15 +102,20 @@ extensions/
   presets/          ← type: "preset"  files
 ```
 
-There is **one** `index.json` for the whole catalogue — it's the single source of
-truth the installer uses to resolve dependencies across types (a preset, for
-instance, can depend on both a metric and a setting). Each entry's `path` points
-into the matching subfolder.
+There is **one** `index.json` for the whole catalogue — it's what the installer
+reads to resolve dependencies across types (a preset, for instance, can depend on
+both a metric and a setting). It's generated from the files in those subfolders by
+`npm run docs:catalogue`, and each entry's `path` points back into the one holding
+its file.
 
-### The catalogue entry (`index.json`)
+### The catalogue entry (`index.json`) — generated
 
-Every extension also gets a row in [`index.json`](extensions/index.json). It carries the fields
-the browse modal needs *before* downloading the file:
+Every extension also gets a row in [`index.json`](extensions/index.json), carrying the fields
+the browse modal needs *before* downloading the file. **You don't write it** —
+`npm run docs:catalogue` derives every entry from the extension files, so the file
+is the single source of truth for its own name, description, `updated` date,
+`dependencies` and translations. Edit your extension, run the script, commit the
+result:
 
 ```json
 {
@@ -125,10 +132,11 @@ the browse modal needs *before* downloading the file:
 }
 ```
 
-`path` is the file's location relative to `index.json` (e.g.
-`"metrics/<id>.json"`); it defaults to `<id>.json` at the catalogue root, so with
-the type subfolders you should always set it explicitly. If your extension declares
-`dependencies` or `i18n` (`storeName`/`description`), mirror those in the entry too.
+`path` is the file's location relative to `index.json` (e.g. `"metrics/<id>.json"`),
+taken from where your file actually sits; `dependencies` and the `storeName` /
+`description` half of your `i18n` are copied across for you. Entries keep their
+position in the array (that's the catalogue's display order) — a new extension is
+appended at the end, and an entry whose file is deleted disappears with it.
 
 ### Metric extensions (`type: "metric"`)
 
@@ -292,11 +300,11 @@ a fallback). On **Export** the plugin downloads **two files**, fully filled in:
 1. **`<id>.json`** — the `type: "preset"` extension, with `dependencies` taken from
    the extensions you connected and `i18n` populated from what you entered. Put it
    in `extensions/presets/`.
-2. **`<id>-index-entry.json`** — the matching `index.json` row (with the right
-   `path` and the same `i18n`). Paste its contents into the `extensions` array in
-   [`index.json`](extensions/index.json).
+2. **`<id>-index-entry.json`** — the matching `index.json` row. You can discard it:
+   `npm run docs:catalogue` generates the entry from the preset file you just
+   added. (It's still handy for eyeballing what the store will show.)
 
-Both files are valid as exported, so you can submit them as-is.
+Both files are valid as exported, so you can submit the preset as-is.
 
 ```json
 {
@@ -323,11 +331,11 @@ Both files are valid as exported, so you can submit them as-is.
 **Localizing the name/description.** Like metric and setting extensions, a preset's
 catalogue name and description can be translated per locale (see
 [Localization](#localization-i18n)). The Share dialog collects the Russian
-translation for you and writes the `i18n` into **both** exported files — which
-matters because the browse modal localizes from the `index.json` **entry**, so the
-translation has to live there, not just in the preset file. To add other languages
-by hand, extend the `i18n` block (`storeName`/`description` per BCP-47 tag) in the
-index entry.
+translation for you and writes the `i18n` into **both** exported files. The browse
+modal localizes from the `index.json` **entry**, so the translation has to reach it
+— which the generator handles: put the `i18n` block (`storeName`/`description` per
+BCP-47 tag, plus any other language you want to add) in the preset file and run
+`npm run docs:catalogue`.
 
 ### Dependencies
 
@@ -357,9 +365,9 @@ Rules:
   `footnotes`, …) are always available — use them directly as ratio operands;
   listing one in `dependencies` is **rejected at validation** (there's nothing to
   install).
-- Mirror the same `dependencies` array in the matching `index.json` entry so the
-  installer can resolve the tree from the catalogue without downloading every
-  file first.
+- The installer resolves the tree from `index.json` alone, without downloading
+  every file first — so run `npm run docs:catalogue` after editing
+  `dependencies` to copy the array into your entry.
 - A dependency id that isn't present in `index.json` makes the install fail with a
   "missing required dependencies" error.
 
@@ -385,8 +393,9 @@ back to the base (English) value when there's no translation. The logic fields
 }
 ```
 
-Add the same `i18n` (just `storeName`/`description`) to the matching `index.json`
-entry so the browse modal localizes too.
+The browse modal reads its translations from `index.json`, so run
+`npm run docs:catalogue` after editing `i18n` — it copies the `storeName` /
+`description` translations into your entry.
 
 ### Regex safety
 
@@ -413,17 +422,18 @@ To iterate on just the catalogue checks:
 npx vitest run tests/catalogue.test.ts
 ```
 
-**Refresh the README catalogue (required).** The extension tables in
-[`README.md`](README.md) and [`README_RU.md`](README_RU.md) are generated from
-`index.json`, not edited by hand. After adding, renaming or removing an extension (or
-changing its `storeName`/`description`, including translations), regenerate them:
+**Refresh the catalogue (required).** [`extensions/index.json`](extensions/index.json) and the
+extension tables in [`README.md`](README.md) / [`README_RU.md`](README_RU.md) are generated from the
+extension files, not edited by hand. After adding, renaming, moving or removing an
+extension — or changing its `storeName`, `description`, `updated`, `dependencies`
+or translations — regenerate them:
 
 ```bash
 npm run docs:catalogue
 ```
 
-`npm test` includes a guard that fails if the tables are out of sync, so commit the
-regenerated READMEs alongside your change.
+`npm test` includes a guard that fails if the index or the tables are out of sync,
+so commit the regenerated files alongside your change.
 
 **Try it live — the Local filter (easiest, recommended).** The quickest way to test a
 **metric** or **setting** you're writing is to load its JSON straight from disk — no
@@ -461,15 +471,14 @@ notes. Reset `extensionRepoUrl` (or remove the key) when you're done.
 - [ ] `storeName`, `description`, `author`, `type` are set (plus `toggleLabel` for
       metric/setting extensions).
 - [ ] `updated` is today's date (`YYYY-MM-DD`).
-- [ ] A matching entry is added to `index.json` (same `id`, `type`; a `path` into
-      the subfolder; `dependencies` and translated `i18n` mirrored if used).
 - [ ] Any `dependencies` reference existing **extensions** (not built-ins, no
       self-reference, no cycles).
 - [ ] Regex patterns use only `g i m s u` flags and don't backtrack catastrophically.
-- [ ] You ran `npm run docs:catalogue` and committed the refreshed README tables.
+- [ ] You ran `npm run docs:catalogue` and committed the regenerated `index.json`
+      and README tables.
 - [ ] `npm test` passes.
 - [ ] If you're **updating** an existing extension, you bumped its `updated` date in
-      both the file and the `index.json` entry so installs detect the update.
+      the file (the generator carries it into the entry) so installs detect the update.
 
 ## Tips & guidelines
 

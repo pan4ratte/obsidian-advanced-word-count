@@ -3,7 +3,7 @@
   "storeName": "Pandoc generated footnotes",
   "description": "Counts Markdown footnotes combined with @citekey groups that will generate footnotes after Pandoc export of the note. Use if you export with a footnote citation style.",
   "author": "pan4ratte",
-  "updated": "2026-07-06",
+  "updated": "2026-07-26",
   "type": "metric",
   "toggleLabel": "Pandoc footnotes",
   "hint": "Markdown footnotes plus each citation group (every [@citekey] bracket). Useful when you export with a footnote citation style.",

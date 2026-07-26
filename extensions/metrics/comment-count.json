@@ -3,7 +3,7 @@
   "storeName": "Comments",
   "description": "Counts HTML (<!-- … -->) and Obsidian (%% … %%) comments in the note.",
   "author": "pan4ratte",
-  "updated": "2026-07-06",
+  "updated": "2026-07-26",
   "type": "metric",
   "toggleLabel": "Comments",
   "hint": "Counts HTML (<!-- … -->) and Obsidian (%% … %%) comments",

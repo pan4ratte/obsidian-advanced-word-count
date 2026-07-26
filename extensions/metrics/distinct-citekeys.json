@@ -3,7 +3,7 @@
   "storeName": "References",
   "description": "Counts the number of unique @citekeys in a note.",
   "author": "pan4ratte",
-  "updated": "2026-07-06",
+  "updated": "2026-07-26",
   "type": "metric",
   "toggleLabel": "References",
   "hint": "Counts unique @citekeys",
@@ -11,7 +11,7 @@
   "defaultEnabled": false,
   "i18n": {
     "ru": {
-      "storeName": "Иточники",
+      "storeName": "Источники",
       "description": "Считает количество уникальных @ключей цитирования в заметке.",
       "toggleLabel": "Источники",
       "hint": "Считает уникальные @ключи цитирования",

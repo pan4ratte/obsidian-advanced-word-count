@@ -39,7 +39,7 @@
       "i18n": {
         "ru": {
           "storeName": "Ссылки референсного стиля",
-          "description": "Считает разрешённые ссылки референсного стиля — ссылку вида [text][id], для которой в заметке есть определение [id]: URL."
+          "description": "Считает разрешённые ссылки референсного стиля — вида [text][id], для которой в заметке есть определение [id]: URL."
         }
       },
       "type": "metric",
@@ -98,7 +98,7 @@
       "updated": "2026-06-20",
       "i18n": {
         "ru": {
-          "storeName": "Средняя длина слов",
+          "storeName": "Средняя длина слова",
           "description": "Рассчитывает среднее число символов в словах в заметке."
         }
       },
@@ -128,7 +128,7 @@
       "updated": "2026-06-21",
       "i18n": {
         "ru": {
-          "storeName": "Среднее количество слов в предложениях",
+          "storeName": "Среднее количество слов в предложении",
           "description": "Рассчитывает среднее число слов в предложениях в заметке."
         }
       },
@@ -206,7 +206,7 @@
       "updated": "2026-06-20",
       "i18n": {
         "ru": {
-          "storeName": "Невыполненные задачи",
+          "storeName": "Открытые задачи",
           "description": "Считает только чекбоксы невыполненных задач (- [ ])."
         }
       },
@@ -215,10 +215,10 @@
     },
     {
       "id": "distinct-citekeys",
-      "storeName": "Unique citekeys",
+      "storeName": "References",
       "description": "Counts the number of unique @citekeys in a note.",
       "author": "pan4ratte",
-      "updated": "2026-07-06",
+      "updated": "2026-07-26",
       "i18n": {
         "ru": {
           "storeName": "Источники",
@@ -402,7 +402,7 @@
       "i18n": {
         "ru": {
           "storeName": "Считать эмодзи Telegram как один символ",
-          "description": "При подсчёте слов и символов, считает кастомное эмодзи Telegram — [😢](tg://emoji?id=5983380877780980112) — как один символ вместо всей Markdown-ссылки. Расширение обеспечивает поддержку эмодзи плагина «Publish to Telegram»."
+          "description": "При подсчёте слов и символов, считает кастомное эмодзи Telegram формата [😢](tg://emoji?id=5983380877780980112) как один символ. Расширение обеспечивает поддержку эмодзи плагина «Publish to Telegram»."
         }
       },
       "type": "setting",
@@ -415,13 +415,16 @@
       "author": "pan4ratte",
       "updated": "2026-06-21",
       "i18n": {
+        "en": {
+          "storeName": "Telegram user post",
+          "description": "Preset for posts, made by user in Telegram: with limit warnings and all metrics set up to count symbols like Telegram does"
+        },
         "ru": {
           "storeName": "Пост в Telegram от лица пользователя",
           "description": "Пресет для постов, сделанных от лица пользователя Telegram: с предупреждениями о лимитах и всеми метриками, настроенными для подсчёта символов так же, как это делает Telegram."
         }
       },
       "type": "preset",
-      "dependencies": [],
       "path": "presets/telegram-user-post.json"
     },
     {
@@ -431,13 +434,16 @@
       "author": "pan4ratte",
       "updated": "2026-06-21",
       "i18n": {
+        "en": {
+          "storeName": "Telegram rich-text post",
+          "description": "Preset for rich-text posts in Telegram: with limit warnings and all metrics set up to count symbols like Telegram does"
+        },
         "ru": {
           "storeName": "Пост в Telegram с rich-text форматированием",
           "description": "Пресет для rich-text постов в Telegram: с предупреждениями о лимитах и всеми метриками, настроенными для подсчёта символов так же, как это делает Telegram."
         }
       },
       "type": "preset",
-      "dependencies": [],
       "path": "presets/telegram-rich-text-post.json"
     },
     {

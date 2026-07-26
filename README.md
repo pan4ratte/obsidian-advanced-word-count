@@ -87,7 +87,7 @@ The official catalogue currently includes:
 | Tasks (all) | Counts all task checkboxes — checked and unchecked. |
 | Completed tasks | Counts only completed task checkboxes (- [x] or - [X]). |
 | Incomplete tasks | Counts only incomplete task checkboxes (- [ ]). |
-| Unique citekeys | Counts the number of unique @citekeys in a note. |
+| References | Counts the number of unique @citekeys in a note. |
 | Average citations per page | Calculates the average number of citations per page. |
 | Pandoc generated footnotes | Counts Markdown footnotes combined with @citekey groups that will generate footnotes after Pandoc export of the note. Use if you export with a footnote citation style. |
 | Tables | Counts the number of complete Markdown tables (header + delimiter row) in a note. |
