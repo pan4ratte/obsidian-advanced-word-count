@@ -6,8 +6,6 @@ This plugin allows you to create complex word count presets that are displayed i
 
 <div align="center">
   <img src="media/1-cover.png"width="100%" />
-  <img src="media/2-right-pane.png"width="48%" />
-  <img src="media/3-community-store.png"width="48%" />  
 </div>
 
 ## Features
@@ -17,6 +15,10 @@ This plugin allows you to create complex word count presets that are displayed i
 Each separate preset can have its own list of metrics and methods of counting formatting elements, which makes working on multiple projects easier. You can quickly cycle between presets by clicking on the status bar, the right pane tab header of or from the command palette.
 
 ### 2. View word counters in the right pane tab
+
+<div align="center">
+  <img src="media/2-right-pane.png"width="100%" />  
+</div>
 
 * Counters can be viewed not only in the status bar, but also in the right pane tab. You can define whether counters are visible in both places or only one.
 * Moreover, for any chosen metric you can set up a limit warning and/or a goal: a warning colors the metric orange at ≥90% of the limit and red at ≥100%, while a goal colors it green at ≥100% (a metric can have both at once, and a goal can't be set higher than its warning).
@@ -60,6 +62,10 @@ You can specify, how formatting elements will be counted:
 | **Ignore HTML tags**		         | HTML tags like `<b> … </b>` etc. will be counted		          | HTML tags will be ignored 	   		|
 
 ### 5. Install community extensions: presets, metrics and advanced settings
+
+<div align="center">
+  <img src="media/3-community-store.png"width="100%" />  
+</div>
 
 **Community extensions** are small add-ons, each of which adds one metric, one advanced (word-count) setting, or a whole ready-made preset.
 
