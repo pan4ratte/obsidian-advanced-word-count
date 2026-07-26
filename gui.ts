@@ -1323,7 +1323,7 @@ export class ExtensionBrowserModal extends Modal {
       if (!file) return;
       try {
         const ext = await this.plugin.extensionManager.installLocal(JSON.parse(await file.text()));
-        new Notice(t.extLocalInstalledNotice(ext.storeName));
+        new Notice(t.extLocalInstalledNotice(this.storeName(ext)));
         this.onChanged();
         this.renderChips();
         this.renderList();
@@ -1334,13 +1334,21 @@ export class ExtensionBrowserModal extends Modal {
     input.click();
   }
 
+  /**
+   * An extension's display name in the active locale — what the card shows, and so
+   * what every notice about it must say too.
+   */
+  private storeName(entry: { storeName: string; i18n?: I18n }): string {
+    return this.plugin.extensions.loc(entry, "storeName") ?? entry.storeName;
+  }
+
   private renderCard(parent: HTMLElement, entry: ExtensionIndexEntry) {
     const card = parent.createDiv({ cls: "wcp-ext-card" });
 
     // Left: name + type icon, author beneath, then the description.
     const main = card.createDiv({ cls: "wcp-ext-card-main" });
     const head = main.createDiv({ cls: "wcp-ext-card-head" });
-    head.createEl("span", { text: this.plugin.extensions.loc(entry, "storeName") ?? entry.storeName, cls: "wcp-ext-name" });
+    head.createEl("span", { text: this.storeName(entry), cls: "wcp-ext-name" });
     const icon = head.createSpan({ cls: "wcp-ext-type-icon" });
     const typeIcon = entry.type === "metric" ? "whole-word" : entry.type === "preset" ? "package" : "sliders-horizontal";
     const typeLabel = entry.type === "metric" ? t.extTypeMetric : entry.type === "preset" ? t.extTypePreset : t.extTypeSetting;
@@ -1381,7 +1389,8 @@ export class ExtensionBrowserModal extends Modal {
           // Pass the loaded catalogue so dependencies resolve without a re-fetch.
           const installed = await this.plugin.extensionManager.installFromIndex(entry, this.entries);
           const deps = installed.length - 1; // the rest of the batch are pulled-in dependencies
-          new Notice(deps > 0 ? t.extInstalledWithDepsNotice(entry.storeName, deps) : t.extInstalledNotice(entry.storeName));
+          const name = this.storeName(entry);
+          new Notice(deps > 0 ? t.extInstalledWithDepsNotice(name, deps) : t.extInstalledNotice(name));
           this.onChanged();
           this.renderList(); // rebuild so install states refresh
         } catch (e) {
@@ -1401,7 +1410,7 @@ export class ExtensionBrowserModal extends Modal {
         uninstall.disabled = true;
         try {
           await this.plugin.extensionManager.uninstall(entry.id);
-          new Notice(t.extUninstalledNotice(entry.storeName));
+          new Notice(t.extUninstalledNotice(this.storeName(entry)));
           this.onChanged();
           this.renderChips(); // local count chip reflects the removal
           this.renderList();
@@ -1419,9 +1428,9 @@ export class ExtensionBrowserModal extends Modal {
           return;
         }
         const names = dependents
-          .map((d) => this.plugin.extensions.loc(d, "storeName") ?? d.storeName)
+          .map((d) => this.storeName(d))
           .join(", ");
-        new ExtUninstallConfirmModal(this.plugin.app, entry.storeName, names, doUninstall).open();
+        new ExtUninstallConfirmModal(this.plugin.app, this.storeName(entry), names, doUninstall).open();
       });
     }
   }
@@ -1447,7 +1456,7 @@ export class ExtensionBrowserModal extends Modal {
         this.plugin.refreshPresetCommands();
         await this.plugin.saveSettings();
         this.plugin.updateCount();
-        new Notice(t.extPresetInstalledNotice(entry.storeName, extCount));
+        new Notice(t.extPresetInstalledNotice(this.storeName(entry), extCount));
         this.onChanged();
         this.renderList();
       } catch (e) {
