@@ -1,5 +1,26 @@
 # Changelog
 
+## 4.2.0
+
+### New features
+
+* **Custom labels.** A new "Set custom labels" was added to the plugin settings. Opens a manager where every metric you have — built-in or downloaded — can be renamed to your liking. You can also clear a field to drop the label entirely and show only the number, or reset a metric back to its original names at any time. Labels apply to all of your presets, and a label left untouched keeps following your Obsidian language.
+
+### New community extensions
+
+* **New metric: Comments.** Counts HTML (`<!-- … -->`) and Obsidian (`%% … %%`) comments in a note.
+* **New setting: Count Telegram emoji as one symbol.** Counts a custom Telegram emoji written as `[😢](tg://emoji?id=…)` as a single symbol instead of the whole Markdown link. Adds support for the emojis of the [Publish to Telegram](https://github.com/pan4ratte/obsidian-publish-to-telegram) plugin.
+
+### Enhancements and bug fixes
+
+* Fixed a bug where the update extension button didn't go away after the update.
+* Fixed notifications localiations.
+* Changed *Unique citekeys* metric name to "References" for clarity.
+* Russian status-bar label fixes for the *Comments* and *Pandoc footnotes* metrics.
+
+This update comletes a feature request by @mjakubowiak
+
+
 ## 4.1.1
 
 ### New community extensions
