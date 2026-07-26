@@ -410,7 +410,7 @@ describe("ExtensionRegistry", () => {
     const rows = reg.metricRows(preset, { "sentence-count": 9 });
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({ id: "sentence-count", label: "Sentences", value: "9", level: "orange" });
-    expect(rows[0].statusText).toBe("Sentences: 9");
+    expect(rows[0].statusLabel).toBe("Sentences");
 
     expect(reg.metricRows(preset, { "sentence-count": 10 })[0].level).toBe("red");
   });
@@ -608,7 +608,7 @@ describe("localization", () => {
     reg.setLocale(["ru"]);
     const row = reg.metricRows(preset, { headings: 3 })[0];
     expect(row.label).toBe("Заголовки");
-    expect(row.statusText).toBe("Заголовков: 3");
+    expect(row.statusLabel).toBe("Заголовков");
     expect(reg.loc({ ...metricExt(), i18n: { ru: { toggleLabel: "Заголовки" } }, toggleLabel: "Headings" }, "toggleLabel")).toBe("Заголовки");
 
     reg.setLocale(["en"]);

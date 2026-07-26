@@ -13,19 +13,25 @@ const en = {
   statusTooltipSingle: (name: string) => `${name}`,
   statusTooltipCycle: (name: string) => `${name}`,
 
-  // Status bar metric labels
-  statusWords: (n: number) => `Words: ${n}`,
-  statusChars: (n: number) => `Chars: ${n}`,
-  statusCharsNoSpaces: (n: number) => `Chars (no spaces): ${n}`,
-  statusPages: (n: string) => `Pages: ${n}`,
-  statusReadingTime: (n: string) => `Reading time: ${n} min`,
-  statusLines: (n: number) => `Lines: ${n}`,
-  statusParas: (n: number) => `Paras: ${n}`,
-  statusMdLinks: (n: number) => `MD Links: ${n}`,
-  statusWikiLinks: (n: number) => `Wikilinks: ${n}`,
-  statusCitekeys: (n: number) => `Citekeys: ${n}`,
-  statusEmbeds: (n: number) => `Embeds: ${n}`,
-  statusFootnotes: (n: number) => `Footnotes: ${n}`,
+  // Status bar metric labels, keyed by MetricKey. The status bar shows
+  // "<label>: <value>"; a custom label (see settingsCustomLabels*) replaces the
+  // label, or drops it entirely when set to an empty string.
+  statusLabels: {
+    wordsWithSpaces: "Words",
+    charsWithSpaces: "Chars",
+    charsWithoutSpaces: "Chars (no spaces)",
+    pages: "Pages",
+    readingTime: "Reading time",
+    lines: "Lines",
+    paragraphs: "Paras",
+    markdownLinks: "MD Links",
+    wikiLinks: "Wikilinks",
+    citekeys: "Citekeys",
+    embeds: "Embeds",
+    footnotes: "Footnotes",
+  },
+  // Follows the reading-time value in the status bar ("Reading time: 3.4 min").
+  statusReadingTimeUnit: "min",
 
   // ── Settings page ──────────────────────────────────────────────────────────
   settingsHeading: "Advanced Word Count settings",
@@ -120,6 +126,24 @@ const en = {
     "Check for updates to installed community extensions when Obsidian starts",
   extAutoUpdatedNotice: (count: number) =>
     `Updated ${count} ${count === 1 ? "extension" : "extensions"}`,
+
+  // ── Custom labels ──────────────────────────────────────────────────────────
+  settingsCustomLabelsName: "Set custom labels",
+  settingsCustomLabelsDesc: "Change labels of any metric to your liking",
+  settingsCustomLabelsButton: "Labels manager",
+  labelsModalTitle: "Metric labels manager",
+  labelsModalNote: "Rename any metric, or clear a field to hide its name.",
+  labelsSearchPlaceholder: "Search metrics…",
+  labelsFilterAll: "All",
+  labelsFilterBuiltin: "Built-in",
+  labelsFilterDownloaded: "Downloaded",
+  labelsTypeBuiltin: "Built-in metric",
+  labelsTypeDownloaded: "Downloaded metric",
+  labelsFieldStatusBar: "Status bar",
+  labelsFieldRightPane: "Right pane",
+  labelsNoLabelPlaceholder: "No label",
+  labelsReset: "Reset to default",
+  labelsNoResults: "No metrics match your search",
 
   // Browse modal
   extModalTitle: "Extensions store",

@@ -111,6 +111,36 @@ export interface WordCountSettings {
   // When true, check the catalogue on startup and update installed extensions
   // whose catalogue copy carries a newer `updated` date.
   autoUpdateExtensions: boolean;
+
+  // ── Custom labels ───────────────────────────────────────────────────────────
+  // Per-metric label overrides, keyed by built-in MetricKey or extension metric id.
+  // They apply to every preset (a metric reads the same in all of them).
+  customLabels: CustomLabels;
+}
+
+/**
+ * One metric's label overrides. Each field is independent: absent means "use the
+ * metric's own label", while an empty string means "show no label at all" — the
+ * status bar then shows the bare number and the right-pane block just its value.
+ */
+export interface CustomLabel {
+  status?: string;  // status bar
+  block?: string;   // right-pane metric block
+}
+
+export type CustomLabels = Record<string, CustomLabel>;
+
+/** A metric's effective label: the override when one is set (`""` included). */
+export function labelFor(
+  labels: CustomLabels | undefined, key: string, field: keyof CustomLabel, fallback: string
+): string {
+  const custom = labels?.[key]?.[field];
+  return typeof custom === "string" ? custom : fallback;
+}
+
+/** Status-bar text for a metric — just the value once its label is emptied. */
+export function statusTextFor(label: string, value: string): string {
+  return label ? `${label}: ${value}` : value;
 }
 
 export interface Metrics {
@@ -230,6 +260,7 @@ export const DEFAULT_SETTINGS: WordCountSettings = {
   installedExtensions: [],
   extensionRepoUrl: DEFAULT_EXTENSION_REPO_URL,
   autoUpdateExtensions: false,
+  customLabels: {},
 };
 
 // ── Text pre-processing ───────────────────────────────────────────────────────
@@ -588,28 +619,45 @@ function warnLevel(preset: Preset, m: Metrics, key: MetricKey): WarnLevel {
  * row carries status-bar text, block label/value and warning level.
  */
 export function metricRows(
-  preset: Preset, m: Metrics, registry?: ExtensionRegistry, ext?: Record<string, number>
+  preset: Preset, m: Metrics, registry?: ExtensionRegistry, ext?: Record<string, number>,
+  labels?: CustomLabels
 ): MetricRow[] {
-  const defs: { key: MetricKey; show: boolean; blockLabel: string; statusText: string; value: string; unit?: string }[] = [
-    { key: "wordsWithSpaces",    show: preset.showWordsWithSpaces,    blockLabel: t.toggles.showWordsWithSpaces.label,    statusText: t.statusWords(m.wordsWithSpaces),           value: String(m.wordsWithSpaces) },
-    { key: "charsWithSpaces",    show: preset.showCharsWithSpaces,    blockLabel: t.toggles.showCharsWithSpaces.label,    statusText: t.statusChars(m.charsWithSpaces),           value: String(m.charsWithSpaces) },
-    { key: "charsWithoutSpaces", show: preset.showCharsWithoutSpaces, blockLabel: t.toggles.showCharsWithoutSpaces.label, statusText: t.statusCharsNoSpaces(m.charsWithoutSpaces), value: String(m.charsWithoutSpaces) },
-    { key: "pages",              show: preset.showPages && preset.wordsPerPage > 0, blockLabel: t.toggles.showPages.label,        statusText: t.statusPages(m.pages),                     value: m.pages },
-    { key: "readingTime",        show: preset.showReadingTime,        blockLabel: t.toggles.showReadingTime.label,        statusText: t.statusReadingTime(m.readingTime),         value: m.readingTime, unit: t.readingTimeUnit },
-    { key: "lines",              show: preset.showLines,              blockLabel: t.toggles.showLines.label,              statusText: t.statusLines(m.lines),                     value: String(m.lines) },
-    { key: "paragraphs",         show: preset.showParagraphs,         blockLabel: t.toggles.showParagraphs.label,         statusText: t.statusParas(m.paragraphs),                value: String(m.paragraphs) },
-    { key: "markdownLinks",      show: preset.showMarkdownLinks,      blockLabel: t.toggles.showMarkdownLinks.label,      statusText: t.statusMdLinks(m.markdownLinks),           value: String(m.markdownLinks) },
-    { key: "wikiLinks",          show: preset.showWikiLinks,          blockLabel: t.toggles.showWikiLinks.label,          statusText: t.statusWikiLinks(m.wikiLinks),             value: String(m.wikiLinks) },
-    { key: "citekeys",           show: preset.showCitekeys,           blockLabel: t.toggles.showCitekeys.label,           statusText: t.statusCitekeys(m.citekeys),               value: String(m.citekeys) },
-    { key: "embeds",             show: preset.showEmbeds,             blockLabel: t.toggles.showEmbeds.label,             statusText: t.statusEmbeds(m.embeds),                   value: String(m.embeds) },
-    { key: "footnotes",          show: preset.showFootnotes,          blockLabel: t.toggles.showFootnotes.label,          statusText: t.statusFootnotes(m.footnotes),             value: String(m.footnotes) },
+  // `statusValue` is what follows the status-bar label; it defaults to `value` and
+  // is only spelled out where the two differ (reading time carries a unit there).
+  const defs: { key: MetricKey; show: boolean; blockLabel: string; statusLabel: string; value: string; statusValue?: string; unit?: string }[] = [
+    { key: "wordsWithSpaces",    show: preset.showWordsWithSpaces,    blockLabel: t.toggles.showWordsWithSpaces.label,    statusLabel: t.statusLabels.wordsWithSpaces,    value: String(m.wordsWithSpaces) },
+    { key: "charsWithSpaces",    show: preset.showCharsWithSpaces,    blockLabel: t.toggles.showCharsWithSpaces.label,    statusLabel: t.statusLabels.charsWithSpaces,    value: String(m.charsWithSpaces) },
+    { key: "charsWithoutSpaces", show: preset.showCharsWithoutSpaces, blockLabel: t.toggles.showCharsWithoutSpaces.label, statusLabel: t.statusLabels.charsWithoutSpaces, value: String(m.charsWithoutSpaces) },
+    { key: "pages",              show: preset.showPages && preset.wordsPerPage > 0, blockLabel: t.toggles.showPages.label, statusLabel: t.statusLabels.pages,             value: m.pages },
+    { key: "readingTime",        show: preset.showReadingTime,        blockLabel: t.toggles.showReadingTime.label,        statusLabel: t.statusLabels.readingTime,        value: m.readingTime, statusValue: `${m.readingTime} ${t.statusReadingTimeUnit}`, unit: t.readingTimeUnit },
+    { key: "lines",              show: preset.showLines,              blockLabel: t.toggles.showLines.label,              statusLabel: t.statusLabels.lines,              value: String(m.lines) },
+    { key: "paragraphs",         show: preset.showParagraphs,         blockLabel: t.toggles.showParagraphs.label,         statusLabel: t.statusLabels.paragraphs,         value: String(m.paragraphs) },
+    { key: "markdownLinks",      show: preset.showMarkdownLinks,      blockLabel: t.toggles.showMarkdownLinks.label,      statusLabel: t.statusLabels.markdownLinks,      value: String(m.markdownLinks) },
+    { key: "wikiLinks",          show: preset.showWikiLinks,          blockLabel: t.toggles.showWikiLinks.label,          statusLabel: t.statusLabels.wikiLinks,          value: String(m.wikiLinks) },
+    { key: "citekeys",           show: preset.showCitekeys,           blockLabel: t.toggles.showCitekeys.label,           statusLabel: t.statusLabels.citekeys,           value: String(m.citekeys) },
+    { key: "embeds",             show: preset.showEmbeds,             blockLabel: t.toggles.showEmbeds.label,             statusLabel: t.statusLabels.embeds,             value: String(m.embeds) },
+    { key: "footnotes",          show: preset.showFootnotes,          blockLabel: t.toggles.showFootnotes.label,          statusLabel: t.statusLabels.footnotes,          value: String(m.footnotes) },
   ];
   const builtinRows: MetricRow[] = defs
     .filter((d) => d.show)
-    .map((d) => ({ key: d.key, blockLabel: d.blockLabel, statusText: d.statusText, value: d.value, unit: d.unit, level: warnLevel(preset, m, d.key) }));
+    .map((d) => ({
+      key: d.key,
+      blockLabel: labelFor(labels, d.key, "block", d.blockLabel),
+      statusText: statusTextFor(labelFor(labels, d.key, "status", d.statusLabel), d.statusValue ?? d.value),
+      value: d.value,
+      unit: d.unit,
+      level: warnLevel(preset, m, d.key),
+    }));
 
   const extRows: MetricRow[] = registry && ext
-    ? registry.metricRows(preset, ext).map((r) => ({ key: r.id, blockLabel: r.label, statusText: r.statusText, value: r.value, unit: r.unit, level: r.level }))
+    ? registry.metricRows(preset, ext).map((r) => ({
+        key: r.id,
+        blockLabel: labelFor(labels, r.id, "block", r.label),
+        statusText: statusTextFor(labelFor(labels, r.id, "status", r.statusLabel), r.value),
+        value: r.value,
+        unit: r.unit,
+        level: r.level,
+      }))
     : [];
 
   const order = effectiveMetricOrder(preset, registry);

@@ -342,8 +342,8 @@ export function presetIndexEntryFrom(ext: PresetExtension): ExtensionIndexEntry 
 
 export interface ExtMetricRow {
   id: string;
-  label: string;
-  statusText: string;
+  label: string;       // right-pane block label
+  statusLabel: string; // status-bar label (metrics.ts composes "label: value")
   value: string;
   unit?: string;
   level: WarnLevel;
@@ -902,7 +902,7 @@ export class ExtensionRegistry {
       rows.push({
         id: def.id,
         label: toggleLabel,
-        statusText: `${statusBarLabel}: ${valStr}`,
+        statusLabel: statusBarLabel,
         value: valStr,
         unit: this.loc(def, "unit") ?? def.unit,
         level: ruleLevel(preset, value, def.id),

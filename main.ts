@@ -288,7 +288,7 @@ export default class WordCountPlugin extends Plugin {
     this.statusBarItem.empty();
     if (!preset || !metrics) return;
 
-    const rows = metricRows(preset, metrics, this.extensions, this.lastExtMetrics);
+    const rows = metricRows(preset, metrics, this.extensions, this.lastExtMetrics, this.settings.customLabels);
     if (rows.length === 0) {
       this.statusBarItem.setText(t.statusNoMetrics);
     } else {
@@ -364,6 +364,10 @@ export default class WordCountPlugin extends Plugin {
       this.settings.extensionRepoUrl = DEFAULT_EXTENSION_REPO_URL;
     }
     if (typeof this.settings.autoUpdateExtensions !== "boolean") this.settings.autoUpdateExtensions = false;
+    // Custom metric labels were added later; backfill so the modal has a map to
+    // write into.
+    const labels = this.settings.customLabels as unknown;
+    if (!labels || typeof labels !== "object" || Array.isArray(labels)) this.settings.customLabels = {};
   }
 
   async saveSettings() {

@@ -14,18 +14,21 @@ const ru = {
   statusTooltipCycle: (name: string) => `${name}`,
 
   // Status bar metric labels
-  statusWords: (n: number) => `Слов: ${n}`,
-  statusChars: (n: number) => `Символов: ${n}`,
-  statusCharsNoSpaces: (n: number) => `Символов (без пробелов): ${n}`,
-  statusPages: (n: string) => `Страниц: ${n}`,
-  statusReadingTime: (n: string) => `Время чтения: ${n} мин`,
-  statusLines: (n: number) => `Строк: ${n}`,
-  statusParas: (n: number) => `Абзацев: ${n}`,
-  statusMdLinks: (n: number) => `MD ссылок: ${n}`,
-  statusWikiLinks: (n: number) => `Викиссылок: ${n}`,
-  statusCitekeys: (n: number) => `Цитирований: ${n}`,
-  statusEmbeds: (n: number) => `Вложений: ${n}`,
-  statusFootnotes: (n: number) => `Сносок: ${n}`,
+  statusLabels: {
+    wordsWithSpaces: "Слов",
+    charsWithSpaces: "Символов",
+    charsWithoutSpaces: "Символов (без пробелов)",
+    pages: "Страниц",
+    readingTime: "Время чтения",
+    lines: "Строк",
+    paragraphs: "Абзацев",
+    markdownLinks: "MD ссылок",
+    wikiLinks: "Викиссылок",
+    citekeys: "Цитирований",
+    embeds: "Вложений",
+    footnotes: "Сносок",
+  },
+  statusReadingTimeUnit: "мин",
 
   // ── Settings page ──────────────────────────────────────────────────────────
   settingsHeading: "Настройки Advanced Word Count",
@@ -123,6 +126,24 @@ const ru = {
       : "расширений";
     return `Обновлено ${count} ${word}`;
   },
+
+  // ── Пользовательские названия ──────────────────────────────────────────────
+  settingsCustomLabelsName: "Изменить названия метрик",
+  settingsCustomLabelsDesc: "Поменяйте названия любых метрик на удобные вам",
+  settingsCustomLabelsButton: "Менеджер лейблов",
+  labelsModalTitle: "Менеджер лейблов метрик",
+  labelsModalNote: "Переименуйте любую метрику или очистите поле, чтобы полностью убрать её название.",
+  labelsSearchPlaceholder: "Поиск метрик…",
+  labelsFilterAll: "Все",
+  labelsFilterBuiltin: "Встроенные",
+  labelsFilterDownloaded: "Загруженные",
+  labelsTypeBuiltin: "Встроенная метрика",
+  labelsTypeDownloaded: "Загруженная метрика",
+  labelsFieldStatusBar: "Строка состояния",
+  labelsFieldRightPane: "Правая панель",
+  labelsNoLabelPlaceholder: "Без названия",
+  labelsReset: "Вернуть исходное",
+  labelsNoResults: "Нет метрик по вашему запросу",
 
   // Browse modal
   extModalTitle: "Магазин расширений",

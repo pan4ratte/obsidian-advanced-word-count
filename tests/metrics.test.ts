@@ -234,6 +234,66 @@ describe("metricRows", () => {
     expect(metricRows(preset, m).map((r) => r.key)).toEqual(["pages", "wordsWithSpaces"]);
   });
 
+  it("composes status text from the metric's label and value", () => {
+    const preset = defaultPreset({ showReadingTime: true });
+    const rows = metricRows(preset, computeMetrics("one two three", preset));
+    const status = (key: string) => rows.find((r) => r.key === key)!.statusText;
+
+    expect(status("wordsWithSpaces")).toBe("Words: 3");
+    // The reading-time unit belongs to the value, so it survives a relabel.
+    expect(status("readingTime")).toBe("Reading time: 0.0 min");
+  });
+
+  it("applies custom labels to the status bar and the right-pane block", () => {
+    const preset = defaultPreset();
+    const m = computeMetrics("one two three", preset);
+    const rows = metricRows(preset, m, undefined, undefined, {
+      wordsWithSpaces: { status: "W", block: "Word count" },
+    });
+    const words = rows.find((r) => r.key === "wordsWithSpaces")!;
+
+    expect(words.statusText).toBe("W: 3");
+    expect(words.blockLabel).toBe("Word count");
+    // Metrics without an override keep their own labels.
+    expect(rows.find((r) => r.key === "pages")!.statusText).toBe("Pages: 0.0");
+  });
+
+  it("drops the label entirely when a custom label is empty", () => {
+    const preset = defaultPreset({ showReadingTime: true });
+    const m = computeMetrics("one two three", preset);
+    const rows = metricRows(preset, m, undefined, undefined, {
+      wordsWithSpaces: { status: "", block: "" },
+      readingTime: { status: "" },
+    });
+
+    expect(rows.find((r) => r.key === "wordsWithSpaces")!.statusText).toBe("3");
+    expect(rows.find((r) => r.key === "wordsWithSpaces")!.blockLabel).toBe("");
+    // The value keeps its unit — only the label goes.
+    expect(rows.find((r) => r.key === "readingTime")!.statusText).toBe("0.0 min");
+  });
+
+  it("applies custom labels to extension metrics too", () => {
+    const reg = new ExtensionRegistry();
+    reg.set([{
+      id: "sentence-count", storeName: "Sentences", description: "", author: "t",
+      type: "metric", toggleLabel: "Sentences", statusBarLabel: "Sent.",
+      count: { mode: "split", separator: "[.!?]+\\s+" },
+    }]);
+    const preset = defaultPreset({ extMetrics: { "sentence-count": true } });
+    const full = computeFull("One. Two. Three!", preset, reg);
+
+    const plain = metricRows(preset, full.values, reg, full.ext)
+      .find((r) => r.key === "sentence-count")!;
+    expect(plain.statusText).toBe("Sent.: 3");
+    expect(plain.blockLabel).toBe("Sentences");
+
+    const relabelled = metricRows(preset, full.values, reg, full.ext, {
+      "sentence-count": { status: "", block: "Phrases" },
+    }).find((r) => r.key === "sentence-count")!;
+    expect(relabelled.statusText).toBe("3");
+    expect(relabelled.blockLabel).toBe("Phrases");
+  });
+
   it("flags warning levels at 90% (orange) and 100% (red) of a warning threshold", () => {
     const preset = defaultPreset({ rules: [{ metric: "wordsWithSpaces", threshold: 10, kind: "warning" }] });
     const level = (raw: string) =>

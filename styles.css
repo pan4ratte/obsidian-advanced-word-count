@@ -950,3 +950,54 @@
     width: 100%;
   }
 }
+
+/* ── Custom labels modal ─────────────────────────────────────────────────────
+   Reuses the extensions-store chrome (.wcp-ext-title / -search / -filters / -list
+   / -card); only the per-card label fields are new. */
+
+.wcp-labels-note {
+  margin: 0 0 12px;
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+}
+
+/* Two fields per card plus the reset button — side by side when there's room,
+   stacked when there isn't. The button is the row's last item. */
+.wcp-labels-fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+/* Each field is a stacked caption + input, so pin the button to the bottom of the
+   row to sit on the inputs' line rather than beside the caption. */
+.wcp-labels-actions {
+  flex: 0 0 auto;
+  align-self: flex-end;
+}
+
+/* Match the inputs' height so the row reads as one line of controls. */
+.wcp-labels-actions button {
+  height: var(--input-height, 30px);
+}
+
+.wcp-labels-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1 1 160px;
+  min-width: 0;
+}
+
+.wcp-labels-field-name {
+  font-size: var(--font-smallest);
+  color: var(--text-faint);
+}
+
+.wcp-labels-input {
+  width: 100%;
+  min-width: 0;
+  font-size: var(--font-ui-smaller);
+}

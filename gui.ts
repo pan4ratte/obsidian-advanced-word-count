@@ -9,6 +9,7 @@ import {
   WarnLevel,
   LimitKind,
   LimitRule,
+  CustomLabel,
   METRIC_ORDER,
   METRIC_SHOW_KEY,
   REPOSITORY_URL,
@@ -85,13 +86,17 @@ export class MetricsView extends ItemView {
   render() {
     const preset = this.plugin.getActivePreset();
     const metrics = preset ? this.plugin.lastMetrics : null;
-    const rows = preset && metrics ? metricRows(preset, metrics, this.plugin.extensions, this.plugin.lastExtMetrics) : [];
+    const rows = preset && metrics
+      ? metricRows(preset, metrics, this.plugin.extensions, this.plugin.lastExtMetrics, this.plugin.settings.customLabels)
+      : [];
     const layout = this.plugin.settings.rightPaneLayout;
     const multiPreset = this.plugin.settings.presets.length > 1;
 
-    // Structure signature — when unchanged we can update in place and animate.
+    // Structure signature — when unchanged we can update in place and animate. The
+    // block labels are part of it: a custom label changes the text but not the set
+    // of rows, and only a rebuild repaints it.
     const sig = preset && metrics && rows.length > 0
-      ? [preset.id, preset.name, multiPreset, layout, ...rows.map((r) => r.key)].join("|")
+      ? [preset.id, preset.name, multiPreset, layout, ...rows.flatMap((r) => [r.key, r.blockLabel])].join("|")
       : null;
 
     if (sig && sig === this.gridSig) {
@@ -440,6 +445,16 @@ export class WordCountSettingTab extends PluginSettingTab {
             // to restart Obsidian to pick up pending updates.
             if (value) void this.plugin.autoUpdateInstalledExtensions();
           })
+      );
+
+    // Custom metric labels — a plugin-wide rename of any installed metric.
+    new Setting(containerEl)
+      .setName(t.settingsCustomLabelsName)
+      .setDesc(t.settingsCustomLabelsDesc)
+      .addButton((button) =>
+        button
+          .setButtonText(t.settingsCustomLabelsButton)
+          .onClick(() => new CustomLabelsModal(this.plugin).open())
       );
 
     const intro = new Setting(containerEl)
@@ -1449,5 +1464,243 @@ export class ExtensionBrowserModal extends Modal {
     // front-most again), so freshly installed extensions — local or from the
     // catalogue — reliably show up in each preset's connect dropdowns.
     if (this.dirty) this.onChanged();
+  }
+}
+
+// ── Custom labels modal ───────────────────────────────────────────────────────
+
+type LabelFilter = "all" | "builtin" | "downloaded";
+
+/**
+ * One row of the custom-labels list: an installed metric plus the labels it falls
+ * back to when the user hasn't overridden them. Built-ins read theirs from the
+ * locale, community metrics from their (localized) definition.
+ */
+interface LabelTarget {
+  key: string;           // built-in MetricKey or extension metric id
+  name: string;          // card title
+  description: string;   // what the metric counts (the store shows the same line)
+  builtin: boolean;
+  author?: string;
+  statusDefault: string; // status bar
+  blockDefault: string;  // right-pane block
+}
+
+/**
+ * Rename any installed metric. Each card carries the metric's two display labels —
+ * status bar and right-pane block — as free text: what's in the box is what shows,
+ * and an empty box means the metric is displayed with no label at all. A field left
+ * at its default isn't stored, so it keeps following the locale (and, for community
+ * metrics, extension updates); "Reset" clears both back to that state.
+ *
+ * Labels are plugin-wide rather than per-preset: a metric reads the same everywhere.
+ */
+export class CustomLabelsModal extends Modal {
+  private plugin: WordCountPlugin;
+  private filter = "";
+  private typeFilter: LabelFilter = "all";
+  private chipsEl: HTMLElement;
+  private listEl: HTMLElement;
+
+  constructor(plugin: WordCountPlugin) {
+    super(plugin.app);
+    this.plugin = plugin;
+  }
+
+  onOpen() {
+    const { contentEl } = this;
+    // Same modal chrome as the extensions store (the inset padding lives on .modal).
+    this.modalEl.addClass("wcp-ext-modal");
+    contentEl.createEl("h3", { text: t.labelsModalTitle, cls: "wcp-ext-title" });
+    contentEl.createEl("p", { text: t.labelsModalNote, cls: "wcp-labels-note" });
+
+    const search = contentEl.createEl("input", { type: "text", cls: "wcp-ext-search" });
+    search.placeholder = t.labelsSearchPlaceholder;
+    search.addEventListener("input", () => {
+      this.filter = search.value.trim().toLowerCase();
+      this.renderChips();
+      this.renderList();
+    });
+
+    const filtersWrap = contentEl.createDiv({ cls: "wcp-ext-filters-wrap" });
+    this.chipsEl = filtersWrap.createDiv({ cls: "wcp-ext-filters" });
+    this.renderChips();
+
+    this.listEl = contentEl.createDiv({ cls: "wcp-ext-list" });
+    this.renderList();
+  }
+
+  /**
+   * Every metric the user actually has: the built-ins, then each installed community
+   * metric (whether or not it's connected to a preset).
+   */
+  private targets(): LabelTarget[] {
+    const out: LabelTarget[] = METRIC_ORDER.map((key) => {
+      const toggle = t.toggles[METRIC_SHOW_KEY[key] as keyof typeof t.toggles];
+      return {
+        key,
+        name: toggle.label,
+        // A built-in's toggle hint says what it counts — the same job the store's
+        // description does for an extension.
+        description: toggle.hint,
+        builtin: true,
+        statusDefault: t.statusLabels[key],
+        blockDefault: toggle.label,
+      };
+    });
+
+    const registry = this.plugin.extensions;
+    for (const def of registry.metricList()) {
+      const toggleLabel = registry.loc(def, "toggleLabel") ?? def.toggleLabel;
+      out.push({
+        key: def.id,
+        name: registry.loc(def, "storeName") ?? def.storeName,
+        description: registry.loc(def, "description") ?? def.description,
+        builtin: false,
+        author: def.author,
+        // Mirrors the fallback chain in ExtensionRegistry.metricRows.
+        statusDefault: registry.loc(def, "statusBarLabel") ?? def.statusBarLabel ?? toggleLabel,
+        blockDefault: toggleLabel,
+      });
+    }
+    return out;
+  }
+
+  /** Search matches the card title, its description, either default label, or the id. */
+  private matchesSearch(target: LabelTarget): boolean {
+    const f = this.filter;
+    if (!f) return true;
+    const hit = (s: string | undefined) => !!s && s.toLowerCase().includes(f);
+    return (
+      hit(target.name) ||
+      hit(target.description) ||
+      hit(target.statusDefault) ||
+      hit(target.blockDefault) ||
+      hit(target.key)
+    );
+  }
+
+  private matchesType(target: LabelTarget): boolean {
+    return this.typeFilter === "all" || (this.typeFilter === "builtin") === target.builtin;
+  }
+
+  /** Origin chips — All / Built-in / Community — each with its count for the search. */
+  private renderChips() {
+    this.chipsEl.empty();
+    const matched = this.targets().filter((e) => this.matchesSearch(e));
+    const countOf = (value: LabelFilter) =>
+      value === "all" ? matched.length : matched.filter((e) => (value === "builtin") === e.builtin).length;
+
+    const chips: { value: LabelFilter; label: string }[] = [
+      { value: "all", label: t.labelsFilterAll },
+      { value: "builtin", label: t.labelsFilterBuiltin },
+      { value: "downloaded", label: t.labelsFilterDownloaded },
+    ];
+    for (const { value, label } of chips) {
+      const chip = this.chipsEl.createEl("button", { cls: "wcp-ext-filter" });
+      chip.appendText(label);
+      chip.createSpan({ text: `(${countOf(value)})`, cls: "wcp-ext-filter-count" });
+      if (this.typeFilter === value) chip.addClass("is-active");
+      chip.addEventListener("click", () => {
+        this.typeFilter = value;
+        this.renderChips();
+        this.renderList();
+      });
+    }
+  }
+
+  private renderList() {
+    this.listEl.empty();
+    const shown = this.targets().filter((e) => this.matchesSearch(e) && this.matchesType(e));
+    if (shown.length === 0) {
+      this.listEl.createEl("p", { text: t.labelsNoResults, cls: "wcp-ext-status" });
+      return;
+    }
+    for (const target of shown) this.renderCard(this.listEl, target);
+  }
+
+  /** The stored override for one field, or undefined when the metric uses its default. */
+  private override(key: string, field: keyof CustomLabel): string | undefined {
+    const entry = this.plugin.settings.customLabels[key];
+    const value = entry ? entry[field] : undefined;
+    return typeof value === "string" ? value : undefined;
+  }
+
+  private hasOverride(key: string): boolean {
+    return this.override(key, "status") !== undefined || this.override(key, "block") !== undefined;
+  }
+
+  /**
+   * Store (or clear) one label. A value equal to the metric's own label is stored as
+   * *no* override, so it keeps tracking the locale and extension updates; an empty
+   * string is a real override meaning "show no label".
+   */
+  private async setLabel(key: string, field: keyof CustomLabel, value: string, fallback: string) {
+    const labels = this.plugin.settings.customLabels;
+    const entry: CustomLabel = { ...(labels[key] ?? {}) };
+    if (value === fallback) delete entry[field];
+    else entry[field] = value;
+
+    if (entry.status === undefined && entry.block === undefined) delete labels[key];
+    else labels[key] = entry;
+
+    await this.plugin.saveSettings();
+    // Repaint the status bar and the right pane so the new label shows immediately.
+    this.plugin.updateCount();
+  }
+
+  private renderCard(parent: HTMLElement, target: LabelTarget) {
+    const card = parent.createDiv({ cls: "wcp-ext-card wcp-labels-card" });
+
+    const main = card.createDiv({ cls: "wcp-ext-card-main" });
+    const head = main.createDiv({ cls: "wcp-ext-card-head" });
+    head.createEl("span", { text: target.name, cls: "wcp-ext-name" });
+    // The icon (and its tooltip) is the only origin marker — no author/type line, so
+    // the card stays two rows tall: the name, then the fields.
+    const icon = head.createSpan({ cls: "wcp-ext-type-icon" });
+    setIcon(icon, target.builtin ? "whole-word" : "blocks");
+    setTooltip(icon, target.builtin ? t.labelsTypeBuiltin : t.labelsTypeDownloaded, { placement: "top" });
+    main.createEl("p", { text: target.description, cls: "wcp-ext-desc" });
+
+    const fields = main.createDiv({ cls: "wcp-labels-fields" });
+    const addField = (label: string, field: keyof CustomLabel, fallback: string) => {
+      const wrap = fields.createDiv({ cls: "wcp-labels-field" });
+      wrap.createEl("label", { text: label, cls: "wcp-labels-field-name" });
+      const input = wrap.createEl("input", { type: "text", cls: "wcp-labels-input" });
+      // Pre-filled with what's shown today, so clearing the box unambiguously means
+      // "no label" — the placeholder spells out that result.
+      input.value = this.override(target.key, field) ?? fallback;
+      input.placeholder = t.labelsNoLabelPlaceholder;
+      input.addEventListener("input", handle(async () => {
+        await this.setLabel(target.key, field, input.value, fallback);
+        refreshReset();
+      }));
+      return input;
+    };
+
+    const statusInput = addField(t.labelsFieldStatusBar, "status", target.statusDefault);
+    const blockInput = addField(t.labelsFieldRightPane, "block", target.blockDefault);
+
+    // Reset is the last item of the fields row, so it sits on the inputs' line
+    // rather than beside the card as a whole.
+    const actions = fields.createDiv({ cls: "wcp-ext-actions wcp-labels-actions" });
+    const reset = actions.createEl("button", { cls: "wcp-ext-install" });
+    setIcon(reset, "rotate-ccw");
+    setTooltip(reset, t.labelsReset, { placement: "top" });
+    const refreshReset = () => { reset.disabled = !this.hasOverride(target.key); };
+
+    refreshReset();
+    reset.addEventListener("click", handle(async () => {
+      delete this.plugin.settings.customLabels[target.key];
+      statusInput.value = target.statusDefault;
+      blockInput.value = target.blockDefault;
+      await this.plugin.saveSettings();
+      this.plugin.updateCount();
+      refreshReset();
+    }));
+  }
+
+  onClose() {
+    this.contentEl.empty();
   }
 }
