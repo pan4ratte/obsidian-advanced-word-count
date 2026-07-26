@@ -248,7 +248,7 @@
       "storeName": "Pandoc generated footnotes",
       "description": "Counts Markdown footnotes combined with @citekey groups that will generate footnotes after Pandoc export of the note. Use if you export with a footnote citation style.",
       "author": "pan4ratte",
-      "updated": "2026-07-06",
+      "updated": "2026-07-26",
       "i18n": {
         "ru": {
           "storeName": "Сноски, сгенерированные Pandoc",
