@@ -1,4 +1,7 @@
 import { App, ItemView, Modal, Notice, Platform, PluginSettingTab, Setting, WorkspaceLeaf, ToggleComponent, setIcon, setTooltip } from "obsidian";
+// Declarative settings types (Obsidian 1.13.0+); type-only, so nothing is imported
+// at runtime and older versions are unaffected.
+import type { SettingDefinitionItem } from "obsidian";
 import { t } from "./locales";
 import type WordCountPlugin from "./main";
 import {
@@ -345,6 +348,130 @@ export class WordCountSettingTab extends PluginSettingTab {
   /** Sync the "hide default word counter" toggle with the stored setting. */
   refreshHideDefaultToggle() {
     this.hideDefaultToggle?.setValue(this.plugin.settings.hideDefaultWordCount);
+  }
+
+  // ── Declarative definitions (Obsidian 1.13.0+) ──────────────────────────────
+  //
+  // The plugin-wide settings, declared so Obsidian's settings search can find and
+  // operate them. This is purely additive: rendering still happens in display()
+  // below (the per-preset UI is too dynamic to declare), and older versions never
+  // call these methods — so the manifest's minAppVersion stays where it is.
+  //
+  // Keys are the field names in WordCountSettings, and get/setControlValue below
+  // route them through the same code paths the rendered controls use.
+
+  getSettingDefinitions(): SettingDefinitionItem[] {
+    const displayMethods: Record<string, string> = {
+      statusBar: t.displayMethodStatusBar,
+      rightPane: t.displayMethodRightPane,
+      both: t.displayMethodBoth,
+    };
+    return [
+      {
+        type: "group",
+        heading: t.settingsSectionGeneral,
+        items: [
+          {
+            name: t.settingsHideDefaultName,
+            desc: t.settingsHideDefaultDesc,
+            control: { type: "toggle", key: "hideDefaultWordCount" },
+          },
+          {
+            name: t.settingsDisplayMethodName,
+            desc: t.settingsDisplayMethodDesc,
+            control: { type: "dropdown", key: "displayMethod", options: displayMethods },
+          },
+          {
+            name: t.settingsRightPaneLayoutName,
+            desc: t.settingsRightPaneLayoutDesc,
+            control: {
+              type: "dropdown",
+              key: "rightPaneLayout",
+              options: { two: t.rightPaneLayoutTwo, one: t.rightPaneLayoutOne },
+            },
+          },
+          {
+            name: t.settingsLimitWarningsDisplayName,
+            desc: t.settingsLimitWarningsDisplayDesc,
+            control: { type: "dropdown", key: "limitWarningsDisplayMethod", options: displayMethods },
+          },
+          {
+            name: t.settingsSeparatorName,
+            desc: t.settingsSeparatorDesc,
+            control: { type: "text", key: "separator", placeholder: "  |  " },
+          },
+        ],
+      },
+      {
+        type: "group",
+        heading: t.settingsSectionPresets,
+        items: [
+          {
+            name: t.settingsAutoUpdateExtensionsName,
+            desc: t.settingsAutoUpdateExtensionsDesc,
+            control: { type: "toggle", key: "autoUpdateExtensions" },
+          },
+          {
+            name: t.settingsCustomLabelsName,
+            desc: t.settingsCustomLabelsDesc,
+            action: () => new CustomLabelsModal(this.plugin).open(),
+          },
+          {
+            name: t.settingsBrowseExtensions,
+            desc: t.settingsPresetsStoreDesc,
+            action: () => new ExtensionBrowserModal(this.plugin, () => this.display()).open(),
+          },
+        ],
+      },
+    ];
+  }
+
+  /** Read a declared control's value from the plugin's settings. */
+  getControlValue(key: string): unknown {
+    return (this.plugin.settings as unknown as Record<string, unknown>)[key];
+  }
+
+  /**
+   * Persist a declared control's value, applying the same side effects as the
+   * rendered control in display() — an unknown key is ignored rather than blindly
+   * written into the settings object.
+   */
+  async setControlValue(key: string, value: unknown): Promise<void> {
+    const settings = this.plugin.settings;
+    switch (key) {
+      case "hideDefaultWordCount":
+        settings.hideDefaultWordCount = value === true;
+        await this.plugin.setDefaultWordCountHidden(settings.hideDefaultWordCount);
+        // Keep the rendered toggle in sync when the tab is also on screen.
+        this.refreshHideDefaultToggle();
+        await this.save();
+        return;
+      case "displayMethod":
+        settings.displayMethod = value as DisplayMethod;
+        await this.plugin.saveSettings();
+        await this.plugin.applyDisplayMethod(true);
+        return;
+      case "rightPaneLayout":
+        settings.rightPaneLayout = value as RightPaneLayout;
+        await this.plugin.saveSettings();
+        this.plugin.updateCount();
+        return;
+      case "limitWarningsDisplayMethod":
+        settings.limitWarningsDisplayMethod = value as DisplayMethod;
+        await this.plugin.saveSettings();
+        this.plugin.updateCount();
+        return;
+      case "separator":
+        settings.separator = String(value);
+        await this.save();
+        return;
+      case "autoUpdateExtensions":
+        settings.autoUpdateExtensions = value === true;
+        await this.save();
+        // Check straight away when the user opts in, as the rendered toggle does.
+        if (settings.autoUpdateExtensions) void this.plugin.autoUpdateInstalledExtensions();
+        return;
+    }
   }
 
   display(): void {

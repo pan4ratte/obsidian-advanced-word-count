@@ -56,7 +56,7 @@ You can specify, how formatting elements will be counted:
 | **Ignore wikilinks** 		         | wikilinks text will be counted	   											 		  | wikilinks will be ignored	  		  |
 | **Count wikilinks display text** | `[[wiki\|label]]` → wiki and label will be counted 				  | only label will be counted  		  |
 | **Ignore citekeys** 			       | citekeys text will be counted 															  | citekeys will be ignored 				  |
-| **Ignore comments**			         | comments `%% … %%` and `<!-- … -->` text will be counted		  | comments will be ignored 	   		  |
+| **Ignore comments**			         | comments `%% … %%` and &lt;!-- … --&gt; text will be counted		  | comments will be ignored 	   		  |
 | **Ignore HTML tags**		         | HTML tags like `<b> … </b>` etc. will be counted		          | HTML tags will be ignored 	   		|
 
 ### 5. Install community extensions: presets, metrics and advanced settings
@@ -79,7 +79,7 @@ The official catalogue currently includes:
 | Emoji | Counts the number of emoji and other pictographic characters in a note. |
 | Reference links | Counts resolved reference-style links — a [text][id] reference that has a matching [id]: URL definition elsewhere in the note. |
 | HTTP(S) links | Counts every http(s) link in a note, wherever it appears — bare, inside a Markdown link, angle brackets or any other brackets. |
-| Comments | Counts HTML (<!-- … -->) and Obsidian (%% … %%) comments in the note. |
+| Comments | Counts HTML and Obsidian comments in the note. |
 | Unique tags | Counts the number of unique #tags in a note, ignoring repeats. |
 | Average word length | Calculates the average number of characters per word in a note. |
 | Average Markdown links per page | Calculates the average number of Markdown links per page. |

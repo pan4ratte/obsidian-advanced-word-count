@@ -63,13 +63,13 @@
     {
       "id": "comment-count",
       "storeName": "Comments",
-      "description": "Counts HTML (<!-- … -->) and Obsidian (%% … %%) comments in the note.",
+      "description": "Counts HTML and Obsidian comments in the note.",
       "author": "pan4ratte",
       "updated": "2026-07-26",
       "i18n": {
         "ru": {
           "storeName": "Комментарии",
-          "description": "Считает HTML (<!-- … -->) и Obsidian (%% … %%) комментарии в заметке."
+          "description": "Считает HTML и Obsidian комментарии в заметке."
         }
       },
       "type": "metric",

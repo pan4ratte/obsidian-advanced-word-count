@@ -1,20 +1,20 @@
 {
   "id": "comment-count",
   "storeName": "Comments",
-  "description": "Counts HTML (<!-- … -->) and Obsidian (%% … %%) comments in the note.",
+  "description": "Counts HTML and Obsidian comments in the note.",
   "author": "pan4ratte",
   "updated": "2026-07-26",
   "type": "metric",
   "toggleLabel": "Comments",
-  "hint": "Counts HTML (<!-- … -->) and Obsidian (%% … %%) comments",
+  "hint": "Counts HTML and Obsidian comments",
   "statusBarLabel": "Comments",
   "defaultEnabled": false,
   "i18n": {
     "ru": {
       "storeName": "Комментарии",
-      "description": "Считает HTML (<!-- … -->) и Obsidian (%% … %%) комментарии в заметке.",
+      "description": "Считает HTML и Obsidian комментарии в заметке.",
       "toggleLabel": "Комментарии",
-      "hint": "Считает HTML- (<!-- … -->) и Obsidian- (%% … %%) комментарии",
+      "hint": "Считает HTML- и Obsidian-комментарии",
       "statusBarLabel": "Комментариев"
     }
   },

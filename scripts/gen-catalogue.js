@@ -148,12 +148,18 @@ const field = (entry, lang, key) => {
   return (loc && loc[key]) || entry[key];
 };
 
-// Make a description safe inside a Markdown table cell: escape pipes, and wrap the
-// inline tokens that GitHub would otherwise render (math, strikethrough, highlight)
-// in backticks so they show verbatim.
+// Make a description safe inside a Markdown table cell: escape pipes, entity-escape
+// HTML comment markers, and wrap the inline tokens that GitHub would otherwise
+// render (math, strikethrough, highlight) in backticks so they show verbatim.
+//
+// A literal `<!--` would be parsed as an HTML comment — the syntax a description is
+// trying to show would render as nothing at all, and Obsidian's plugin review flags
+// any HTML comment in a README as leftover template text.
 const cell = (s) =>
   s
     .replace(/\|/g, "\\|")
+    .replace(/<!--/g, "&lt;!--")
+    .replace(/-->/g, "--&gt;")
     .replace(/\$\$[^$]*\$\$|\$[^$\n]+\$|~~[^~]+~~|==[^=]+==/g, (m) => "`" + m + "`");
 
 const table = (entries, lang, type) => {
