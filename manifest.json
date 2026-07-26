@@ -1,7 +1,7 @@
 {
   "id": "advanced-word-count",
   "name": "Advanced Word Count",
-  "version": "4.1.1",
+  "version": "4.2.0",
   "minAppVersion": "1.7.2",
   "description": "Create complex word count presets that will be displayed in the status bar or in the right pane tab. Install tens of community presets, custom metrics, and settings from the extension store.",
   "author": "pan4ratte",
