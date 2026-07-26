@@ -186,6 +186,26 @@ describe("shipped extensions behave", () => {
     expect(wordsOf("text [rating:: 5] end")).toBe(2); // text, end
   });
 
+  it("telegram-emoji-one-symbol counts a custom Telegram emoji as one symbol", () => {
+    const emoji = "[😢](tg://emoji?id=5983380877780980112)";
+    const charsOf = (text: string, preset: Preset) => computeFull(text, preset, reg).values.charsWithSpaces;
+
+    // Markdown links keep their label, so with the setting off the emoji itself is
+    // counted — a surrogate pair, i.e. two characters.
+    const on = enableAll();
+    on.countMdLinksAsWords = true;
+    const off: Preset = { ...on, extSettings: { ...on.extSettings, "telegram-emoji-one-symbol": false } };
+
+    expect(charsOf(emoji, on)).toBe(1);
+    expect(charsOf(emoji, off)).toBe(2);
+    // Each emoji counts once and the surrounding text is untouched: "ab " + 2 symbols.
+    expect(charsOf(`ab ${emoji}${emoji}`, on)).toBe(5);
+    // One symbol also means one word.
+    expect(computeFull(`hello ${emoji} world`, on, reg).values.wordsWithSpaces).toBe(3);
+    // An ordinary Markdown link is left to the built-in handling ("hi").
+    expect(charsOf("[hi](note.md)", on)).toBe(2);
+  });
+
   // ── Extracted from the former built-ins ──────────────────────────────────────
 
   it("counts complete tables (former built-in metric)", () => {

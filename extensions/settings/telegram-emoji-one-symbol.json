@@ -1,0 +1,25 @@
+{
+  "id": "telegram-emoji-one-symbol",
+  "storeName": "Count Telegram emoji as one symbol",
+  "description": "When counting words and characters, counts a custom Telegram emoji — [😢](tg://emoji?id=5983380877780980112) — as one symbol instead of the whole Markdown link. Note: the extension provides support for the “Publish to Telegram” plugin emojis.",
+  "author": "pan4ratte",
+  "updated": "2026-07-26",
+  "type": "setting",
+  "toggleLabel": "Count Telegram emoji as one symbol",
+  "hint": "Off: the whole [emoji](tg://emoji?id=…) link is counted\nOn: each custom Telegram emoji counts as one symbol",
+  "defaultEnabled": false,
+  "i18n": {
+    "ru": {
+      "storeName": "Считать эмодзи Telegram как один символ",
+      "description": "При подсчёте слов и символов, считает кастомное эмодзи Telegram — [😢](tg://emoji?id=5983380877780980112) — как один символ вместо всей Markdown-ссылки. Примечание: расширение обеспечивает поддержку эмодзи плагина «Publish to Telegram».",
+      "toggleLabel": "Считать эмодзи Telegram как один символ",
+      "hint": "Выкл.: подсчитывается вся ссылка [эмодзи](tg://emoji?id=…)\nВкл.: каждое кастомное эмодзи Telegram считается за один символ"
+    }
+  },
+  "transform": {
+    "pattern": "\\[[^\\]\\n]*\\]\\(tg://emoji\\?id=[^)\\s]*\\)",
+    "flags": "gi",
+    "replacement": "\uFFFC",
+    "stage": "pre"
+  }
+}

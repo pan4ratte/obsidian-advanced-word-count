@@ -105,6 +105,7 @@ The official catalogue currently includes:
 | Ignore backslash commands | When counting words and characters, excludes lines consisting solely of a backslash command such as \pagebreak or \newpage. |
 | Ignore Dataview fields | When counting words and characters, excludes inline Dataview fields — [key:: value] and (key:: value). |
 | Ignore code | When counting words and characters, excludes block and inline code. |
+| Count Telegram emoji as one symbol | When counting words and characters, counts a custom Telegram emoji — [😢](tg://emoji?id=5983380877780980112) — as one symbol instead of the whole Markdown link. Note: the extension provides support for the “Publish to Telegram” plugin emojis. |
 
 **Presets**
 
