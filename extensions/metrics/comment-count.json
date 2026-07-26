@@ -15,7 +15,7 @@
       "description": "Считает HTML (<!-- … -->) и Obsidian (%% … %%) комментарии в заметке.",
       "toggleLabel": "Комментарии",
       "hint": "Считает HTML- (<!-- … -->) и Obsidian- (%% … %%) комментарии",
-      "statusBarLabel": "Комментарии"
+      "statusBarLabel": "Комментариев"
     }
   },
   "count": {

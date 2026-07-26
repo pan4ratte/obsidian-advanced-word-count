@@ -65,7 +65,7 @@
       "storeName": "Comments",
       "description": "Counts HTML (<!-- … -->) and Obsidian (%% … %%) comments in the note.",
       "author": "pan4ratte",
-      "updated": "2026-07-06",
+      "updated": "2026-07-26",
       "i18n": {
         "ru": {
           "storeName": "Комментарии",
