@@ -18,7 +18,7 @@
 * Changed *Unique citekeys* metric name to "References" for clarity.
 * Russian status-bar label fixes for the *Comments* and *Pandoc footnotes* metrics.
 
-This update comletes a feature request by @mjakubowiak
+This update completes a feature request by @mjakubowiak
 
 
 ## 4.1.1
