@@ -127,7 +127,7 @@ export class MetricsView extends ItemView {
 
     // Header: preset name (clickable to cycle when multiple presets exist)
     const header = container.createDiv({ cls: "wcp-view-header" });
-    const nameEl = header.createEl("span", { cls: "wcp-view-preset-name" });
+    const nameEl = header.createSpan({ cls: "wcp-view-preset-name" });
     nameEl.createSpan({ text: preset.name });
     if (multiPreset) {
       nameEl.addClass("is-clickable");
@@ -154,10 +154,10 @@ export class MetricsView extends ItemView {
       // Value and its optional unit (e.g. "MIN.") share a baseline-aligned line;
       // the unit is a sibling so in-place value updates don't wipe it.
       const valueLine = block.createDiv({ cls: "wcp-metric-value-line" });
-      const value = valueLine.createEl("div", { cls: "wcp-metric-value" });
+      const value = valueLine.createDiv({ cls: "wcp-metric-value" });
       this.renderValue(value, row.value, "", false);
-      if (row.unit) valueLine.createEl("span", { text: row.unit, cls: "wcp-metric-unit" });
-      block.createEl("div", { text: row.blockLabel, cls: "wcp-metric-label" });
+      if (row.unit) valueLine.createSpan({ text: row.unit, cls: "wcp-metric-unit" });
+      block.createDiv({ text: row.blockLabel, cls: "wcp-metric-label" });
       this.blockRefs.set(row.key, { block, value, text: row.value });
       // Drag-and-drop reordering: native HTML5 DnD on desktop, touch (long-press)
       // on mobile/tablet, where drag events don't fire.
@@ -520,13 +520,13 @@ export class WordCountSettingTab extends PluginSettingTab {
   private downloadJson(filename: string, data: unknown) {
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
-    const a = activeDocument.createElement("a");
-    a.href = url;
-    a.download = filename;
-    // Attach the anchor and defer the revoke. Clicking a detached anchor or
+    // Create the anchor attached to the active document's body (createEl appends to
+    // the node it's called on), and defer the revoke. Clicking a detached anchor or
     // revoking the object URL synchronously can drop the download on some Electron
     // builds (notably macOS/Linux), even though it happens to work on Windows.
-    activeDocument.body.appendChild(a);
+    const a = activeDocument.body.createEl("a");
+    a.href = url;
+    a.download = filename;
     a.click();
     a.remove();
     window.setTimeout(() => URL.revokeObjectURL(url), 10000);
@@ -542,7 +542,7 @@ export class WordCountSettingTab extends PluginSettingTab {
     // Status badge — always shown as an icon. Active is highlighted; inactive is
     // faded and clickable to make this preset active. The status text lives in
     // the tooltip.
-    const badge = header.createEl("span", {
+    const badge = header.createSpan({
       cls: `wcp-active-badge${isActive ? "" : " is-inactive"}`,
     });
     setIcon(badge, "whole-word");
@@ -592,17 +592,17 @@ export class WordCountSettingTab extends PluginSettingTab {
 
     // ── Words per page ──────────────────────────────────────────────────────
     const wppRow = card.createDiv({ cls: "wcp-wpp-row" });
-    wppRow.createEl("span", { text: t.wppLabel, cls: "wcp-wpp-label" });
+    wppRow.createSpan({ text: t.wppLabel, cls: "wcp-wpp-label" });
 
     const wppInput = wppRow.createEl("input", { type: "number" });
     wppInput.value = String(preset.wordsPerPage);
     wppInput.min = "0";
     wppInput.addClass("wcp-wpp-input");
-    wppRow.createEl("span", { text: t.wppSuffix, cls: "wcp-wpp-suffix" });
+    wppRow.createSpan({ text: t.wppSuffix, cls: "wcp-wpp-suffix" });
 
     // ── Reading time speed (its own row) ─────────────────────────────────────
     const readingRow = card.createDiv({ cls: "wcp-wpp-row" });
-    readingRow.createEl("span", { text: t.readingTimeLabel, cls: "wcp-wpp-label" });
+    readingRow.createSpan({ text: t.readingTimeLabel, cls: "wcp-wpp-label" });
     const readingSelect = readingRow.createEl("select", { cls: "dropdown" });
     const readingSpeeds: { wpm: number; label: string }[] = [
       { wpm: 250, label: t.readingSpeedAverage },
@@ -735,7 +735,7 @@ export class WordCountSettingTab extends PluginSettingTab {
     const row = grid.createDiv({ cls: "wcp-toggle-chip" });
     const hint = this.plugin.extensions.loc(def, "hint") ?? def.hint;
     if (hint) setTooltip(row, hint, { placement: "top" });
-    row.createEl("span", { text: this.plugin.extensions.loc(def, "toggleLabel") ?? def.toggleLabel, cls: "wcp-toggle-label" });
+    row.createSpan({ text: this.plugin.extensions.loc(def, "toggleLabel") ?? def.toggleLabel, cls: "wcp-toggle-label" });
     row.createDiv({ cls: "checkbox-container is-enabled" });
     row.addEventListener("click", handle(async () => {
       this.setExtConnected(preset, def, false);
@@ -866,7 +866,7 @@ export class WordCountSettingTab extends PluginSettingTab {
     const row = parent.createDiv({ cls: "wcp-toggle-chip" });
     if (hint) setTooltip(row, hint, { placement: "top" });
 
-    row.createEl("span", { text: label, cls: "wcp-toggle-label" });
+    row.createSpan({ text: label, cls: "wcp-toggle-label" });
 
     const toggle = row.createDiv({ cls: "checkbox-container" });
     if (preset[key]) toggle.addClass("is-enabled");
@@ -1298,7 +1298,7 @@ export class ExtensionBrowserModal extends Modal {
     const card = parent.createDiv({ cls: "wcp-ext-card wcp-ext-local-intro" });
     const main = card.createDiv({ cls: "wcp-ext-card-main" });
     const head = main.createDiv({ cls: "wcp-ext-card-head" });
-    head.createEl("span", { text: t.extLocalIntroTitle, cls: "wcp-ext-name" });
+    head.createSpan({ text: t.extLocalIntroTitle, cls: "wcp-ext-name" });
     main.createEl("p", { text: t.extLocalIntroDesc, cls: "wcp-ext-desc" });
 
     const actions = card.createDiv({ cls: "wcp-ext-actions" });
@@ -1348,13 +1348,13 @@ export class ExtensionBrowserModal extends Modal {
     // Left: name + type icon, author beneath, then the description.
     const main = card.createDiv({ cls: "wcp-ext-card-main" });
     const head = main.createDiv({ cls: "wcp-ext-card-head" });
-    head.createEl("span", { text: this.storeName(entry), cls: "wcp-ext-name" });
+    head.createSpan({ text: this.storeName(entry), cls: "wcp-ext-name" });
     const icon = head.createSpan({ cls: "wcp-ext-type-icon" });
     const typeIcon = entry.type === "metric" ? "whole-word" : entry.type === "preset" ? "package" : "sliders-horizontal";
     const typeLabel = entry.type === "metric" ? t.extTypeMetric : entry.type === "preset" ? t.extTypePreset : t.extTypeSetting;
     setIcon(icon, typeIcon);
     setTooltip(icon, typeLabel, { placement: "top" });
-    main.createEl("span", { text: t.extByAuthor(entry.author), cls: "wcp-ext-author" });
+    main.createSpan({ text: t.extByAuthor(entry.author), cls: "wcp-ext-author" });
     main.createEl("p", { text: this.plugin.extensions.loc(entry, "description") ?? entry.description, cls: "wcp-ext-desc" });
 
     // Presets install differently (they add a preset + pull in the extensions they
@@ -1663,7 +1663,7 @@ export class CustomLabelsModal extends Modal {
 
     const main = card.createDiv({ cls: "wcp-ext-card-main" });
     const head = main.createDiv({ cls: "wcp-ext-card-head" });
-    head.createEl("span", { text: target.name, cls: "wcp-ext-name" });
+    head.createSpan({ text: target.name, cls: "wcp-ext-name" });
     // The icon (and its tooltip) is the only origin marker — no author/type line, so
     // the card stays two rows tall: the name, then the fields.
     const icon = head.createSpan({ cls: "wcp-ext-type-icon" });

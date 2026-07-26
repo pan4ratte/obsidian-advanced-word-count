@@ -4,10 +4,11 @@ import obsidianmd from "eslint-plugin-obsidianmd";
 
 export default defineConfig([
   {
-    // Lint the TypeScript source only. Build/config (*.mjs), data (*.json) and
-    // tooling scripts (scripts/*.js) aren't plugin code, and the preset's
-    // type-aware rules can't run on them (no TS parser services).
-    ignores: ["node_modules/**", "main.js", "**/*.mjs", "**/*.json", "scripts/**"],
+    // Lint the TypeScript source only. Build/config (*.mjs, *.mts), data (*.json)
+    // and tooling scripts (scripts/*.js) aren't plugin code, and the preset's
+    // type-aware rules can't run on them (they're outside tsconfig's project, so
+    // there are no parser services).
+    ignores: ["node_modules/**", "main.js", "**/*.mjs", "**/*.mts", "**/*.json", "scripts/**"],
   },
   // Full Obsidian plugin guideline preset (includes the type-checked
   // @typescript-eslint ruleset and the obsidianmd/* rules).
@@ -36,7 +37,9 @@ export default defineConfig([
     files: ["tests/**/*.ts"],
     rules: {
       "no-restricted-imports": "off",
+      "@typescript-eslint/no-restricted-imports": "off",
       "import/no-nodejs-modules": "off",
+      "obsidianmd/no-nodejs-modules": "off",
     },
   },
 ]);
