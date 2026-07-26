@@ -91,7 +91,14 @@ export class ExtensionManager {
     if (!result.ok) {
       throw new Error(`Invalid extension "${entry.id}": ${result.error}`);
     }
-    return result.ext;
+    const ext = result.ext;
+    // Update detection compares the *catalogue entry's* `updated` against the
+    // installed copy's. If the downloaded file's own date lags behind the entry that
+    // advertised it, the fresh install would still look out of date — the browse
+    // modal would keep offering "Update" after every update, and updateAll() would
+    // re-download it on every startup. Record the date the catalogue promised.
+    if (entry.updated && (!ext.updated || entry.updated > ext.updated)) ext.updated = entry.updated;
+    return ext;
   }
 
   // ── Install / uninstall ──────────────────────────────────────────────────────
