@@ -194,7 +194,7 @@ export default class WordCountPlugin extends Plugin {
     if (core?.enabled) {
       this.settings.hideDefaultWordCount = false;
       await this.saveSettings();
-      this.settingTab.refreshHideDefaultToggle();
+      this.settingTab.refreshControls();
     }
   }
 

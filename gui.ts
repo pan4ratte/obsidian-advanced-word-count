@@ -1,6 +1,6 @@
-import { App, ItemView, Modal, Notice, Platform, PluginSettingTab, Setting, WorkspaceLeaf, ToggleComponent, setIcon, setTooltip } from "obsidian";
+import { App, ItemView, Modal, Notice, Platform, PluginSettingTab, Setting, WorkspaceLeaf, setIcon, setTooltip } from "obsidian";
 // Declarative settings types (Obsidian 1.13.0+); type-only, so nothing is imported
-// at runtime and older versions are unaffected.
+// at runtime.
 import type { SettingDefinitionItem } from "obsidian";
 import { t } from "./locales";
 import type WordCountPlugin from "./main";
@@ -332,7 +332,10 @@ export class MetricsView extends ItemView {
 
 export class WordCountSettingTab extends PluginSettingTab {
   plugin: WordCountPlugin;
-  private hideDefaultToggle: ToggleComponent | null = null;
+  // Container the preset UI draws into, created once by the presets definition's
+  // render callback and reused afterwards. Kept so preset edits can redraw just
+  // this subtree instead of rebuilding Obsidian's whole definition list.
+  private presetsRoot: HTMLElement | null = null;
 
   constructor(app: App, plugin: WordCountPlugin) {
     super(app, plugin);
@@ -345,20 +348,28 @@ export class WordCountSettingTab extends PluginSettingTab {
     this.plugin.updateCount();
   }
 
-  /** Sync the "hide default word counter" toggle with the stored setting. */
-  refreshHideDefaultToggle() {
-    this.hideDefaultToggle?.setValue(this.plugin.settings.hideDefaultWordCount);
+  /**
+   * Re-read the declared controls from the settings object. Needed when something
+   * outside this tab writes a setting the tab is displaying — see
+   * syncDefaultWordCountState(), which turns "hide default word counter" back off.
+   * Safe to call: every definition below has a static name/key, so the reconciler
+   * reuses the existing rows rather than rebuilding them.
+   */
+  refreshControls() {
+    this.update();
   }
 
-  // ── Declarative definitions (Obsidian 1.13.0+) ──────────────────────────────
+  // ── Declarative settings (Obsidian 1.13.0+) ─────────────────────────────────
   //
-  // The plugin-wide settings, declared so Obsidian's settings search can find and
-  // operate them. This is purely additive: rendering still happens in display()
-  // below (the per-preset UI is too dynamic to declare), and older versions never
-  // call these methods — so the manifest's minAppVersion stays where it is.
+  // The whole tab is declared here; there is no display() fallback, which is safe
+  // only because this array is never empty (Obsidian falls back to display() only
+  // when it is). Plain bound values use `control`, so Obsidian renders, persists
+  // and search-indexes them individually — the keys are field names in
+  // WordCountSettings, routed through get/setControlValue below.
   //
-  // Keys are the field names in WordCountSettings, and get/setControlValue below
-  // route them through the same code paths the rendered controls use.
+  // The preset UI is far too dynamic to declare, so it gets a single `render`
+  // definition that hands its row's element to the imperative renderer. See
+  // renderPresets() for the rules that come with that.
 
   getSettingDefinitions(): SettingDefinitionItem[] {
     const displayMethods: Record<string, string> = {
@@ -367,6 +378,26 @@ export class WordCountSettingTab extends PluginSettingTab {
       both: t.displayMethodBoth,
     };
     return [
+      // Plugin blurb. Drawn by hand so it keeps the full-width note styling it had
+      // before the migration, instead of the two-column name/description row.
+      {
+        type: "group",
+        cls: "wcp-settings-group",
+        heading: t.settingsHeading,
+        items: [
+          {
+            name: t.settingsHeading,
+            desc: t.settingsDescription,
+            searchable: false, // the group heading above already carries this text
+            render: (setting) => {
+              setting.settingEl.addClass("wcp-settings-anchor", "wcp-settings-anchor-bare");
+              const root = this.anchorRoot(setting, "wcp-intro-root");
+              root.empty();
+              root.createEl("p", { text: t.settingsDescription, cls: "wcp-plugin-note" });
+            },
+          },
+        ],
+      },
       {
         type: "group",
         heading: t.settingsSectionGeneral,
@@ -416,14 +447,66 @@ export class WordCountSettingTab extends PluginSettingTab {
             desc: t.settingsCustomLabelsDesc,
             action: () => new CustomLabelsModal(this.plugin).open(),
           },
+          // Description plus the two full-width actions (open the community store,
+          // create a preset) stacked below it. Deliberately left in this group so it
+          // keeps the group's card — only the buttons are hand-drawn.
           {
-            name: t.settingsBrowseExtensions,
+            name: t.settingsPresetsStoreName,
             desc: t.settingsPresetsStoreDesc,
-            action: () => new ExtensionBrowserModal(this.plugin, () => this.display()).open(),
+            aliases: [t.settingsBrowseExtensions, t.settingsAddPreset],
+            render: (setting) => {
+              setting.settingEl.addClass("wcp-presets-intro");
+              const root = this.anchorRoot(setting, "wcp-presets-actions");
+              root.empty();
+              this.renderPresetActions(root);
+            },
+          },
+        ],
+      },
+      // One card per preset. Its own group, with the group card blanked (see
+      // .wcp-settings-group in styles.css), because each preset already draws its
+      // own card — nesting them inside another one would double the chrome.
+      {
+        type: "group",
+        cls: "wcp-settings-group",
+        items: [
+          {
+            name: t.settingsYourPresets,
+            // The cards are one DOM blob as far as Obsidian is concerned, so spell
+            // out what lives in them for the settings search.
+            aliases: [
+              t.sectionStatusBar,
+              t.sectionWordCountOptions,
+              t.limitsTitle,
+              t.wppLabel,
+              t.readingTimeLabel,
+            ],
+            render: (setting) => {
+              setting.settingEl.addClass("wcp-settings-anchor", "wcp-settings-anchor-bare");
+              this.renderPresets(this.anchorRoot(setting, "wcp-settings-root"));
+              // Forget the root on tab hide and before each re-render, so a late
+              // callback (an extensions modal closing, say) can't redraw into a
+              // node that is no longer on screen.
+              return () => { this.presetsRoot = null; };
+            },
           },
         ],
       },
     ];
+  }
+
+  /**
+   * A render callback's own container inside its row, created on first render and
+   * reused on every later one. Obsidian re-runs the callback against the same row
+   * on update(), and Setting.clear() only empties controlEl — it leaves settingEl's
+   * own children alone — so appending unconditionally would stack a second copy of
+   * the whole UI. Building into settingEl (never into the group's list element) is
+   * what keeps the content alive: the group prunes its list down to the rows it
+   * created after every render pass.
+   */
+  private anchorRoot(setting: Setting, cls: string): HTMLElement {
+    return setting.settingEl.querySelector<HTMLElement>(`:scope > .${cls}`)
+      ?? setting.settingEl.createDiv({ cls });
   }
 
   /** Read a declared control's value from the plugin's settings. */
@@ -432,9 +515,8 @@ export class WordCountSettingTab extends PluginSettingTab {
   }
 
   /**
-   * Persist a declared control's value, applying the same side effects as the
-   * rendered control in display() — an unknown key is ignored rather than blindly
-   * written into the settings object.
+   * Persist a declared control's value, applying its side effects — an unknown key
+   * is ignored rather than blindly written into the settings object.
    */
   async setControlValue(key: string, value: unknown): Promise<void> {
     const settings = this.plugin.settings;
@@ -442,8 +524,6 @@ export class WordCountSettingTab extends PluginSettingTab {
       case "hideDefaultWordCount":
         settings.hideDefaultWordCount = value === true;
         await this.plugin.setDefaultWordCountHidden(settings.hideDefaultWordCount);
-        // Keep the rendered toggle in sync when the tab is also on screen.
-        this.refreshHideDefaultToggle();
         await this.save();
         return;
       case "displayMethod":
@@ -474,133 +554,24 @@ export class WordCountSettingTab extends PluginSettingTab {
     }
   }
 
-  display(): void {
-    const { containerEl } = this;
-    containerEl.empty();
-    new Setting(containerEl).setName(t.settingsHeading).setHeading();
-    containerEl.createEl("p", { text: t.settingsDescription, cls: "wcp-plugin-note" });
-
-    // ── General ───────────────────────────────────────────────────────────────
-    new Setting(containerEl).setName(t.settingsSectionGeneral).setHeading();
-
-    new Setting(containerEl)
-      .setName(t.settingsHideDefaultName)
-      .setDesc(t.settingsHideDefaultDesc)
-      .addToggle((toggle) => {
-        this.hideDefaultToggle = toggle;
-        toggle
-          .setValue(this.plugin.settings.hideDefaultWordCount)
-          .onChange(async (value) => {
-            this.plugin.settings.hideDefaultWordCount = value;
-            await this.plugin.setDefaultWordCountHidden(value);
-            await this.save();
-          });
-      });
-
-    new Setting(containerEl)
-      .setName(t.settingsDisplayMethodName)
-      .setDesc(t.settingsDisplayMethodDesc)
-      .addDropdown((dd) => {
-        dd.addOption("statusBar", t.displayMethodStatusBar);
-        dd.addOption("rightPane", t.displayMethodRightPane);
-        dd.addOption("both", t.displayMethodBoth);
-        dd.setValue(this.plugin.settings.displayMethod);
-        dd.onChange(async (value) => {
-          this.plugin.settings.displayMethod = value as DisplayMethod;
-          await this.plugin.saveSettings();
-          await this.plugin.applyDisplayMethod(true);
-        });
-      });
-
-    new Setting(containerEl)
-      .setName(t.settingsRightPaneLayoutName)
-      .setDesc(t.settingsRightPaneLayoutDesc)
-      .addDropdown((dd) => {
-        dd.addOption("two", t.rightPaneLayoutTwo);
-        dd.addOption("one", t.rightPaneLayoutOne);
-        dd.setValue(this.plugin.settings.rightPaneLayout);
-        dd.onChange(async (value) => {
-          this.plugin.settings.rightPaneLayout = value as RightPaneLayout;
-          await this.plugin.saveSettings();
-          this.plugin.updateCount();
-        });
-      });
-
-    new Setting(containerEl)
-      .setName(t.settingsLimitWarningsDisplayName)
-      .setDesc(t.settingsLimitWarningsDisplayDesc)
-      .addDropdown((dd) => {
-        dd.addOption("statusBar", t.displayMethodStatusBar);
-        dd.addOption("rightPane", t.displayMethodRightPane);
-        dd.addOption("both", t.displayMethodBoth);
-        dd.setValue(this.plugin.settings.limitWarningsDisplayMethod);
-        dd.onChange(async (value) => {
-          this.plugin.settings.limitWarningsDisplayMethod = value as DisplayMethod;
-          await this.plugin.saveSettings();
-          this.plugin.updateCount();
-        });
-      });
-
-    new Setting(containerEl)
-      .setName(t.settingsSeparatorName)
-      .setDesc(t.settingsSeparatorDesc)
-      .addText((text) =>
-        text
-          .setPlaceholder("  |  ")
-          .setValue(this.plugin.settings.separator)
-          .onChange(async (value) => {
-            this.plugin.settings.separator = value;
-            await this.save();
-          })
-      );
-
-    // ── Presets & extensions ──────────────────────────────────────────────────
-    // The section title, then one setting with the description + two full-width
-    // actions on their own row — open the community store, or create a new preset.
-    new Setting(containerEl).setName(t.settingsSectionPresets).setHeading();
-
-    new Setting(containerEl)
-      .setName(t.settingsAutoUpdateExtensionsName)
-      .setDesc(t.settingsAutoUpdateExtensionsDesc)
-      .addToggle((toggle) =>
-        toggle
-          .setValue(this.plugin.settings.autoUpdateExtensions)
-          .onChange(async (value) => {
-            this.plugin.settings.autoUpdateExtensions = value;
-            await this.save();
-            // Run a check straight away when the user opts in, so they don't have
-            // to restart Obsidian to pick up pending updates.
-            if (value) void this.plugin.autoUpdateInstalledExtensions();
-          })
-      );
-
-    // Custom metric labels — a plugin-wide rename of any installed metric.
-    new Setting(containerEl)
-      .setName(t.settingsCustomLabelsName)
-      .setDesc(t.settingsCustomLabelsDesc)
-      .addButton((button) =>
-        button
-          .setButtonText(t.settingsCustomLabelsButton)
-          .onClick(() => new CustomLabelsModal(this.plugin).open())
-      );
-
-    const intro = new Setting(containerEl)
-      .setName(t.settingsPresetsStoreName)
-      .setDesc(t.settingsPresetsStoreDesc);
-    intro.settingEl.addClass("wcp-presets-intro");
-
-    const actions = intro.settingEl.createDiv({ cls: "wcp-presets-actions" });
-
-    const storeBtn = actions.createEl("button", { cls: "mod-cta" });
+  /**
+   * The two full-width accent buttons: open the community store, or create a preset.
+   *
+   * Nothing drawn by a `render` definition is auto-saved — that persistence only
+   * comes with `control` — so this and renderPresets() below write through save()
+   * in every handler themselves.
+   */
+  private renderPresetActions(root: HTMLElement): void {
+    const storeBtn = root.createEl("button", { cls: "mod-cta" });
     setIcon(storeBtn.createSpan({ cls: "wcp-btn-icon" }), "store");
     storeBtn.createSpan({ text: t.settingsBrowseExtensions });
     storeBtn.addEventListener("click", () => {
-      // Re-render the settings page after an install so newly downloaded
+      // Re-render the preset cards after an install so newly downloaded
       // extensions appear in each preset's "Connect extensions" dropdown.
-      new ExtensionBrowserModal(this.plugin, () => this.display()).open();
+      new ExtensionBrowserModal(this.plugin, () => this.rerenderPresets()).open();
     });
 
-    const createBtn = actions.createEl("button", { cls: "mod-cta" });
+    const createBtn = root.createEl("button", { cls: "mod-cta" });
     setIcon(createBtn.createSpan({ cls: "wcp-btn-icon" }), "plus");
     createBtn.createSpan({ text: t.settingsAddPreset });
     createBtn.addEventListener("click", handle(async () => {
@@ -612,12 +583,26 @@ export class WordCountSettingTab extends PluginSettingTab {
       // make this one active so counts show up immediately.
       if (!this.plugin.getActivePreset()) this.plugin.settings.activePresetId = preset.id;
       await this.save();
-      this.display();
+      this.rerenderPresets();
     }));
+  }
 
+  /** One card per preset. `root` is the container handed over by the render callback. */
+  private renderPresets(root: HTMLElement): void {
+    this.presetsRoot = root;
+    root.empty();
     for (const preset of this.plugin.settings.presets) {
-      this.renderPreset(containerEl, preset);
+      this.renderPreset(root, preset);
     }
+  }
+
+  /**
+   * Redraw the preset cards after a change to the preset list. Deliberately not
+   * update(): that re-runs getSettingDefinitions() and reconciles Obsidian's rows,
+   * which is far more work than repainting our own subtree.
+   */
+  private rerenderPresets(): void {
+    if (this.presetsRoot) this.renderPresets(this.presetsRoot);
   }
 
   /** Open the export dialog, which collects catalogue metadata then downloads the files. */
@@ -659,9 +644,9 @@ export class WordCountSettingTab extends PluginSettingTab {
     window.setTimeout(() => URL.revokeObjectURL(url), 10000);
   }
 
-  renderPreset(containerEl: HTMLElement, preset: Preset) {
+  renderPreset(parent: HTMLElement, preset: Preset) {
     const isActive = preset.id === this.plugin.settings.activePresetId;
-    const card = containerEl.createDiv({ cls: `wcp-preset-card${isActive ? " is-active" : ""}` });
+    const card = parent.createDiv({ cls: `wcp-preset-card${isActive ? " is-active" : ""}` });
 
     // ── Header ──────────────────────────────────────────────────────────────
     const header = card.createDiv({ cls: "wcp-preset-header" });
@@ -677,7 +662,7 @@ export class WordCountSettingTab extends PluginSettingTab {
     if (!isActive) {
       badge.addEventListener("click", handle(async () => {
         await this.plugin.activatePreset(preset.id);
-        this.display();
+        this.rerenderPresets();
       }));
     }
 
@@ -713,7 +698,7 @@ export class WordCountSettingTab extends PluginSettingTab {
           this.plugin.settings.activePresetId = this.plugin.settings.presets[0]?.id ?? "";
         }
         await this.save();
-        this.display();
+        this.rerenderPresets();
       })).open();
     });
 
@@ -853,7 +838,7 @@ export class WordCountSettingTab extends PluginSettingTab {
       if (!def) return;
       this.setExtConnected(preset, def, true);
       await this.save();
-      this.display();
+      this.rerenderPresets();
     }));
   }
 
@@ -867,7 +852,7 @@ export class WordCountSettingTab extends PluginSettingTab {
     row.addEventListener("click", handle(async () => {
       this.setExtConnected(preset, def, false);
       await this.save();
-      this.display();
+      this.rerenderPresets();
     }));
   }
 
@@ -883,7 +868,7 @@ export class WordCountSettingTab extends PluginSettingTab {
     const addRule = (kind: LimitKind) => handle(async () => {
       preset.rules.push({ metric: "", threshold: 0, kind });
       await this.save();
-      this.display();
+      this.rerenderPresets();
     });
 
     const btnRow = head.createDiv({ cls: "wcp-limit-buttons" });
@@ -947,7 +932,7 @@ export class WordCountSettingTab extends PluginSettingTab {
       if (!this.allowsDecimalThreshold(rule.metric)) rule.threshold = Math.round(rule.threshold);
       this.clampToPair(rule, this.pairedRule(preset, rule));
       await this.save();
-      this.display(); // re-render so the chosen metric drops out of other dropdowns
+      this.rerenderPresets(); // re-render so the chosen metric drops out of other dropdowns
     }));
 
     // Threshold — bounded so a warning can't drop below its goal (and vice versa).
@@ -968,7 +953,7 @@ export class WordCountSettingTab extends PluginSettingTab {
       this.clampToPair(rule, paired);
       input.value = String(rule.threshold);
       await this.save();
-      if (paired) this.display(); // refresh the paired input's min/max hint
+      if (paired) this.rerenderPresets(); // refresh the paired input's min/max hint
     }));
 
     // Delete
@@ -979,7 +964,7 @@ export class WordCountSettingTab extends PluginSettingTab {
     del.addEventListener("click", handle(async () => {
       preset.rules = preset.rules.filter((r) => r !== rule);
       await this.save();
-      this.display();
+      this.rerenderPresets();
     }));
   }
 
@@ -1208,7 +1193,7 @@ export class ExtensionBrowserModal extends Modal {
   private listEl: HTMLElement;
   private state: "loading" | "ready" | "error" = "loading";
   // Set whenever an install/uninstall changes the registry. The settings page is
-  // re-rendered again on close (see onClose): calling display() while this modal is
+  // re-rendered again on close (see onClose): re-rendering while this modal is
   // still on top doesn't reliably refresh the dropdowns behind it.
   private dirty = false;
 

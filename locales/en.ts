@@ -41,6 +41,7 @@ const en = {
   settingsPresetsStoreName: "Manage presets and extensions",
   settingsPresetsStoreDesc: "Create your own counter presets, or install community presets, metrics and settings.",
   settingsAddPreset: "Create preset",
+  settingsYourPresets: "Your presets",
   settingsSeparatorName: "Status bar metrics separator",
   settingsSeparatorDesc: "Type the characters that will visually separate metrics in the status bar",
   settingsHideDefaultName: "Hide default Obsidian word counter",
@@ -130,7 +131,6 @@ const en = {
   // ── Custom labels ──────────────────────────────────────────────────────────
   settingsCustomLabelsName: "Set custom labels",
   settingsCustomLabelsDesc: "Change labels of any metric to your liking",
-  settingsCustomLabelsButton: "Labels manager",
   labelsModalTitle: "Metric labels manager",
   labelsModalNote: "Rename any metric, or clear a field to hide its name.",
   labelsSearchPlaceholder: "Search metrics…",

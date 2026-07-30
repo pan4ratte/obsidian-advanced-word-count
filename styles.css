@@ -9,6 +9,44 @@
   white-space: pre;
 }
 
+/* ── Declarative settings host rows ──────────────────────────────────────────────
+   Obsidian 1.13 draws a setting group as a card and restyles every row inside it
+   (`.setting-group .setting-item:not(.setting-item-heading)`, specificity 0,3,0 —
+   `:not()` contributes its argument). The groups holding our hand-drawn UI opt out
+   of both, so the rows below are laid out by this plugin's own rules and not by the
+   group card.
+
+   IMPORTANT: every rule that re-asserts a custom look on one of these rows ties with
+   the resets here at 0,3,0, so file order decides. Keep such rules BELOW this block. */
+
+.wcp-settings-group > .setting-items {
+  background-color: transparent;
+  border: none;
+  border-radius: 0;
+}
+
+/* A host row for hand-drawn UI that brings its own chrome: strip the group's card
+   padding and row divider so the custom layout is laid out by this plugin alone.
+   Rows that want to keep the card (see .wcp-presets-intro) don't carry this class. */
+.setting-group .setting-item.wcp-settings-anchor {
+  display: block;
+  padding: 0;
+  margin-bottom: 0;
+  border: none;
+  border-radius: 0;
+  background-color: transparent;
+}
+
+.setting-group .setting-item.wcp-settings-anchor::before {
+  content: none;
+}
+
+/* A "bare" anchor draws its own heading text, so drop the row's stock label. */
+.wcp-settings-anchor-bare > .setting-item-info,
+.wcp-settings-anchor-bare > .setting-item-control {
+  display: none;
+}
+
 /* ── Preset card ─────────────────────────────────────────────────────────────── */
 
 .wcp-preset-card {
@@ -80,8 +118,10 @@
 
 /* Combined "Presets & extensions" setting: the heading title + description sit on
    top, with the two full-width accent buttons (store + create preset) on their own
-   row below — so let the setting item stack its contents. */
-.wcp-presets-intro {
+   row below — so let the setting item stack its contents. It keeps the group's card
+   and padding, so the only thing to override is the row's flex layout; 0,3,0 to
+   out-rank Obsidian's own `.setting-group .setting-item:not(.setting-item-heading)`. */
+.setting-group .setting-item.wcp-presets-intro {
   display: block;
 }
 

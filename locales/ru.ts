@@ -38,6 +38,7 @@ const ru = {
   settingsPresetsStoreName: "Управление пресетами и расширениями",
   settingsPresetsStoreDesc: "Создавайте собственные пресеты счётчиков или устанавливайте пресеты, метриками и настройки сообщества.",
   settingsAddPreset: "Создать пресет",
+  settingsYourPresets: "Ваши пресеты",
   settingsSeparatorName: "Разделитель метрик в строке состояния",
   settingsSeparatorDesc: "Введите символы, которые будут визуально разделять метрики в строке состояния",
   settingsHideDefaultName: "Скрыть стандартный счётчик слов Obsidian",
@@ -130,7 +131,6 @@ const ru = {
   // ── Пользовательские названия ──────────────────────────────────────────────
   settingsCustomLabelsName: "Изменить названия метрик",
   settingsCustomLabelsDesc: "Поменяйте названия любых метрик на удобные вам",
-  settingsCustomLabelsButton: "Менеджер лейблов",
   labelsModalTitle: "Менеджер лейблов метрик",
   labelsModalNote: "Переименуйте любую метрику или очистите поле, чтобы полностью убрать её название.",
   labelsSearchPlaceholder: "Поиск метрик…",
