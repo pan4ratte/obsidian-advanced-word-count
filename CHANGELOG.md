@@ -1,5 +1,14 @@
 # Changelog
 
+## 4.3.0
+
+**This version requires Obsidian 1.13.0 or newer.** Earlier releases stay available to older Obsidian versions automatically.
+
+### Enhancements and bug fixes
+
+* **Fixed the settings tab on Obsidian 1.13 and newer,** where the presets section was not shown at all. The whole tab is now built with the declarative settings API that 1.13 introduced.
+* **The settings search now finds this plugin's settings.** Typing "separator", "display method" or "extensions store" into the search box at the top of Obsidian's settings jumps straight to the matching setting.
+
 ## 4.2.0
 
 ### New features
