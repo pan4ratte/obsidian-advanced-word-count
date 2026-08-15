@@ -828,21 +828,35 @@
   padding: 24px 8px;
 }
 
-/* Each extension is a card row: text on the left, actions on the right. */
+/* Each extension is a card: what it is, and along the foot of it who wrote it
+   and what to do with it. */
 .wcp-ext-card {
   display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 16px;
   padding: 16px;
   border: 1px solid var(--background-modifier-border);
   border-radius: var(--radius-m);
   background-color: var(--background-secondary);
+  /* The card is as wide as the list and no wider; its text wraps rather than
+     pushing the actions off the right-hand edge. */
+  max-width: 100%;
+  min-width: 0;
+  /* The footer runs out to the card's edges, and the corners crop it. */
+  overflow: hidden;
 }
 
 .wcp-ext-card-main {
-  flex: 1;
+  flex: 1 1 auto;
   min-width: 0;
+}
+
+/* A name can be one long unbroken word; it wraps rather than overflows. */
+.wcp-ext-name,
+.wcp-ext-desc,
+.wcp-ext-author {
+  overflow-wrap: anywhere;
 }
 
 .wcp-ext-card-head {
@@ -875,10 +889,17 @@
   color: var(--text-accent);
 }
 
-/* The pinned "add a local extension from a file" card on the Local filter. */
+/* The pinned "add a local extension from a file" card on the Local filter. Its
+   footer divider follows the dashed outline, so the card reads as one sketch
+   rather than a solid line boxed in by dashes. */
 .wcp-ext-local-intro {
   border-style: dashed;
   border-color: var(--background-modifier-border-hover);
+}
+
+.wcp-ext-local-intro > .wcp-ext-actions {
+  border-top-style: dashed;
+  border-top-color: var(--background-modifier-border-hover);
 }
 
 /* Hidden picker the folder-open button drives. */
@@ -886,8 +907,15 @@
   display: none;
 }
 
+/* Whose work the extension is, in the row along the foot of the card: the space
+   the buttons do not need is the credit's, and it takes the card's own inset so
+   it starts where the text above it does. */
 .wcp-ext-author {
-  display: block;
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 8px 16px;
   font-size: var(--font-smallest);
   color: var(--text-faint);
 }
@@ -898,13 +926,10 @@
   color: var(--text-muted);
 }
 
-/* Action buttons: neutral by default, colored only on hover. Pinned to the
-   bottom-right of the card. */
+/* Action buttons: neutral by default, colored only on hover. */
 .wcp-ext-actions {
   display: flex;
-  gap: 8px;
   flex-shrink: 0;
-  align-self: flex-end;
 }
 
 .wcp-ext-actions button {
@@ -912,8 +937,6 @@
   align-items: center;
   justify-content: center;
   padding: 6px;
-  background: var(--interactive-normal);
-  color: var(--text-normal);
   box-shadow: none;
   cursor: pointer;
 }
@@ -923,19 +946,67 @@
   height: 16px;
 }
 
-.wcp-ext-install:hover {
-  background: var(--interactive-accent);
-  color: var(--text-on-accent);
-}
-
-.wcp-ext-uninstall:hover {
-  background: var(--background-modifier-error);
-  color: var(--text-on-accent);
-}
-
 .wcp-ext-actions button:disabled {
   cursor: default;
   opacity: 0.6;
+}
+
+/*
+ * The foot of a store card: the credit, then what to do with the extension.
+ *
+ * Out through the card's padding to its edges — the negative margins are the
+ * padding given back — so the line above the row runs the whole width of the
+ * card rather than stopping short of it, as a footer does and an inset row of
+ * buttons cannot. The card crops the corners. Scoped to the card's own child so
+ * the labels modal's reset button, which reuses these class names inside its
+ * fields row, keeps the plain look it needs there.
+ */
+.wcp-ext-card > .wcp-ext-actions {
+  align-items: stretch;
+  margin: 0 -16px -16px;
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+/*
+ * Segments of one bar, divided by a line rather than spaced apart — the credit
+ * included, which is why the line is drawn between everything in the row and
+ * not between the buttons alone.
+ */
+.wcp-ext-card > .wcp-ext-actions > * + * {
+  border-left: 1px solid var(--background-modifier-border);
+}
+
+/* A button is as wide as it needs to be, and the same width as the others; the
+   row is filled by the credit beside them. */
+.wcp-ext-card > .wcp-ext-actions button {
+  flex: 0 0 auto;
+  min-width: 44px;
+  padding: 8px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-muted);
+}
+
+/* Nothing to the left of them — the card carries no credit — so they take the
+   width themselves rather than huddling at the end of an empty bar. */
+.wcp-ext-card > .wcp-ext-actions:not(.is-credited) button {
+  flex: 1 1 0;
+}
+
+/* Under the pointer a segment takes the colour of the window behind the card
+   and colours its glyph; nothing is filled in. Pinned rather than left off —
+   Obsidian tints a hovered button with `--interactive-hover` otherwise. */
+.wcp-ext-card > .wcp-ext-actions button:hover {
+  background: var(--color-base-00);
+}
+
+.wcp-ext-card > .wcp-ext-actions .wcp-ext-install:hover {
+  color: var(--text-accent);
+}
+
+.wcp-ext-card > .wcp-ext-actions .wcp-ext-uninstall:hover {
+  color: var(--text-error);
 }
 
 /* ── Section head: title + description + connect dropdown stacked in one container */
@@ -1018,9 +1089,18 @@
   align-self: flex-end;
 }
 
-/* Match the inputs' height so the row reads as one line of controls. */
+/* Match the inputs' height so the row reads as one line of controls. It sits in
+   the fields row rather than the card's footer bar, so it keeps the filled look
+   of an ordinary button instead of the bar's flat segments. */
 .wcp-labels-actions button {
   height: var(--input-height, 30px);
+  background: var(--interactive-normal);
+  color: var(--text-normal);
+}
+
+.wcp-labels-actions button:hover:not(:disabled) {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
 }
 
 .wcp-labels-field {

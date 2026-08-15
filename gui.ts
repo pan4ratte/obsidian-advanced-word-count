@@ -1413,7 +1413,8 @@ export class ExtensionBrowserModal extends Modal {
     head.createSpan({ text: t.extLocalIntroTitle, cls: "wcp-ext-name" });
     main.createEl("p", { text: t.extLocalIntroDesc, cls: "wcp-ext-desc" });
 
-    const actions = card.createDiv({ cls: "wcp-ext-actions" });
+    // No author to credit, so the button takes the whole width of the bar.
+    const actions = this.renderCardFooter(card);
     const add = actions.createEl("button", { cls: "wcp-ext-install" });
     setIcon(add, "folder-open");
     setTooltip(add, t.extLocalAdd, { placement: "top" });
@@ -1454,10 +1455,26 @@ export class ExtensionBrowserModal extends Modal {
     return this.plugin.extensions.loc(entry, "storeName") ?? entry.storeName;
   }
 
+  /**
+   * The row along the foot of a card: whose work the extension is, then what to do
+   * with it. The credit shares the bar with the buttons rather than sitting up in
+   * the description — the space the buttons don't need is its own.
+   */
+  private renderCardFooter(card: HTMLElement, author?: string): HTMLElement {
+    const actions = card.createDiv({ cls: "wcp-ext-actions" });
+    // Marked on the row rather than asked of its contents, so the buttons know
+    // whether they are sharing the bar or filling it.
+    if (author) {
+      actions.addClass("is-credited");
+      actions.createSpan({ text: t.extByAuthor(author), cls: "wcp-ext-author" });
+    }
+    return actions;
+  }
+
   private renderCard(parent: HTMLElement, entry: ExtensionIndexEntry) {
     const card = parent.createDiv({ cls: "wcp-ext-card" });
 
-    // Left: name + type icon, author beneath, then the description.
+    // Top: name + type icon, then the description. The author goes in the footer.
     const main = card.createDiv({ cls: "wcp-ext-card-main" });
     const head = main.createDiv({ cls: "wcp-ext-card-head" });
     head.createSpan({ text: this.storeName(entry), cls: "wcp-ext-name" });
@@ -1466,13 +1483,12 @@ export class ExtensionBrowserModal extends Modal {
     const typeLabel = entry.type === "metric" ? t.extTypeMetric : entry.type === "preset" ? t.extTypePreset : t.extTypeSetting;
     setIcon(icon, typeIcon);
     setTooltip(icon, typeLabel, { placement: "top" });
-    main.createSpan({ text: t.extByAuthor(entry.author), cls: "wcp-ext-author" });
     main.createEl("p", { text: this.plugin.extensions.loc(entry, "description") ?? entry.description, cls: "wcp-ext-desc" });
 
     // Presets install differently (they add a preset + pull in the extensions they
     // use), so they get their own single "Add" action and skip the install-state UI.
     if (entry.type === "preset") {
-      this.renderPresetActions(card, entry);
+      this.renderPresetActions(this.renderCardFooter(card, entry.author), entry);
       return;
     }
 
@@ -1485,8 +1501,9 @@ export class ExtensionBrowserModal extends Modal {
     const updatable = installed && !!entry.updated && !!installedDate && entry.updated > installedDate;
     const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
-    // Right: action buttons (neutral by default, accent/red only on hover).
-    const actions = card.createDiv({ cls: "wcp-ext-actions" });
+    // The foot of the card: the credit, then the actions (neutral by default,
+    // accent/red only on hover).
+    const actions = this.renderCardFooter(card, entry.author);
 
     // Install (not installed) or Update (catalogue copy is newer). Icon-only; the
     // label lives in the tooltip.
@@ -1551,9 +1568,8 @@ export class ExtensionBrowserModal extends Modal {
    * A preset card's single "Add" action: download the extensions the preset uses,
    * then add the preset to the user's preset list (activating it if none is active).
    */
-  private renderPresetActions(card: HTMLElement, entry: ExtensionIndexEntry) {
+  private renderPresetActions(actions: HTMLElement, entry: ExtensionIndexEntry) {
     const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
-    const actions = card.createDiv({ cls: "wcp-ext-actions" });
     const add = actions.createEl("button", { cls: "wcp-ext-install" });
     setIcon(add, "download");
     setTooltip(add, t.extInstallPreset, { placement: "top" });
