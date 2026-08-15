@@ -597,12 +597,41 @@ export class WordCountSettingTab extends PluginSettingTab {
   }
 
   /**
+   * The pane the preset cards scroll inside — Obsidian's settings content, or
+   * whatever scrolls in a popped-out window or on mobile. Walked up to rather
+   * than named by class, so a change to the settings layout can't quietly turn
+   * scroll keeping below into a no-op.
+   */
+  private scrollParent(el: HTMLElement): HTMLElement | null {
+    for (let node = el.parentElement; node; node = node.parentElement) {
+      const overflowY = node.win.getComputedStyle(node).overflowY;
+      // Overflowing as well as scrollable: an ancestor that merely permits
+      // scrolling has no offset to keep, and stopping at one would leave the
+      // real scroller further up unread. Measured before the container is
+      // emptied, while the heights still mean something.
+      if ((overflowY === "auto" || overflowY === "scroll") && node.scrollHeight > node.clientHeight) return node;
+    }
+    return null;
+  }
+
+  /**
    * Redraw the preset cards after a change to the preset list. Deliberately not
    * update(): that re-runs getSettingDefinitions() and reconciles Obsidian's rows,
    * which is far more work than repainting our own subtree.
+   *
+   * Emptying the container collapses the pane's content to a fraction of its
+   * height, and the browser clamps the scroll offset to what is left — so the
+   * view jumps (in practice, to the top) and does not come back when the cards
+   * are drawn again a moment later. Everything here is synchronous, so reading
+   * the offset before and writing it after is enough to hold the page still:
+   * adding a goal leaves the eye where the button was.
    */
   private rerenderPresets(): void {
-    if (this.presetsRoot) this.renderPresets(this.presetsRoot);
+    if (!this.presetsRoot) return;
+    const scroller = this.scrollParent(this.presetsRoot);
+    const top = scroller?.scrollTop ?? 0;
+    this.renderPresets(this.presetsRoot);
+    if (scroller && scroller.scrollTop !== top) scroller.scrollTop = top;
   }
 
   /** Open the export dialog, which collects catalogue metadata then downloads the files. */
