@@ -1,10 +1,23 @@
 # Changelog
 
+## 4.4.0
+
+### New features
+
+* **Progress indication style.** A new setting in the General section allows you to choose how a warning or a goal progress is drawn on the right pane metric blocks. "Border and text" is the look the plugin has always had, and stays the default. The other four fill up gradually as you write, so you can see how close you are before you get there: "Border progress" draws around the block's border from the top-left corner clockwise, "Progress bar" fills the bottom edge alone, "Progress circle" puts a small dial in the top-right corner, and "Progress background" washes across the block from left to right. All four start out neutral and take on the warning and goal colors as you pass each mark.
+
+### UI/UX enhancements and bug fixes
+
+* Fixed a bug when the settings page was jumping to the top when you add a goal or a warning.
+* Fixed Obsidian's own strange dropdowns and toggles vertical alignment.
+* Extension store cards UI is cleaner now.
+* Updated development dependencies for better security.
+
 ## 4.3.0
 
 **This version requires Obsidian 1.13.0 or newer.** Earlier releases stay available to older Obsidian versions automatically.
 
-### Enhancements and bug fixes
+### UI/UX enhancements and bug fixes
 
 * **Fixed the settings tab on Obsidian 1.13 and newer,** where the presets section was not shown at all. The whole tab is now built with the declarative settings API that 1.13 introduced.
 * **The settings search now finds this plugin's settings.** Typing "separator", "display method" or "extensions store" into the search box at the top of Obsidian's settings jumps straight to the matching setting.
@@ -20,7 +33,7 @@
 * **New metric: Comments.** Counts HTML (`<!-- … -->`) and Obsidian (`%% … %%`) comments in a note.
 * **New setting: Count Telegram emoji as one symbol.** Counts a custom Telegram emoji written as `[😢](tg://emoji?id=…)` as a single symbol instead of the whole Markdown link. Adds support for the emojis of the [Publish to Telegram](https://github.com/pan4ratte/obsidian-publish-to-telegram) plugin.
 
-### Enhancements and bug fixes
+### UI/UX enhancements and bug fixes
 
 * Fixed a bug where the update extension button didn't go away after the update.
 * Fixed notifications localiations.
@@ -37,7 +50,7 @@ This update completes a feature request by @mjakubowiak
 * **New metric: Pandoc footnotes.** Counts Markdown footnotes combined with `@citekey` citation groups that will generate footnotes after Pandoc export. Complete footnotes (`[^1]` with a `[^1]: …` definition, or inline `^[…]`) are counted, plus each body citation bracket (`[@key]`) — however many keys it bundles, it becomes one footnote when exported with a footnote citation style (e.g. Chicago notes). Citations already inside a footnote aren't double-counted. Useful if you export with a footnote citation style.
 * **New setting: Ignore backslash commands.** When enabled, lines consisting solely of a backslash command — such as `\pagebreak` or `\newpage` — are excluded from word and character counts.
 
-### Enhancements and bug fixes
+### UI/UX enhancements and bug fixes
 
 * **Community store desktop UX improvements.** Added mouse scroll for the filters row in the extensions store. Plus, various interaction and layout improvements were implemented.
 * **Mobile UI optimizations.** Several CSS fixes for a better experience on mobile.
@@ -51,7 +64,7 @@ This update completes a feature request by @mjakubowiak
 * **New preset: Scientific article.** A ready-made preset with the basic metrics and a page goal for academic writing, including the *Average citations per page* metric.
 * **Test extensions locally.** A new **Local** filter in the extensions store lets extension developers load a metric or setting straight from a JSON file on disk — no fork or upload needed — then connect it to a preset and test it against real notes. Locally added extensions are listed under the filter and can be removed at any time.
 
-### Enhancements and bug fixes
+### UI/UX enhancements and bug fixes
 
 * **Embeds metric updated to count HTML embeds.** Now it also recognises HTML embedded content — `<img>`, `<iframe>`, `<embed>`, `<object>`, `<video>` and `<audio>` — alongside the Obsidian wiki (`![[…]]`) and Markdown image (`![](…)`) forms.
 * **Store search matches translations.** Searching the extensions store now also matches localized names and descriptions, so you can find extensions by the text shown in your Obsidian language.
