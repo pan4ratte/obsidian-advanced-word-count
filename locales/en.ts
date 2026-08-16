@@ -57,6 +57,13 @@ const en = {
   rightPaneLayoutTwo: "Two columns",
   settingsLimitWarningsDisplayName: "Limit warnings display method",
   settingsLimitWarningsDisplayDesc: "Choose where limit warnings are visible",
+  settingsLimitWarningsStyleName: "Progress indication style",
+  settingsLimitWarningsStyleDesc: "Choose how warnings and goals are displayed in right pane metric blocks",
+  limitStyleColor: "Border and text",
+  limitStyleProgress: "Border progress",
+  limitStyleBar: "Progress bar",
+  limitStyleCircle: "Progress circle",
+  limitStyleBackground: "Progress background",
 
   // ── Right pane view ────────────────────────────────────────────────────────
   viewTitle: "Advanced Word Count",

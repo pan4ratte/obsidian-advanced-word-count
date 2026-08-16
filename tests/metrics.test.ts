@@ -4,6 +4,8 @@ import {
   computeFull,
   metricRows,
   surfaceWarnLevel,
+  surfaceShowsLimits,
+  ruleProgress,
   defaultPreset,
   effectiveMetricOrder,
   reorderMetrics,
@@ -347,6 +349,84 @@ describe("metricRows", () => {
 
     expect(level("a b")).toBe("none");    // 1.0 pages
     expect(level("a b c")).toBe("green"); // 1.5 pages — exactly the goal
+  });
+});
+
+describe("ruleProgress", () => {
+  const p = (rules: Preset["rules"], value: number, metric = "wordsWithSpaces") =>
+    ruleProgress(defaultPreset({ rules }), value, metric);
+
+  it("has no progress for a metric no rule bounds", () => {
+    expect(p([], 5)).toBeUndefined();
+    expect(p([{ metric: "pages", threshold: 10, kind: "goal" }], 5)).toBeUndefined();
+  });
+
+  it("measures a goal-only metric against its goal", () => {
+    const goal = [{ metric: "wordsWithSpaces", threshold: 10, kind: "goal" as const }];
+    expect(p(goal, 0)).toBe(0);
+    expect(p(goal, 4)).toBeCloseTo(0.4);
+    expect(p(goal, 10)).toBe(1);
+  });
+
+  it("measures a warning-only metric against its warning", () => {
+    const warn = [{ metric: "wordsWithSpaces", threshold: 20, kind: "warning" as const }];
+    expect(p(warn, 5)).toBeCloseTo(0.25);
+    expect(p(warn, 18)).toBeCloseTo(0.9);
+  });
+
+  it("measures against the warning when a metric carries both, so the fill runs once", () => {
+    const both = [
+      { metric: "wordsWithSpaces", threshold: 10, kind: "goal" as const },
+      { metric: "wordsWithSpaces", threshold: 20, kind: "warning" as const },
+    ];
+    // The goal is passed halfway up the outline rather than completing it.
+    expect(p(both, 10)).toBeCloseTo(0.5);
+    expect(p(both, 20)).toBe(1);
+  });
+
+  it("clamps past the threshold and never reports below zero", () => {
+    const goal = [{ metric: "wordsWithSpaces", threshold: 10, kind: "goal" as const }];
+    expect(p(goal, 40)).toBe(1);
+    expect(p(goal, -5)).toBe(0);
+  });
+
+  it("ignores a rule with no metric or no threshold", () => {
+    expect(p([{ metric: "", threshold: 10, kind: "goal" }], 5)).toBeUndefined();
+    expect(p([{ metric: "wordsWithSpaces", threshold: 0, kind: "goal" }], 5)).toBeUndefined();
+  });
+
+  it("falls back to the goal when the warning has no usable threshold", () => {
+    expect(p([
+      { metric: "wordsWithSpaces", threshold: 0, kind: "warning" },
+      { metric: "wordsWithSpaces", threshold: 8, kind: "goal" },
+    ], 4)).toBeCloseTo(0.5);
+  });
+
+  it("rides along on metric rows, tracking the value", () => {
+    const preset = defaultPreset({
+      showLines: true,
+      rules: [{ metric: "wordsWithSpaces", threshold: 4, kind: "goal" }],
+    });
+    const progress = (raw: string) =>
+      metricRows(preset, computeMetrics(raw, preset)).find((r) => r.key === "wordsWithSpaces")!.progress;
+
+    expect(progress("a")).toBeCloseTo(0.25);
+    expect(progress("a b c d")).toBe(1);
+    // A metric with no rule of its own carries none.
+    expect(metricRows(preset, computeMetrics("a b", preset)).find((r) => r.key === "lines")!.progress)
+      .toBeUndefined();
+  });
+});
+
+describe("surfaceShowsLimits", () => {
+  it("shows limits on both surfaces when the method is 'both'", () => {
+    expect(surfaceShowsLimits("both", "statusBar")).toBe(true);
+    expect(surfaceShowsLimits("both", "rightPane")).toBe(true);
+  });
+
+  it("hides them on the surface the method excludes", () => {
+    expect(surfaceShowsLimits("rightPane", "statusBar")).toBe(false);
+    expect(surfaceShowsLimits("statusBar", "rightPane")).toBe(false);
   });
 });
 

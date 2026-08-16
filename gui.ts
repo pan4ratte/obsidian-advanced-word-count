@@ -10,6 +10,7 @@ import {
   RightPaneLayout,
   Preset,
   WarnLevel,
+  LimitWarningStyle,
   LimitKind,
   LimitRule,
   CustomLabel,
@@ -19,6 +20,7 @@ import {
   defaultPreset,
   metricRows,
   surfaceWarnLevel,
+  surfaceShowsLimits,
   effectiveMetricOrder,
   reorderMetrics,
 } from "./metrics";
@@ -32,6 +34,30 @@ type RegistryExtension = MetricExtension | SettingExtension;
 // types without leaving a floating promise.
 const handle = (fn: () => Promise<void>) => (): void => { void fn(); };
 
+// Geometry of the progress outline drawn over a metric block. The radius matches
+// .wcp-metric-block's border-radius and the width its border; both live here as
+// numbers because the dash length has to be computed from them in JS.
+const RING_STROKE = 2;
+const RING_RADIUS = 8;
+
+// The corner dial, in the units of its own viewBox — which .wcp-limit-circle then
+// scales to whatever size it likes, dash length and all.
+const CIRCLE_BOX = 16;
+const CIRCLE_RADIUS = 6;
+
+/**
+ * A block's progress meter, in whichever shape the limit style asks for.
+ *
+ * A "ring" (the whole outline) and a "circle" (the corner dial) are both strokes
+ * drawn part-way round, so they differ only in what gets measured: the ring's
+ * length depends on the block's pixel size, while the dial's is fixed by its own
+ * viewBox. A "fill" — the bar along the bottom edge, or the wash behind the
+ * block — is a plain element whose percentage width says everything.
+ */
+type Meter =
+  | { kind: "ring" | "circle"; svg: SVGSVGElement; shape: SVGElement; len: number; progress: number }
+  | { kind: "fill"; fill: HTMLElement; progress: number };
+
 // ── Right pane metrics view ────────────────────────────────────────────────────
 
 export class MetricsView extends ItemView {
@@ -41,6 +67,13 @@ export class MetricsView extends ItemView {
   private gridSig: string | null = null;
   // Keyed by metric id (built-in MetricKey or extension metric id).
   private blockRefs: Map<string, { block: HTMLElement; value: HTMLElement; text: string }> = new Map();
+  // Progress meters, keyed by the block each belongs to. Empty in the "color"
+  // limit style. Keyed by element because the resize observer below has a block
+  // in hand and needs its meter back.
+  private meters: Map<HTMLElement, Meter> = new Map();
+  // Watches every ringed block: the dash length is measured in pixels, so it has
+  // to be recomputed whenever the pane is resized or the layout changes.
+  private ringResize: ResizeObserver | null = null;
   // Metric currently being dragged for reorder (desktop only), or null.
   private dragKey: string | null = null;
 
@@ -59,6 +92,136 @@ export class MetricsView extends ItemView {
     block.toggleClass("wcp-limit-orange", level === "orange");
     block.toggleClass("wcp-limit-red", level === "red");
     block.toggleClass("wcp-limit-green", level === "green");
+  }
+
+  // ── Progress meters ─────────────────────────────────────────────────────────
+
+  /**
+   * Attach the meter a style asks for. Both are drawn at their current fraction
+   * straight away and only allowed to animate a frame later, so switching preset
+   * or layout does not replay every meter filling in from nothing.
+   */
+  private addMeter(block: HTMLElement, style: LimitWarningStyle, progress: number) {
+    if (style === "progress") this.addRing(block);
+    else if (style === "circle") this.addCircle(block);
+    else this.addFill(block, style === "background" ? "wcp-limit-fill-bg" : "wcp-limit-fill-bar");
+    this.setProgress(block, progress);
+  }
+
+  /**
+   * An SVG stroke laid over the block rather than a border: a border is all or
+   * nothing, while a stroke can be dashed, and a <rect>'s outline conveniently
+   * begins at its top-left corner and runs clockwise — which is the direction the
+   * fill is asked to travel.
+   *
+   * Nothing is drawn here. The dash length is measured in pixels and the block
+   * has no size until the grid around it is laid out, so the observer does the
+   * first draw.
+   */
+  private addRing(block: HTMLElement) {
+    const svg = block.createSvg("svg", { cls: "wcp-limit-ring" });
+    const shape = svg.createSvg("rect");
+    this.meters.set(block, { kind: "ring", svg, shape, len: 0, progress: 0 });
+    this.ringResize ??= new ResizeObserver((entries) => {
+      for (const entry of entries) this.sizeRing(entry.target as HTMLElement);
+    });
+    this.ringResize.observe(block);
+  }
+
+  /**
+   * A dial in the block's top-right corner: a stroked circle over a faint one.
+   *
+   * Unlike the outline, it is drawn complete here — its length comes from its own
+   * viewBox, not from the block, so there is nothing to wait for and no observer
+   * to keep. The track is drawn because the corner, unlike the block's edges, has
+   * no border of its own to stand in for the unfilled part.
+   */
+  private addCircle(block: HTMLElement) {
+    // Tells the block to keep its value clear of the corner. See styles.css.
+    block.addClass("wcp-has-circle");
+    const c = CIRCLE_BOX / 2;
+    const geometry = { cx: c, cy: c, r: CIRCLE_RADIUS };
+    const svg = block.createSvg("svg", {
+      cls: "wcp-limit-circle",
+      attr: { viewBox: `0 0 ${CIRCLE_BOX} ${CIRCLE_BOX}` },
+    });
+    svg.createSvg("circle", { cls: "wcp-limit-circle-track", attr: geometry });
+    const shape = svg.createSvg("circle", { cls: "wcp-limit-circle-arc", attr: geometry });
+    const len = 2 * Math.PI * CIRCLE_RADIUS;
+    shape.style.strokeDasharray = `${len} ${len}`;
+    this.meters.set(block, { kind: "circle", svg, shape, len, progress: 0 });
+    this.contentEl.win.requestAnimationFrame(() => svg.classList.add("is-live"));
+  }
+
+  /**
+   * Something that grows left to right: the bar over the block's bottom border,
+   * or the wash behind the block as a whole. `cls` is which of the two.
+   *
+   * A percentage width is all either takes, so unlike the strokes they need no
+   * measuring and no observer — the track exists only to crop the fill to the
+   * block's rounded corners.
+   */
+  private addFill(block: HTMLElement, cls: string) {
+    const track = block.createDiv({ cls: `wcp-limit-fill ${cls}` });
+    const fill = track.createDiv({ cls: "wcp-limit-fill-inner" });
+    this.meters.set(block, { kind: "fill", fill, progress: 0 });
+    this.contentEl.win.requestAnimationFrame(() => track.addClass("is-live"));
+  }
+
+  /**
+   * Fit an outline to the block it covers and re-apply the current fraction.
+   *
+   * The dash pattern is one dash and one gap, each the full length of the
+   * outline, so the offset alone decides how much of it is drawn — and an offset
+   * is a single number, which a CSS transition can move smoothly in a way a
+   * two-value dash array cannot.
+   */
+  private sizeRing(block: HTMLElement) {
+    const ring = this.meters.get(block);
+    if (ring?.kind !== "ring") return;
+    // offsetWidth/Height are the border box, which is what the outline covers.
+    const w = block.offsetWidth - RING_STROKE;
+    const h = block.offsetHeight - RING_STROKE;
+    // Not laid out yet — a collapsed pane, or a tab that has never been shown.
+    // The observer fires again when it gains a size.
+    if (w <= 0 || h <= 0) return;
+    const first = ring.len === 0;
+
+    // Half the stroke sits either side of the path, so inset the path by half to
+    // keep the whole of it inside the block's outline.
+    const inset = RING_STROKE / 2;
+    const r = Math.max(0, Math.min(RING_RADIUS - inset, w / 2, h / 2));
+    ring.shape.setAttribute("x", String(inset));
+    ring.shape.setAttribute("y", String(inset));
+    ring.shape.setAttribute("width", String(w));
+    ring.shape.setAttribute("height", String(h));
+    ring.shape.setAttribute("rx", String(r));
+    // Perimeter of a rounded rectangle: the four straight runs plus the four
+    // quarter-circles that join them.
+    ring.len = 2 * (w - 2 * r) + 2 * (h - 2 * r) + 2 * Math.PI * r;
+    ring.shape.style.strokeDasharray = `${ring.len} ${ring.len}`;
+    this.setProgress(block, ring.progress);
+
+    // Only now may the outline animate. An unmeasured one has no dash at all, so
+    // it counts as fully drawn; transitioning away from that would sweep the
+    // first fill backwards from a complete outline the block never showed.
+    if (first) this.contentEl.win.requestAnimationFrame(() => ring.svg.classList.add("is-live"));
+  }
+
+  /** Draw `progress` (0–1) of a block's meter. A full one colours the text too. */
+  private setProgress(block: HTMLElement, progress: number) {
+    const meter = this.meters.get(block);
+    if (!meter) return;
+    meter.progress = progress;
+    if (meter.kind === "fill") meter.fill.style.width = `${progress * 100}%`;
+    else meter.shape.style.strokeDashoffset = String(meter.len * (1 - progress));
+    block.toggleClass("wcp-limit-full", progress >= 1);
+  }
+
+  /** Forget every meter — called before a rebuild wipes the blocks they sit on. */
+  private clearMeters() {
+    this.ringResize?.disconnect();
+    this.meters.clear();
   }
 
   /** Subtle one-shot fade played when a character changes. */
@@ -94,12 +257,19 @@ export class MetricsView extends ItemView {
       : [];
     const layout = this.plugin.settings.rightPaneLayout;
     const multiPreset = this.plugin.settings.presets.length > 1;
+    const limitMethod = this.plugin.settings.limitWarningsDisplayMethod;
+    // Whether limits are drawn here at all, and if so in which style. Both are
+    // part of the signature below: changing either adds, removes or swaps the
+    // progress meters, which only a rebuild can do.
+    const showLimits = surfaceShowsLimits(limitMethod, "rightPane");
+    const style = this.plugin.settings.limitWarningsStyle;
+    const metered = showLimits && style !== "color";
 
     // Structure signature — when unchanged we can update in place and animate. The
     // block labels are part of it: a custom label changes the text but not the set
     // of rows, and only a rebuild repaints it.
     const sig = preset && metrics && rows.length > 0
-      ? [preset.id, preset.name, multiPreset, layout, ...rows.flatMap((r) => [r.key, r.blockLabel])].join("|")
+      ? [preset.id, preset.name, multiPreset, layout, limitMethod, style, ...rows.flatMap((r) => [r.key, r.blockLabel])].join("|")
       : null;
 
     if (sig && sig === this.gridSig) {
@@ -110,7 +280,8 @@ export class MetricsView extends ItemView {
           this.renderValue(ref.value, row.value, ref.text, true);
           ref.text = row.value;
         }
-        this.setLevel(ref.block, surfaceWarnLevel(this.plugin.settings.limitWarningsDisplayMethod, "rightPane", row.level));
+        this.setLevel(ref.block, surfaceWarnLevel(limitMethod, "rightPane", row.level));
+        if (metered) this.setProgress(ref.block, row.progress ?? 0);
       }
       return;
     }
@@ -118,6 +289,7 @@ export class MetricsView extends ItemView {
     // Structure changed (or placeholder state) — full rebuild.
     this.gridSig = sig;
     this.blockRefs.clear();
+    this.clearMeters();
 
     const container = this.contentEl;
     container.empty();
@@ -150,10 +322,15 @@ export class MetricsView extends ItemView {
     }
 
     const cols = layout === "one" ? "wcp-cols-1" : "wcp-cols-2";
-    const grid = container.createDiv({ cls: `wcp-block-grid ${cols}` });
+    // The style is carried on the grid so the two ways of drawing a level can be
+    // written as separate rules rather than one undoing the other.
+    const grid = container.createDiv({ cls: `wcp-block-grid ${cols} wcp-limits-${style}` });
     for (const row of rows) {
       const block = grid.createDiv({ cls: "wcp-metric-block" });
-      this.setLevel(block, surfaceWarnLevel(this.plugin.settings.limitWarningsDisplayMethod, "rightPane", row.level));
+      this.setLevel(block, surfaceWarnLevel(limitMethod, "rightPane", row.level));
+      // A meter only for metrics a rule actually bounds; the rest have nothing to
+      // fill toward.
+      if (metered && row.progress !== undefined) this.addMeter(block, style, row.progress);
       // Value and its optional unit (e.g. "MIN.") share a baseline-aligned line;
       // the unit is a sibling so in-place value updates don't wipe it.
       const valueLine = block.createDiv({ cls: "wcp-metric-value-line" });
@@ -326,6 +503,12 @@ export class MetricsView extends ItemView {
     block.addEventListener("touchend", onEnd);
     block.addEventListener("touchcancel", onEnd);
   }
+
+  async onClose() {
+    // A live ResizeObserver holds on to the blocks it watches, so the view's DOM
+    // would outlive the leaf that closed without this.
+    this.clearMeters();
+  }
 }
 
 // ── Settings Tab ──────────────────────────────────────────────────────────────
@@ -400,6 +583,7 @@ export class WordCountSettingTab extends PluginSettingTab {
       },
       {
         type: "group",
+        cls: "wcp-settings-rows",
         heading: t.settingsSectionGeneral,
         items: [
           {
@@ -427,6 +611,21 @@ export class WordCountSettingTab extends PluginSettingTab {
             control: { type: "dropdown", key: "limitWarningsDisplayMethod", options: displayMethods },
           },
           {
+            name: t.settingsLimitWarningsStyleName,
+            desc: t.settingsLimitWarningsStyleDesc,
+            control: {
+              type: "dropdown",
+              key: "limitWarningsStyle",
+              options: {
+                color: t.limitStyleColor,
+                progress: t.limitStyleProgress,
+                bar: t.limitStyleBar,
+                circle: t.limitStyleCircle,
+                background: t.limitStyleBackground,
+              },
+            },
+          },
+          {
             name: t.settingsSeparatorName,
             desc: t.settingsSeparatorDesc,
             control: { type: "text", key: "separator", placeholder: "  |  " },
@@ -435,6 +634,7 @@ export class WordCountSettingTab extends PluginSettingTab {
       },
       {
         type: "group",
+        cls: "wcp-settings-rows",
         heading: t.settingsSectionPresets,
         items: [
           {
@@ -538,6 +738,11 @@ export class WordCountSettingTab extends PluginSettingTab {
         return;
       case "limitWarningsDisplayMethod":
         settings.limitWarningsDisplayMethod = value as DisplayMethod;
+        await this.plugin.saveSettings();
+        this.plugin.updateCount();
+        return;
+      case "limitWarningsStyle":
+        settings.limitWarningsStyle = value as LimitWarningStyle;
         await this.plugin.saveSettings();
         this.plugin.updateCount();
         return;

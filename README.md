@@ -22,6 +22,7 @@ Each separate preset can have its own list of metrics and methods of counting fo
 
 * Counters can be viewed not only in the status bar, but also in the right pane tab. You can define whether counters are visible in both places or only one.
 * Moreover, for any chosen metric you can set up a limit warning and/or a goal: a warning colors the metric orange at ≥90% of the limit and red at ≥100%, while a goal colors it green at ≥100% (a metric can have both at once, and a goal can't be set higher than its warning).
+* The progress indication style for goals and limits in the right pane can be configured; five options are currently available: "Border and text", described above, as well as "Border progress", "Progress bar", "Progress circle" and "Progress background".
 * You can also reorder the metrics in the right pane by dragging them — the new order is applied to the status bar as well (drag-and-drop on mobile devices is experimental for now).
 * Every metric — built-in or community — can be renamed to your liking in **Set custom labels**, separately for the status bar and the right pane, or left without a label at all so only its number is shown.
 

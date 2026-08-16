@@ -1,5 +1,5 @@
 import type { Preset, WarnLevel } from "./metrics";
-import { METRIC_ORDER, defaultPreset, ruleLevel } from "./metrics";
+import { METRIC_ORDER, defaultPreset, ruleLevel, ruleProgress } from "./metrics";
 
 // Built-in metric ids (e.g. "wordsWithSpaces", "pages"). They're always computed,
 // so they're valid ratio operands but must never appear in `dependencies` — there
@@ -347,6 +347,8 @@ export interface ExtMetricRow {
   value: string;
   unit?: string;
   level: WarnLevel;
+  // 0–1 toward the metric's bounding rule; absent when it has none. See ruleProgress.
+  progress?: number;
 }
 
 // ── Regex safety ────────────────────────────────────────────────────────────────
@@ -906,6 +908,7 @@ export class ExtensionRegistry {
         value: valStr,
         unit: this.loc(def, "unit") ?? def.unit,
         level: ruleLevel(preset, value, def.id),
+        progress: ruleProgress(preset, value, def.id),
       });
     }
     return rows;

@@ -8,6 +8,20 @@ export type DisplayMethod = "statusBar" | "rightPane" | "both";
 
 export type RightPaneLayout = "one" | "two";
 
+/**
+ * How a warning or goal is drawn on a right-pane metric block.
+ *
+ * "color" — the block's whole outline and its text take the level's colour the
+ * moment the level is reached. The rest are meters that fill as the value climbs
+ * toward the rule's threshold: "progress" round the whole outline from the
+ * top-left corner clockwise, "bar" along the bottom edge alone, "circle" a dial
+ * in the top-right corner, and "background" a wash across the block from left to
+ * right. Every meter starts neutral, and all but the wash colour the text once
+ * they complete — the wash carries the colour itself, and tinting the text in
+ * the hue it sits on is what would cost the contrast.
+ */
+export type LimitWarningStyle = "color" | "progress" | "bar" | "circle" | "background";
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 // Undocumented Obsidian internals not present in the public type definitions
@@ -99,6 +113,7 @@ export interface WordCountSettings {
   displayMethod: DisplayMethod;
   rightPaneLayout: RightPaneLayout;
   limitWarningsDisplayMethod: DisplayMethod;
+  limitWarningsStyle: LimitWarningStyle;
 
   // ── Extensions ──────────────────────────────────────────────────────────────
   // Validated definitions of every installed community extension. They live in
@@ -183,6 +198,9 @@ export interface MetricRow {
   // metrics that need no unit.
   unit?: string;
   level: WarnLevel;
+  // How far the value has come toward the rule that bounds it, 0–1. Absent when
+  // no rule applies to the metric. Only the "progress" limit style reads it.
+  progress?: number;
 }
 
 // Display order and the preset "show" flag that gates each metric
@@ -257,6 +275,7 @@ export const DEFAULT_SETTINGS: WordCountSettings = {
   displayMethod: "statusBar",
   rightPaneLayout: "two",
   limitWarningsDisplayMethod: "both",
+  limitWarningsStyle: "color",
   installedExtensions: [],
   extensionRepoUrl: DEFAULT_EXTENSION_REPO_URL,
   autoUpdateExtensions: false,
@@ -575,11 +594,15 @@ export function reorderMetrics(
 
 // ── Metric rows & warnings ──────────────────────────────────────────────────
 
+/** Whether limits are drawn on a surface at all, per the limit-warnings display method. */
+export function surfaceShowsLimits(method: DisplayMethod, surface: "statusBar" | "rightPane"): boolean {
+  return surface === "statusBar" ? method !== "rightPane" : method !== "statusBar";
+}
+
 /** Adjust a metric's warning level for a given surface, honoring the limit-warnings display method. */
 export function surfaceWarnLevel(method: DisplayMethod, surface: "statusBar" | "rightPane", level: WarnLevel): WarnLevel {
   if (level === "none") return "none";
-  const show = surface === "statusBar" ? method !== "rightPane" : method !== "statusBar";
-  return show ? level : "none";
+  return surfaceShowsLimits(method, surface) ? level : "none";
 }
 
 /**
@@ -607,10 +630,33 @@ export function ruleLevel(preset: Preset, value: number, metric: string): WarnLe
   return "none";
 }
 
+/**
+ * How far a value has come toward the rule that bounds it, 0–1, or undefined when
+ * no rule does.
+ *
+ * The warning is the denominator whenever there is one. A warning is never below
+ * its goal (the settings clamp the pair), so measuring against the warning fills
+ * the outline once across the whole range — turning green as the goal goes by,
+ * orange near the cap and red at it — rather than filling to the goal, resetting
+ * and filling again.
+ */
+export function ruleProgress(preset: Preset, value: number, metric: string): number | undefined {
+  const usable = (kind: LimitKind) =>
+    preset.rules.find((r) => r.metric === metric && r.kind === kind && r.threshold > 0);
+  const rule = usable("warning") ?? usable("goal");
+  if (!rule) return undefined;
+  if (!isFinite(value)) return 0;
+  return Math.max(0, Math.min(1, value / rule.threshold));
+}
+
 function warnLevel(preset: Preset, m: Metrics, key: MetricKey): WarnLevel {
+  return ruleLevel(preset, metricValue(m, key), key);
+}
+
+/** A metric's numeric value — the string-formatted ones (pages, reading time) parsed back. */
+function metricValue(m: Metrics, key: MetricKey): number {
   const raw = m[key];
-  const value = typeof raw === "number" ? raw : parseFloat(raw);
-  return ruleLevel(preset, value, key);
+  return typeof raw === "number" ? raw : parseFloat(raw);
 }
 
 /**
@@ -647,6 +693,7 @@ export function metricRows(
       value: d.value,
       unit: d.unit,
       level: warnLevel(preset, m, d.key),
+      progress: ruleProgress(preset, metricValue(m, d.key), d.key),
     }));
 
   const extRows: MetricRow[] = registry && ext
@@ -657,6 +704,7 @@ export function metricRows(
         value: r.value,
         unit: r.unit,
         level: r.level,
+        progress: r.progress,
       }))
     : [];
 

@@ -47,6 +47,19 @@
   display: none;
 }
 
+/* Obsidian lays a setting row out with `align-items: flex-start`, so a control
+   keeps to the top of its row: against a description that runs to two lines, a
+   dropdown or toggle ends up level with the title rather than with the row. Put
+   them back on the row's centre line.
+
+   Scoped to a class this plugin puts on its own groups, so it cannot reach the
+   rows of another plugin — or of Obsidian's own settings tabs, which share these
+   class names. 0,4,0 clears Obsidian's 0,1,0 base rule; nothing it sets here is
+   claimed by the 0,3,0 group rule this file's header warns about. */
+.setting-group.wcp-settings-rows .setting-item:not(.setting-item-heading) {
+  align-items: center;
+}
+
 /* ── Preset card ─────────────────────────────────────────────────────────────── */
 
 .wcp-preset-card {
@@ -402,6 +415,12 @@
   gap: 4px;
   padding: 12px;
   border-radius: 8px;
+  /* The progress meters are laid over the block; see .wcp-limit-ring. */
+  position: relative;
+  /* A stacking context of the block's own, so the wash can sit at z-index -1 and
+     land between the block's background and its text rather than behind the
+     block entirely. `position: relative` alone would not make one. */
+  isolation: isolate;
   background-color: var(--background-secondary);
   border: 1px solid var(--background-modifier-border);
   /* Equal width comes from the 1fr columns; this keeps every block equal height
@@ -465,38 +484,227 @@
 
 /* ── Limit warnings ──────────────────────────────────────────────────────────── */
 
-/* Right pane blocks */
-.wcp-metric-block.wcp-limit-orange {
+/*
+ * Right pane blocks, in the "color" style: the whole outline and the text take
+ * the level's colour the moment the level is reached.
+ */
+.wcp-limits-color .wcp-metric-block.wcp-limit-orange {
   border-color: var(--color-orange);
   border-width: 1.5px;
 }
 
-.wcp-metric-block.wcp-limit-orange .wcp-metric-value,
-.wcp-metric-block.wcp-limit-orange .wcp-metric-unit,
-.wcp-metric-block.wcp-limit-orange .wcp-metric-label {
+.wcp-limits-color .wcp-metric-block.wcp-limit-orange .wcp-metric-value,
+.wcp-limits-color .wcp-metric-block.wcp-limit-orange .wcp-metric-unit,
+.wcp-limits-color .wcp-metric-block.wcp-limit-orange .wcp-metric-label {
   color: var(--color-orange);
 }
 
-.wcp-metric-block.wcp-limit-red {
+.wcp-limits-color .wcp-metric-block.wcp-limit-red {
   border-color: var(--color-red);
   border-width: 1.5px;
 }
 
-.wcp-metric-block.wcp-limit-red .wcp-metric-value,
-.wcp-metric-block.wcp-limit-red .wcp-metric-unit,
-.wcp-metric-block.wcp-limit-red .wcp-metric-label {
+.wcp-limits-color .wcp-metric-block.wcp-limit-red .wcp-metric-value,
+.wcp-limits-color .wcp-metric-block.wcp-limit-red .wcp-metric-unit,
+.wcp-limits-color .wcp-metric-block.wcp-limit-red .wcp-metric-label {
   color: var(--color-red);
 }
 
-.wcp-metric-block.wcp-limit-green {
+.wcp-limits-color .wcp-metric-block.wcp-limit-green {
   border-color: var(--color-green);
   border-width: 1.5px;
 }
 
-.wcp-metric-block.wcp-limit-green .wcp-metric-value,
-.wcp-metric-block.wcp-limit-green .wcp-metric-unit,
-.wcp-metric-block.wcp-limit-green .wcp-metric-label {
+.wcp-limits-color .wcp-metric-block.wcp-limit-green .wcp-metric-value,
+.wcp-limits-color .wcp-metric-block.wcp-limit-green .wcp-metric-unit,
+.wcp-limits-color .wcp-metric-block.wcp-limit-green .wcp-metric-label {
   color: var(--text-success);
+}
+
+/*
+ * Right pane blocks, in the "progress", "bar", "circle" and "background" styles.
+ *
+ * Each draws a meter that fills as the value climbs toward its threshold — the
+ * whole outline clockwise from the top-left corner, the bottom edge alone, a
+ * dial in the top-right corner, or a wash across the block. None of them touch
+ * the block's own border. That is deliberate for the two that run along it: the
+ * plain border is the empty part of the track, and a fill reads as progress only
+ * against something unfilled. The dial, having no border under it, draws its own
+ * track, and the wash is read against the part of the block it has not reached.
+ *
+ * The colour is shared by every shape, and by the text once a meter completes,
+ * so it is set once on the block and read from there. It starts neutral: a
+ * half-drawn meter is progress, not a warning.
+ */
+.wcp-metric-block {
+  --wcp-meter-color: var(--text-muted);
+}
+
+.wcp-metric-block.wcp-limit-orange {
+  --wcp-meter-color: var(--color-orange);
+}
+
+.wcp-metric-block.wcp-limit-red {
+  --wcp-meter-color: var(--color-red);
+}
+
+.wcp-metric-block.wcp-limit-green {
+  --wcp-meter-color: var(--text-success);
+}
+
+/*
+ * Only a completed meter colours the text, so reaching the threshold reads as an
+ * event rather than one more shade along the way. The class is set alongside the
+ * meter, so this can never fire in the "color" style.
+ *
+ * The wash is left out: it is the one meter the text sits on, and putting the
+ * same hue in both places is what would cost the contrast — a red label on a
+ * red-tinted block drops to about 3:1, under the 4.5:1 small text wants. A
+ * filled block is already unmistakable without it.
+ */
+.wcp-block-grid:not(.wcp-limits-background) .wcp-metric-block.wcp-limit-full .wcp-metric-value,
+.wcp-block-grid:not(.wcp-limits-background) .wcp-metric-block.wcp-limit-full .wcp-metric-unit,
+.wcp-block-grid:not(.wcp-limits-background) .wcp-metric-block.wcp-limit-full .wcp-metric-label {
+  color: var(--wcp-meter-color);
+}
+
+/* The outline. Sized in JS — see sizeRing() in gui.ts. Nothing here may set the
+   dash array or offset, which are measured from the block in pixels. */
+.wcp-limit-ring {
+  position: absolute;
+  /* Out to the block's border box: an absolutely positioned child is laid out
+     against the padding box, and the block's border is 1px. */
+  inset: -1px;
+  /* Half of the stroke falls outside the rectangle it traces. */
+  overflow: visible;
+  /* Purely decorative, and it covers the whole block — it must not swallow the
+     clicks and drags the block itself handles. */
+  pointer-events: none;
+}
+
+.wcp-limit-ring rect {
+  fill: none;
+  stroke: var(--wcp-meter-color);
+  stroke-width: 2;
+  stroke-linecap: butt;
+}
+
+/* Added a frame after the outline is first measured — see sizeRing() in gui.ts. */
+.wcp-limit-ring.is-live rect {
+  transition: stroke-dashoffset 0.4s ease, stroke 0.4s ease;
+}
+
+/*
+ * The two meters that grow left to right: the bar over the block's bottom
+ * border, and the wash behind the block as a whole.
+ *
+ * The track is a crop rather than a groove — it carries no colour of its own. It
+ * covers the whole block, not just the strip a bar occupies, so that it can take
+ * the block's own 8px corners and crop the fill to them. A track only as tall as
+ * the bar would have its radius scaled down to its height, and the fill would
+ * jut out past the curve of the bottom-left corner.
+ */
+.wcp-limit-fill {
+  position: absolute;
+  /* Out to the block's border box: the child is laid out against the padding
+     box, and the block's border is 1px. */
+  inset: -1px;
+  border-radius: 8px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.wcp-limit-fill-inner {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 0;
+  background-color: var(--wcp-meter-color);
+}
+
+/* Added a frame after the fill is drawn, for the same reason the outline waits. */
+.wcp-limit-fill.is-live .wcp-limit-fill-inner {
+  transition: width 0.4s ease, background-color 0.4s ease;
+}
+
+/* The bar: a strip over the bottom border, leaving the rest of it as the
+   unfilled part of the track. */
+.wcp-limit-fill-bar .wcp-limit-fill-inner {
+  height: 2px;
+}
+
+/*
+ * The wash: the whole block.
+ *
+ * Held well below full strength, because this is the one meter with text sitting
+ * on top of it. At this alpha the tint stays close enough to the block's own
+ * background that --text-normal and --text-muted keep the contrast they had, in
+ * either theme; a solid fill would leave the value unreadable.
+ *
+ * Behind the text rather than over it — see .wcp-metric-block's isolation.
+ */
+.wcp-limit-fill-bg {
+  z-index: -1;
+}
+
+.wcp-limit-fill-bg .wcp-limit-fill-inner {
+  height: 100%;
+  opacity: 0.18;
+}
+
+/*
+ * The dial, in the block's top-right corner. Rotated a quarter turn because an
+ * SVG circle's outline begins at three o'clock, and a dial that starts anywhere
+ * but the top does not read as one. The whole element is turned rather than the
+ * arc alone: the track is a full circle, so the rotation costs it nothing, and
+ * this sidesteps having to reason about which box an SVG transform-origin is
+ * resolved against.
+ */
+.wcp-limit-circle {
+  position: absolute;
+  /* The block's own padding, so the dial lines up with the text rather than
+     sitting nearer the edge — an absolutely positioned child is laid out against
+     the padding box, so this puts it flush with the content box's corner. */
+  top: 12px;
+  right: 12px;
+  width: 16px;
+  height: 16px;
+  transform: rotate(-90deg);
+  pointer-events: none;
+}
+
+/* Keep the value clear of the dial. Only the value line is inset: the label sits
+   below the dial and can have the block's full width. */
+.wcp-has-circle .wcp-metric-value-line {
+  padding-right: 18px;
+}
+
+.wcp-limit-circle circle {
+  fill: none;
+  stroke-width: 2;
+}
+
+.wcp-limit-circle-track {
+  stroke: var(--background-modifier-border);
+}
+
+.wcp-limit-circle-arc {
+  stroke: var(--wcp-meter-color);
+  stroke-linecap: butt;
+}
+
+/* Added a frame after the dial is drawn, for the same reason the outline waits. */
+.wcp-limit-circle.is-live .wcp-limit-circle-arc {
+  transition: stroke-dashoffset 0.4s ease, stroke 0.4s ease;
+}
+
+/* Reduced motion: a meter still fills, it just doesn't slide there. */
+@media (prefers-reduced-motion: reduce) {
+  .wcp-limit-ring.is-live rect,
+  .wcp-limit-fill.is-live .wcp-limit-fill-inner,
+  .wcp-limit-circle.is-live .wcp-limit-circle-arc {
+    transition: none;
+  }
 }
 
 /* Status bar segments */

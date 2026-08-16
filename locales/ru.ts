@@ -54,6 +54,13 @@ const ru = {
   rightPaneLayoutTwo: "Два столбца",
   settingsLimitWarningsDisplayName: "Способ отображения предупреждений о лимитах",
   settingsLimitWarningsDisplayDesc: "Выберите, где будут показаны предупреждения о лимитах",
+  settingsLimitWarningsStyleName: "Стиль индикации прогресса",
+  settingsLimitWarningsStyleDesc: "Выберите, как предупреждения и цели будут отображаться в блоках метрик в правой панели",
+  limitStyleColor: "Рамка и текст",
+  limitStyleProgress: "Заполнение рамки",
+  limitStyleBar: "Полоса прогресса",
+  limitStyleCircle: "Круг прогресса",
+  limitStyleBackground: "Заполнение фона",
 
   // ── Right pane view ────────────────────────────────────────────────────────
   viewTitle: "Advanced Word Count",
