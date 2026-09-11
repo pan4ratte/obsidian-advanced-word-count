@@ -1,12 +1,23 @@
 # Плагин Advanced Word Count
 
-[English](https://github.com/pan4ratte/obsidian-advanced-word-count/blob/main/README.md) | Русский
-
-Данный плагин позволяет создавать сложные пресеты счётчиков слов, которые отображаются в строке состояния или во вкладке на правой панели. Пресеты можно переключать нажатием на строку состояния, заголовок правой панели или через палитру команд. Благодаря расширениям сообщества — пресетам, метрикам и расширенным настройкам — плагин гибко настраивается под писательские, научные и другие цели.
-
 <div align="center">
   <img src="media/1-cover.png"width="100%" />
 </div>
+
+<div align="center">
+<a href="https://pay.cloudtips.ru/p/c0e8eac4"><img alt="badge" src="https://shieldcn.dev/badge/Поддержать%20разработку-(RU%20карты).svg?size=lg&amp;logo=ri%3AFaHeart&amp;logoColor=ef4444&amp;color=09090b&amp;labelTextColor=ef4444"></a>
+</div>
+
+<div align="center">
+
+[English](https://github.com/pan4ratte/obsidian-advanced-word-count/blob/main/README.md) | Русский
+
+</div>
+
+<div align="center">
+Данный плагин позволяет создавать сложные пресеты счётчиков слов, которые будут отображаться в строке состояния или в правой боковой панели. Устанавливайте десятки пресетов сообщества, метрик и настроек из магазина внутри плагина для расширения возможностей.
+</div>
+
 
 ## Фичи
 

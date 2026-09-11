@@ -1,12 +1,23 @@
 # Advanced Word Count plugin
 
-English | [Русский](https://github.com/pan4ratte/obsidian-advanced-word-count/blob/main/README_RU.md)
-
-This plugin allows you to create complex word count presets that are displayed in the status bar or in the right pane tab. You can cycle presets by clicking on the status bar, the right pane header or using command palette. Thanks to community extensions — presets, metrics and advanced settings — the plugin flexibly adapts to writing, academic and other purposes.
-
 <div align="center">
   <img src="media/1-cover.png"width="100%" />
 </div>
+
+<div align="center">
+<a href="https://pay.cloudtips.ru/p/c0e8eac4"><img alt="badge" src="https://shieldcn.dev/badge/Поддержать%20разработку-(RU%20карты).svg?size=lg&amp;logo=ri%3AFaHeart&amp;logoColor=ef4444&amp;color=09090b&amp;labelTextColor=ef4444"></a>
+</div>
+
+<div align="center">
+
+English | [Русский](https://github.com/pan4ratte/obsidian-advanced-word-count/blob/main/README_RU.md)
+
+</div>
+
+<div align="center">
+Create complex word count presets that will be displayed in the status bar or in the right pane tab. Install tens of community presets, custom metrics, and settings from the extension store to extend the plugin's capabilities.
+</div>
+
 
 ## Features
 
@@ -72,7 +83,7 @@ You can specify, how formatting elements will be counted:
 
 * **The extension store** opens in the plugin settings. Search by name, author or description, filter by type (metrics / advanced settings / presets), and install, update or remove any extension with a single click. Installed extensions are highlighted with your accent colour.
 * **Ready-made presets** carry their toggle states, advanced settings, warnings/goals and connected community extensions. Installing one adds it to your presets and downloads the extensions it needs automatically. Made a preset you like? Click the **Share** (↗) icon in its header to export a file you can suggest for the plugin's catalogue.
-* **Connecting installed extensions** is done separately for each of your presets — use the **Add metric…** / **Add setting…** dropdown inside a preset.
+* **Connecting installed extensions** is done separately for each of your presets — use the **Community extensions…** dropdown inside a preset.
 * **Dependencies are installed automatically:** if an extension depends on another, everything it needs is downloaded with it.
 * **Updating extensions** is available manually in the store, or automatically on Obsidian startup when the **Automatically update installed community extensions** setting is enabled.
 
