@@ -44,7 +44,7 @@ const ru = {
   settingsHideDefaultName: "Скрыть стандартный счётчик слов Obsidian",
   settingsHideDefaultDesc: "Отключает встроенный плагин подсчёта слов Obsidian",
   settingsCountEmbedsName: "Считать текст во встроенных заметках",
-  settingsCountEmbedsDesc: "Счётчики будут подсчитывать слова и в заметке, и во вложенных в неё заметках",
+  settingsCountEmbedsDesc: "Счётчики будут суммировать показатели в заметке и во вложенных в неё заметках",
   settingsDisplayMethodName: "Способ отображения счётчиков",
   settingsDisplayMethodDesc: "Выберите, где будут отображаться пресеты счётчиков",
   displayMethodStatusBar: "Строка состояния",
