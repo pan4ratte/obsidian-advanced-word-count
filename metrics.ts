@@ -114,6 +114,10 @@ export interface WordCountSettings {
   rightPaneLayout: RightPaneLayout;
   limitWarningsDisplayMethod: DisplayMethod;
   limitWarningsStyle: LimitWarningStyle;
+  // When true, every metric sums the note with the notes embedded in it
+  // (![[Note]], ![[Note#Heading]], ![[Note#^block]]), nested embeds included,
+  // and the embed links themselves aren't counted as text.
+  countEmbeddedNotes: boolean;
 
   // ── Extensions ──────────────────────────────────────────────────────────────
   // Validated definitions of every installed community extension. They live in
@@ -276,6 +280,7 @@ export const DEFAULT_SETTINGS: WordCountSettings = {
   rightPaneLayout: "two",
   limitWarningsDisplayMethod: "both",
   limitWarningsStyle: "color",
+  countEmbeddedNotes: false,
   installedExtensions: [],
   extensionRepoUrl: DEFAULT_EXTENSION_REPO_URL,
   autoUpdateExtensions: false,
@@ -505,22 +510,28 @@ export interface FullMetrics {
   ext: Record<string, number>;
 }
 
+// The built-in metrics counted straight from a text. The rest (pages, reading
+// time) derive from these, so they are worked out once the counts are final.
+type CountKey = Exclude<MetricKey, "pages" | "readingTime">;
+type Counts = Record<CountKey, number>;
+
 /**
- * Compute every metric in one preprocessing pass. The optional registry both
- * feeds setting-extension transforms into preprocessing and supplies the
- * extension metric values; without it the result is the built-ins alone.
+ * One text to count. `hiddenEmbeds` is how many note embeds were removed from it
+ * (see embeds.ts): their links aren't counted as text, but the Embeds metric
+ * still counts them as embeds.
  */
-export function computeFull(raw: string, preset: Preset, registry?: ExtensionRegistry): FullMetrics {
+export interface CountedText {
+  text: string;
+  hiddenEmbeds?: number;
+}
+
+function countText(raw: string, preset: Preset, registry?: ExtensionRegistry): { counts: Counts; ext: Record<string, number> } {
   const base = preprocessBase(raw, preset, registry);
   const preprocessed = preprocessText(raw, preset, registry);
-  const wordsWithSpaces = countWordsWithSpaces(preprocessed);
-
-  const values: Metrics = {
-    wordsWithSpaces,
+  const counts: Counts = {
+    wordsWithSpaces: countWordsWithSpaces(preprocessed),
     charsWithSpaces: countCharsWithSpaces(base),
     charsWithoutSpaces: countCharsWithoutSpaces(base),
-    pages: (wordsWithSpaces / preset.wordsPerPage).toFixed(1),
-    readingTime: computeReadingTime(wordsWithSpaces, preset.readingWpm),
     lines: countLines(raw),
     paragraphs: countParagraphs(raw),
     markdownLinks: countMarkdownLinks(raw),
@@ -529,8 +540,39 @@ export function computeFull(raw: string, preset: Preset, registry?: ExtensionReg
     embeds: countEmbeds(raw),
     footnotes: countFootnotes(raw),
   };
-
   const ext = registry ? registry.computeMetrics(preset, raw, preprocessed) : {};
+  return { counts, ext };
+}
+
+/**
+ * Compute every metric in one preprocessing pass. The optional registry both
+ * feeds setting-extension transforms into preprocessing and supplies the
+ * extension metric values; without it the result is the built-ins alone.
+ *
+ * A list of texts (a note followed by the notes embedded in it) is counted one
+ * text at a time and the counts summed, so each text is counted exactly as it
+ * would be on its own. The derived metrics — pages, reading time and ratio
+ * extensions — are then worked out from the sums rather than summed themselves.
+ */
+export function computeFull(raw: string | CountedText[], preset: Preset, registry?: ExtensionRegistry): FullMetrics {
+  const texts: CountedText[] = typeof raw === "string" ? [{ text: raw }] : raw;
+  const [first, ...rest] = (texts.length > 0 ? texts : [{ text: "" }]).map(({ text, hiddenEmbeds = 0 }) => {
+    const one = countText(text, preset, registry);
+    one.counts.embeds += hiddenEmbeds;
+    return one;
+  });
+  const c = first.counts;
+  const ext = first.ext;
+  for (const one of rest) {
+    for (const key of Object.keys(c) as CountKey[]) c[key] += one.counts[key];
+    for (const id of Object.keys(one.ext)) ext[id] = (ext[id] ?? 0) + one.ext[id];
+  }
+
+  const values: Metrics = {
+    ...c,
+    pages: (c.wordsWithSpaces / preset.wordsPerPage).toFixed(1),
+    readingTime: computeReadingTime(c.wordsWithSpaces, preset.readingWpm),
+  };
 
   // Second pass: ratio metrics derive from other metrics, so they run once the
   // built-in values and the text-based extension values are known.
@@ -548,7 +590,7 @@ export function computeFull(raw: string, preset: Preset, registry?: ExtensionReg
   return { values, ext };
 }
 
-export function computeMetrics(raw: string, preset: Preset, registry?: ExtensionRegistry): Metrics {
+export function computeMetrics(raw: string | CountedText[], preset: Preset, registry?: ExtensionRegistry): Metrics {
   return computeFull(raw, preset, registry).values;
 }
 

@@ -43,6 +43,8 @@ const ru = {
   settingsSeparatorDesc: "Введите символы, которые будут визуально разделять метрики в строке состояния",
   settingsHideDefaultName: "Скрыть стандартный счётчик слов Obsidian",
   settingsHideDefaultDesc: "Отключает встроенный плагин подсчёта слов Obsidian",
+  settingsCountEmbedsName: "Считать текст во встроенных заметках",
+  settingsCountEmbedsDesc: "Счётчики будут подсчитывать слова и в заметке, и во вложенных в неё заметках",
   settingsDisplayMethodName: "Способ отображения счётчиков",
   settingsDisplayMethodDesc: "Выберите, где будут отображаться пресеты счётчиков",
   displayMethodStatusBar: "Строка состояния",

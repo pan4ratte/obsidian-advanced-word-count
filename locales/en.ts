@@ -46,6 +46,8 @@ const en = {
   settingsSeparatorDesc: "Type the characters that will visually separate metrics in the status bar",
   settingsHideDefaultName: "Hide default Obsidian word counter",
   settingsHideDefaultDesc: "Disables Obsidian word count core plugin",
+  settingsCountEmbedsName: "Count embedded notes",
+  settingsCountEmbedsDesc: "Counters show the sum for the note and every note embedded in it",
   settingsDisplayMethodName: "Counters display method",
   settingsDisplayMethodDesc: "Choose where your counter presets are displayed",
   displayMethodStatusBar: "Status bar",

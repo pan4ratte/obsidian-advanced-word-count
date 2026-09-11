@@ -1,5 +1,11 @@
 # Changelog
 
+## 4.5.0
+
+### New features
+
+* **Count embedded notes.** A new toggle in the General section makes every counter include the notes embedded in the current one, so the counters show the sum for the note and all of its embeds. Whole-note, heading (`![[Note#Heading]]`) and block (`![[Note#^block]]`) embeds are supported, and nested embeds are counted too. Handy for a book or a thesis assembled from embedded chapters.
+
 ## 4.4.0
 
 ### New features

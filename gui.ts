@@ -592,6 +592,11 @@ export class WordCountSettingTab extends PluginSettingTab {
             control: { type: "toggle", key: "hideDefaultWordCount" },
           },
           {
+            name: t.settingsCountEmbedsName,
+            desc: t.settingsCountEmbedsDesc,
+            control: { type: "toggle", key: "countEmbeddedNotes" },
+          },
+          {
             name: t.settingsDisplayMethodName,
             desc: t.settingsDisplayMethodDesc,
             control: { type: "dropdown", key: "displayMethod", options: displayMethods },
@@ -725,6 +730,13 @@ export class WordCountSettingTab extends PluginSettingTab {
         settings.hideDefaultWordCount = value === true;
         await this.plugin.setDefaultWordCountHidden(settings.hideDefaultWordCount);
         await this.save();
+        return;
+      case "countEmbeddedNotes":
+        settings.countEmbeddedNotes = value === true;
+        // Nothing reads the embedded notes' text while this is off.
+        if (!settings.countEmbeddedNotes) this.plugin.embeddedNotes.clear();
+        await this.plugin.saveSettings();
+        this.plugin.updateCount();
         return;
       case "displayMethod":
         settings.displayMethod = value as DisplayMethod;

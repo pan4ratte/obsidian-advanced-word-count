@@ -17,6 +17,7 @@ import {
 } from "./metrics";
 import { ExtensionRegistry } from "./extensions";
 import { ExtensionManager } from "./extension-manager";
+import { EmbeddedNotes } from "./embeds";
 import { MetricsView, WordCountSettingTab } from "./gui";
 
 // ── Plugin ────────────────────────────────────────────────────────────────────
@@ -31,6 +32,9 @@ export default class WordCountPlugin extends Plugin {
   // Live registry of installed extensions and the manager that loads/installs them.
   readonly extensions: ExtensionRegistry = new ExtensionRegistry();
   readonly extensionManager: ExtensionManager = new ExtensionManager(this, this.extensions);
+  // Text of the notes embedded in the current one, summed in when
+  // settings.countEmbeddedNotes is on. Redraws the count once a read lands.
+  readonly embeddedNotes: EmbeddedNotes = new EmbeddedNotes(this.app, () => this.updateCount());
   private settingTab: WordCountSettingTab;
   private registeredCommandIds: Set<string> = new Set();
   private activatingRightPane = false;
@@ -69,6 +73,18 @@ export default class WordCountPlugin extends Plugin {
     this.registerEvent(this.app.workspace.on("active-leaf-change", () => this.updateCount()));
     this.registerEvent(this.app.workspace.on("editor-change", () => this.updateCount()));
     this.registerEvent((this.app.workspace as WorkspaceInternal).on("editor-selection-change", () => this.updateCount()));
+
+    // Keep embedded notes' text current. The cache only holds notes embedded in
+    // the one being counted, so these do nothing for any other note.
+    this.registerEvent(this.app.metadataCache.on("changed", (file, data) => {
+      if (this.embeddedNotes.update(file, data)) this.updateCount();
+    }));
+    this.registerEvent(this.app.vault.on("delete", (file) => {
+      if (this.embeddedNotes.forget(file.path)) this.updateCount();
+    }));
+    this.registerEvent(this.app.vault.on("rename", (_file, oldPath) => {
+      if (this.embeddedNotes.forget(oldPath)) this.updateCount();
+    }));
 
     this.settingTab = new WordCountSettingTab(this.app, this);
     this.addSettingTab(this.settingTab);
@@ -266,7 +282,11 @@ export default class WordCountPlugin extends Plugin {
     if (preset && view) {
       const selection = view.editor.getSelection();
       const raw = selection.length > 0 ? selection : view.getViewData();
-      const full = computeFull(raw, preset, this.extensions);
+      // Embeds inside a selection are summed in too, like the rest of the note.
+      const texts = this.settings.countEmbeddedNotes && view.file
+        ? this.embeddedNotes.expand(raw, view.file.path)
+        : raw;
+      const full = computeFull(texts, preset, this.extensions);
       this.lastMetrics = full.values;
       this.lastExtMetrics = full.ext;
     } else if (this.app.workspace.getLeavesOfType("markdown").length === 0) {

@@ -222,6 +222,41 @@ describe("structural metrics", () => {
   });
 });
 
+describe("multiple texts (a note plus its embedded notes)", () => {
+  const texts = (...s: string[]) => s.map((text) => ({ text }));
+
+  it("sums each metric over the texts", () => {
+    const m = computeMetrics(texts("one two\n\nthree", "---\ntitle: x\n---\nfour five"), defaultPreset());
+    expect(m.wordsWithSpaces).toBe(5);
+    expect(m.paragraphs).toBe(3);
+    expect(m.lines).toBe(3 + 4);
+    expect(m.charsWithoutSpaces).toBe("onetwothree".length + "fourfive".length);
+  });
+
+  it("counts each text on its own, so footnotes don't pair up across notes", () => {
+    // Each note has its own [^1]; neither is complete without its own definition.
+    expect(computeMetrics(texts("a[^1]", "[^1]: def"), defaultPreset()).footnotes).toBe(0);
+    expect(computeMetrics(texts("a[^1]\n\n[^1]: x", "b[^1]\n\n[^1]: y"), defaultPreset()).footnotes).toBe(2);
+  });
+
+  it("derives pages and reading time from the summed words", () => {
+    const m = computeMetrics(texts("a b c", "d e"), defaultPreset({ wordsPerPage: 4, readingWpm: 4 }));
+    expect(m.pages).toBe("1.3");
+    expect(m.readingTime).toBe("1.3");
+  });
+
+  it("matches a single-string count for one text", () => {
+    const text = "Hello [[World]] and [link](url).";
+    expect(computeMetrics(texts(text), defaultPreset())).toEqual(count(text));
+  });
+
+  it("adds embeds removed from a text to the Embeds metric only", () => {
+    const m = computeMetrics([{ text: "one two ![[image.png]]", hiddenEmbeds: 2 }], defaultPreset());
+    expect(m.embeds).toBe(3);
+    expect(m.wordsWithSpaces).toBe(3);
+  });
+});
+
 describe("metricRows", () => {
   it("returns rows only for enabled metrics, in display order", () => {
     const preset = defaultPreset(); // words + pages enabled by default
@@ -581,6 +616,27 @@ describe("extensions integration", () => {
     // …and the dependency does not appear among the displayed metric rows.
     expect(metricRows(onlyRatio, full.values, reg, full.ext).map((r) => r.key))
       .not.toContain("sentence-count");
+  });
+
+  it("sums extension metrics across texts and derives ratios from the sums", () => {
+    const reg = new ExtensionRegistry();
+    reg.set([
+      {
+        id: "sentence-count", storeName: "Sentence count", description: "", author: "t",
+        type: "metric", toggleLabel: "Sentences",
+        count: { mode: "split", source: "preprocessed", separator: "[.!?]+(?=\\s|$)" },
+      },
+      {
+        id: "words-per-sentence", storeName: "Words per sentence", description: "", author: "t",
+        type: "metric", toggleLabel: "Words per sentence",
+        count: { mode: "ratio", numerator: "wordsWithSpaces", denominator: "sentence-count", decimals: 1 },
+      },
+    ]);
+    const preset = defaultPreset({ extMetrics: { "sentence-count": true, "words-per-sentence": true } });
+    // 1 sentence of 1 word + 1 sentence of 5 words: 6 ÷ 2 = 3, not (1 + 5) summed.
+    const full = computeFull([{ text: "One." }, { text: "a b c d e." }], preset, reg);
+    expect(full.ext["sentence-count"]).toBe(2);
+    expect(full.ext["words-per-sentence"]).toBe(3);
   });
 
   it("metricRows lists enabled extension metrics after built-ins", () => {
