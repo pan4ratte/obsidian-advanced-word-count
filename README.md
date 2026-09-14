@@ -116,6 +116,10 @@ The official catalogue currently includes:
 | Pandoc generated footnotes | Counts Markdown footnotes combined with @citekey groups that will generate footnotes after Pandoc export of the note. Use if you export with a footnote citation style. |
 | Tables | Counts the number of complete Markdown tables (header + delimiter row) in a note. |
 | Tags | Counts the number of #tags in a note. |
+| Canvas cards | Counts the cards in a canvas: all of them, the selected ones, or the card being edited. |
+| Canvas connections | Counts the arrows in a canvas. For selected cards, counts the arrows leading into, out of and between them. |
+| Unconnected canvas cards | Counts the cards in a canvas that have no arrows leading into or out of them — ideas not yet linked to the rest. |
+| Canvas notes | Counts the distinct vault notes placed on a canvas as note cards. A note shown on several cards counts once. |
 
 **Advanced settings**
 
@@ -130,6 +134,8 @@ The official catalogue currently includes:
 | Ignore Dataview fields | When counting words and characters, excludes inline Dataview fields — [key:: value] and (key:: value). |
 | Ignore code | When counting words and characters, excludes block and inline code. |
 | Count Telegram emoji as one symbol | When counting words and characters, counts a custom Telegram emoji in the format [😢](tg://emoji?id=5983380877780980112) as one symbol. The extension provides support for the “Publish to Telegram” plugin emojis. |
+| Ignore canvas note cards | When counting a canvas, leaves out note cards, so the counts cover only the text written on the canvas itself. |
+| Count canvas group and arrow labels | When counting a canvas, also counts the text of group names and arrow labels. |
 
 **Presets**
 

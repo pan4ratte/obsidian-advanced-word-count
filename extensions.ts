@@ -1,5 +1,7 @@
 import type { Preset, WarnLevel } from "./metrics";
 import { METRIC_ORDER, defaultPreset, ruleLevel, ruleProgress } from "./metrics";
+import type { CanvasCardType, CanvasLabelType, CanvasOptions, CanvasScope } from "./canvas";
+import { CANVAS_CARD_TYPES, CANVAS_LABEL_TYPES, countCanvasCards } from "./canvas";
 
 // Built-in metric ids (e.g. "wordsWithSpaces", "pages"). They're always computed,
 // so they're valid ratio operands but must never appear in `dependencies` — there
@@ -11,7 +13,8 @@ const BUILTIN_METRIC_IDS: string[] = METRIC_ORDER;
 // An extension is a small, *declarative* JSON document that adds either a new
 // metric or a new advanced (word-count) setting to a preset. It carries no
 // executable code — a metric is a regex + a count mode, a setting is a regex
-// find/replace applied while text is preprocessed. This keeps extensions safe to
+// find/replace applied while text is preprocessed, or a choice of what a canvas
+// count takes in. This keeps extensions safe to
 // download, store and review (no remote-code execution), and serializable so they
 // can live in the plugin's data.json.
 //
@@ -37,6 +40,11 @@ export type ExtensionType = "metric" | "setting" | "preset";
  *                   plus any `extra` plain matches (footnotes)
  *  - ratio          a value derived from OTHER metrics: numerator / denominator
  *                   (pages = words / words-per-page, reading time = words / wpm)
+ *  - canvasCards    number of cards in the canvas being counted, optionally only
+ *                   some kinds, connected or not, or distinct notes/files/pages
+ *  - canvasConnections  number of arrows touching the cards being counted
+ * The two canvas modes count the canvas's structure rather than any text, so they
+ * are 0 outside a canvas.
  */
 export type CountMode =
   | "matches"
@@ -45,7 +53,9 @@ export type CountMode =
   | "matchedLength"
   | "split"
   | "intersect"
-  | "ratio";
+  | "ratio"
+  | "canvasCards"
+  | "canvasConnections";
 
 /**
  * A `ratio` operand: either a constant number, or the id of another metric whose
@@ -133,6 +143,11 @@ export interface CountSpec {
   numerator?: RatioOperand;   // metric id or constant
   denominator?: RatioOperand; // metric id or constant (0 → result is 0)
   decimals?: number;          // rounding, 0–6; default 1
+
+  // ── canvasCards ──────────────────────────────────────────────────────────────
+  cardTypes?: CanvasCardType[]; // kinds counted; default every kind but "group"
+  connected?: boolean;          // only cards with (true) / without (false) an arrow
+  distinct?: boolean;           // cards showing the same note, file or page count once
 }
 
 export interface MetricExtension extends ExtensionManifestBase {
@@ -154,6 +169,17 @@ export interface TransformSpec {
   stage?: TransformStage; // default "pre"
 }
 
+/**
+ * What a setting changes about a canvas count: card kinds left out of the text
+ * counts, and labels counted as text on top of the cards. It applies to the whole
+ * canvas and to selected cards — never to the card being edited, which is always
+ * counted as it is.
+ */
+export interface CanvasSettingSpec {
+  skipCards?: CanvasCardType[];
+  countLabels?: CanvasLabelType[];
+}
+
 export interface SettingExtension extends ExtensionManifestBase {
   type: "setting";
   // The label shown on the preset's connect toggle, the right-pane block and the
@@ -161,7 +187,9 @@ export interface SettingExtension extends ExtensionManifestBase {
   toggleLabel: string;
   hint?: string;
   defaultEnabled?: boolean;
-  transform: TransformSpec;
+  // A setting has a text transform, a canvas section, or both.
+  transform?: TransformSpec;
+  canvas?: CanvasSettingSpec;
 }
 
 /**
@@ -413,6 +441,9 @@ export function localize(
   return base;
 }
 
+const isCanvasMode = (mode: CountMode | undefined): boolean =>
+  mode === "canvasCards" || mode === "canvasConnections";
+
 /** Resolve a ratio operand: a constant number, or a metric id read from `values`. */
 function resolveOperand(op: RatioOperand | undefined, values: Record<string, number>): number {
   if (typeof op === "number") return op;
@@ -436,7 +467,22 @@ const show = (v: unknown): string => (typeof v === "string" ? v : JSON.stringify
 // An optional string field is valid when absent or a string.
 const optStr = (v: unknown): boolean => v === undefined || typeof v === "string";
 
-const COUNT_MODES = ["matches", "captureSum", "captureUnique", "matchedLength", "split", "intersect", "ratio"];
+const COUNT_MODES = [
+  "matches", "captureSum", "captureUnique", "matchedLength", "split", "intersect", "ratio",
+  "canvasCards", "canvasConnections",
+];
+
+/** Validate an optional array drawn from `allowed`. Returns an error, or null. */
+function checkChoices(label: string, v: unknown, allowed: readonly string[]): string | null {
+  if (v === undefined) return null;
+  if (!Array.isArray(v)) return `${label} must be an array`;
+  for (const item of v as unknown[]) {
+    if (typeof item !== "string" || allowed.indexOf(item) === -1) {
+      return `${label} must only contain ${allowed.map((a) => `"${a}"`).join(", ")} (got ${show(item)})`;
+    }
+  }
+  return null;
+}
 
 /** Validate a ratio operand (constant number or metric-id string). Error or null. */
 function checkOperand(label: string, v: unknown): string | null {
@@ -562,6 +608,13 @@ export function validateExtension(value: unknown): ValidationResult {
         e = checkSub(cs.extra, "count.extra");
         if (e) return fail(e);
       }
+    } else if (mode === "canvasCards") {
+      const e = checkChoices("count.cardTypes", cs.cardTypes, CANVAS_CARD_TYPES);
+      if (e) return fail(e);
+      if (cs.connected !== undefined && typeof cs.connected !== "boolean") return fail(`count.connected must be a boolean`);
+      if (cs.distinct !== undefined && typeof cs.distinct !== "boolean") return fail(`count.distinct must be a boolean`);
+    } else if (mode === "canvasConnections") {
+      // Nothing to configure.
     } else if (mode === "ratio") {
       let e = checkOperand("count.numerator", cs.numerator);
       if (e) return fail(e);
@@ -585,7 +638,21 @@ export function validateExtension(value: unknown): ValidationResult {
 
   if (o.type === "setting") {
     const tr = o.transform;
-    if (typeof tr !== "object" || tr === null) return fail(`setting extension needs a "transform" object`);
+    const cv = o.canvas;
+    if (tr === undefined && cv === undefined) return fail(`setting extension needs a "transform" or a "canvas" object`);
+    if (cv !== undefined) {
+      if (typeof cv !== "object" || cv === null || Array.isArray(cv)) return fail(`"canvas" must be an object`);
+      const c = cv as Record<string, unknown>;
+      const e = checkChoices("canvas.skipCards", c.skipCards, CANVAS_CARD_TYPES)
+        ?? checkChoices("canvas.countLabels", c.countLabels, CANVAS_LABEL_TYPES);
+      if (e) return fail(e);
+      const size = (v: unknown) => (Array.isArray(v) ? v.length : 0);
+      if (size(c.skipCards) + size(c.countLabels) === 0) {
+        return fail(`"canvas" needs a non-empty "skipCards" or "countLabels"`);
+      }
+      if (tr === undefined) return { ok: true, ext: value as SettingExtension };
+    }
+    if (typeof tr !== "object" || tr === null) return fail(`"transform" must be an object`);
     const ts = tr as Record<string, unknown>;
     if (typeof ts.pattern !== "string" || ts.pattern.length === 0) {
       return fail(`transform.pattern must be a non-empty string`);
@@ -726,12 +793,25 @@ export class ExtensionRegistry {
   applySettings(text: string, preset: Preset, stage: TransformStage): string {
     let s = text;
     for (const def of this.settingDefs.values()) {
-      if ((def.transform.stage || "pre") !== stage) continue;
+      const tr = def.transform;
+      if (!tr || (tr.stage || "pre") !== stage) continue;
       if (!this.settingEnabled(preset, def.id)) continue;
-      const re = this.compiled(def.transform.pattern, def.transform.flags, false);
-      if (re) s = s.replace(re, def.transform.replacement);
+      const re = this.compiled(tr.pattern, tr.flags, false);
+      if (re) s = s.replace(re, tr.replacement);
     }
     return s;
+  }
+
+  /** What the preset's enabled setting extensions change about a canvas count. */
+  canvasOptions(preset: Preset): CanvasOptions {
+    const skipCards = new Set<CanvasCardType>();
+    const labels = new Set<CanvasLabelType>();
+    for (const def of this.settingDefs.values()) {
+      if (!def.canvas || !this.settingEnabled(preset, def.id)) continue;
+      for (const type of def.canvas.skipCards || []) skipCards.add(type);
+      for (const label of def.canvas.countLabels || []) labels.add(label);
+    }
+    return { skipCards, labels };
   }
 
   /** The text a metric counts over, after its `strip` regions are removed. */
@@ -854,9 +934,28 @@ export class ExtensionRegistry {
     const required = this.requiredMetricIds(preset);
     const out: Record<string, number> = {};
     for (const def of this.metricDefs.values()) {
-      if (def.count.mode === "ratio") continue;
+      if (def.count.mode === "ratio" || isCanvasMode(def.count.mode)) continue;
       if (!this.metricEnabled(preset, def.id) && !required.has(def.id)) continue;
       out[def.id] = this.evalCount(def, raw, preprocessed);
+    }
+    return out;
+  }
+
+  /**
+   * Values for every enabled canvas metric extension — and any required as another
+   * metric's operand — counted once over the cards and arrows of a canvas count.
+   * Without a scope (a note rather than a canvas) each is 0.
+   */
+  computeCanvas(preset: Preset, scope?: CanvasScope): Record<string, number> {
+    const required = this.requiredMetricIds(preset);
+    const out: Record<string, number> = {};
+    for (const def of this.metricDefs.values()) {
+      const spec = def.count;
+      if (!isCanvasMode(spec.mode)) continue;
+      if (!this.metricEnabled(preset, def.id) && !required.has(def.id)) continue;
+      if (!scope) out[def.id] = 0;
+      else if (spec.mode === "canvasConnections") out[def.id] = scope.arrows.length;
+      else out[def.id] = countCanvasCards(scope, spec);
     }
     return out;
   }

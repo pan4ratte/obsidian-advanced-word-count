@@ -1,0 +1,25 @@
+{
+  "id": "canvas-count-labels",
+  "storeName": "Count canvas group and arrow labels",
+  "description": "When counting a canvas, also counts the text of group names and arrow labels.",
+  "author": "pan4ratte",
+  "updated": "2026-09-14",
+  "type": "setting",
+  "toggleLabel": "Count group and arrow labels",
+  "hint": "Off: group names and arrow labels aren't counted\nOn: they are counted as text",
+  "defaultEnabled": false,
+  "i18n": {
+    "ru": {
+      "storeName": "Считать названия групп и подписи стрелок в холсте",
+      "description": "При подсчёте в холсте также учитывает текст названий групп и подписей стрелок.",
+      "toggleLabel": "Считать названия групп и подписи стрелок",
+      "hint": "Выкл.: названия групп и подписи стрелок не подсчитываются\nВкл.: они подсчитываются как текст"
+    }
+  },
+  "canvas": {
+    "countLabels": [
+      "group",
+      "arrow"
+    ]
+  }
+}

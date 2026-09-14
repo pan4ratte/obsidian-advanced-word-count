@@ -1,11 +1,15 @@
 import { describe, it, expect } from "vitest";
 import type { App, MarkdownFileInfo } from "obsidian";
 import {
-  canvasCards,
   canvasCardEditor,
-  canvasNodes,
+  canvasData,
+  canvasScope,
   canvasSelection,
+  canvasTextSources,
+  countCanvasCards,
   isCanvasView,
+  CanvasCardType,
+  CanvasLabelType,
   CanvasViewInternal,
 } from "../canvas";
 import { EmbeddedNotes } from "../embeds";
@@ -23,35 +27,50 @@ const view = (
   type = "canvas",
 ): CanvasViewInternal => ({ canvas, getViewType: () => type, getViewData: () => viewData }) as unknown as CanvasViewInternal;
 
-describe("canvasCards", () => {
-  it("takes text cards and note cards, leaving out the rest", () => {
+const arrow = (id: string, from: string, to: string, label?: string) => ({ id, fromNode: from, toNode: to, label });
+
+// Each card in a scope as "type:id", for compact comparisons.
+const ids = (scope: ReturnType<typeof canvasScope>) => scope.cards.map((c) => `${c.type}:${c.id}`);
+
+describe("canvasScope", () => {
+  it("reads every kind of card, telling note cards from other file cards", () => {
     const nodes = [
       text("a", "Hello"),
       note("b", "Notes/B.md", "#Heading"),
-      note("c", "image.png"),
+      note("c", "image.png", "#ignored"),
       { id: "d", type: "link", url: "https://example.com" },
       { id: "e", type: "group", label: "Group label" },
     ];
-    expect(canvasCards(nodes)).toEqual([
-      { type: "text", text: "Hello" },
-      { type: "file", file: "Notes/B.md", subpath: "#Heading" },
-      { type: "file", file: "image.png", subpath: "" },
+    const scope = canvasScope(nodes, []);
+    expect(scope.cards).toEqual([
+      { id: "a", type: "text", text: "Hello", target: "", subpath: "", connected: false },
+      { id: "b", type: "note", text: "", target: "Notes/B.md", subpath: "#Heading", connected: false },
+      { id: "c", type: "file", text: "", target: "image.png", subpath: "", connected: false },
+      { id: "d", type: "link", text: "", target: "https://example.com", subpath: "", connected: false },
+      { id: "e", type: "group", text: "Group label", target: "", subpath: "", connected: false },
     ]);
   });
 
   it("tolerates malformed canvas data", () => {
-    expect(canvasCards(undefined)).toEqual([]);
-    expect(canvasCards({ nodes: [] })).toEqual([]);
-    expect(canvasCards([null, 3, { type: "text", text: "no id" }, { id: "x", type: "text" }, note("y", "")])).toEqual([]);
+    expect(canvasScope(undefined, undefined)).toEqual({ cards: [], arrows: [] });
+    const nodes = [null, 3, { type: "text", text: "no id" }, { id: "x", type: "text" }, note("y", ""), { id: "z", type: "shape" }];
+    expect(ids(canvasScope(nodes, [null, { fromNode: "x" }]))).toEqual(["text:x"]);
   });
 
-  it("takes only the selected cards when given a selection", () => {
-    const nodes = [text("a", "one"), text("b", "two"), text("c", "three")];
-    expect(canvasCards(nodes, new Set(["a", "c"]))).toEqual([
-      { type: "text", text: "one" },
-      { type: "text", text: "three" },
-    ]);
-    expect(canvasCards(nodes, new Set())).toEqual([]);
+  it("marks cards with an arrow anywhere in the canvas as connected", () => {
+    const nodes = [text("a", "1"), text("b", "2"), text("c", "3")];
+    const scope = canvasScope(nodes, [arrow("e1", "a", "b")], new Set(["a", "c"]));
+    expect(scope.cards.map((c) => [c.id, c.connected])).toEqual([["a", true], ["c", false]]);
+  });
+
+  it("takes only the selected cards, and the arrows touching them", () => {
+    const nodes = [text("a", "one"), text("b", "two"), text("c", "three"), text("d", "four")];
+    const edges = [arrow("ab", "a", "b"), arrow("bc", "b", "c"), arrow("cd", "c", "d")];
+    const scope = canvasScope(nodes, edges, new Set(["a", "b"]));
+    expect(ids(scope)).toEqual(["text:a", "text:b"]);
+    expect(scope.arrows.map((a) => `${a.from}${a.to}`)).toEqual(["ab", "bc"]);
+    expect(canvasScope(nodes, edges).arrows).toHaveLength(3);
+    expect(canvasScope(nodes, edges, new Set())).toEqual({ cards: [], arrows: [] });
   });
 
   it("lets a selected group stand for the cards wholly inside it, each once", () => {
@@ -63,8 +82,85 @@ describe("canvasCards", () => {
       text("overlapping", "c", { x: 450, y: 450 }),
       text("outside", "d", { x: 900, y: 900 }),
     ];
-    expect(canvasCards(nodes, new Set(["g1", "g2"])).map((c) => c.type === "text" && c.text)).toEqual(["a", "b"]);
-    expect(canvasCards(nodes, new Set(["g2", "inside-g1"])).map((c) => c.type === "text" && c.text)).toEqual(["a", "b"]);
+    expect(ids(canvasScope(nodes, [], new Set(["g1", "g2"]))))
+      .toEqual(["group:g1", "group:g2", "text:inside-both", "text:inside-g1"]);
+    expect(ids(canvasScope(nodes, [], new Set(["g2", "inside-g1"]))))
+      .toEqual(["group:g2", "text:inside-both", "text:inside-g1"]);
+  });
+});
+
+describe("canvasTextSources", () => {
+  const nodes = [
+    text("a", "Hello"),
+    text("empty", ""),
+    note("b", "B.md", "#Heading"),
+    note("c", "image.png"),
+    { id: "d", type: "link", url: "https://example.com" },
+    { id: "g", type: "group", label: "Chapter one" },
+  ];
+  const edges = [arrow("e1", "a", "b", "because"), arrow("e2", "a", "d")];
+  const scope = canvasScope(nodes, edges);
+  const options = (skipCards: CanvasCardType[], labels: CanvasLabelType[]) =>
+    ({ skipCards: new Set(skipCards), labels: new Set(labels) });
+
+  it("counts text cards and note cards, leaving out the rest", () => {
+    expect(canvasTextSources(scope, "Board.canvas")).toEqual([
+      { text: "Hello", path: "Board.canvas" },
+      { file: "B.md", subpath: "#Heading" },
+    ]);
+  });
+
+  it("leaves out the card kinds a setting skips", () => {
+    expect(canvasTextSources(scope, "Board.canvas", options(["note"], []))).toEqual([
+      { text: "Hello", path: "Board.canvas" },
+    ]);
+  });
+
+  it("adds group and arrow labels when a setting counts them", () => {
+    expect(canvasTextSources(scope, "Board.canvas", options([], ["group", "arrow"]))).toEqual([
+      { text: "Hello", path: "Board.canvas" },
+      { file: "B.md", subpath: "#Heading" },
+      { text: "Chapter one", path: "Board.canvas" },
+      { text: "because", path: "Board.canvas" },
+    ]);
+    // Only the labels of the arrows in scope.
+    const selected = canvasScope(nodes, edges, new Set(["d"]));
+    expect(canvasTextSources(selected, "Board.canvas", options([], ["arrow"]))).toEqual([]);
+  });
+});
+
+describe("countCanvasCards", () => {
+  const nodes = [
+    text("a", "1"),
+    text("b", "2"),
+    note("n1", "A.md"),
+    note("n2", "A.md", "#Heading"),
+    note("n3", "B.md"),
+    note("img", "image.png"),
+    { id: "l", type: "link", url: "https://example.com" },
+    { id: "g", type: "group", label: "Group" },
+  ];
+  const scope = canvasScope(nodes, [arrow("e", "a", "n1")]);
+
+  it("counts every card but groups by default", () => {
+    expect(countCanvasCards(scope)).toBe(7);
+    expect(countCanvasCards(scope, { cardTypes: [] })).toBe(7);
+  });
+
+  it("counts only the given kinds", () => {
+    expect(countCanvasCards(scope, { cardTypes: ["note"] })).toBe(3);
+    expect(countCanvasCards(scope, { cardTypes: ["group", "link"] })).toBe(2);
+  });
+
+  it("counts connected or unconnected cards", () => {
+    expect(countCanvasCards(scope, { connected: true })).toBe(2);
+    expect(countCanvasCards(scope, { connected: false })).toBe(5);
+  });
+
+  it("counts the cards showing the same note once when distinct", () => {
+    expect(countCanvasCards(scope, { cardTypes: ["note"], distinct: true })).toBe(2);
+    // Text cards have nothing to share, so each stays its own.
+    expect(countCanvasCards(scope, { cardTypes: ["text"], distinct: true })).toBe(2);
   });
 });
 
@@ -82,11 +178,13 @@ describe("canvas view helpers", () => {
     expect(canvasSelection(view(undefined))).toEqual([]);
   });
 
-  it("reads the cards from the canvas, falling back to the view data", () => {
+  it("reads the cards and arrows from the canvas, falling back to the view data", () => {
     const nodes = [text("a", "live")];
-    expect(canvasNodes(view({ data: { nodes } }, '{"nodes":[]}'))).toBe(nodes);
-    expect(canvasNodes(view(undefined, JSON.stringify({ nodes: [text("b", "saved")] })))).toEqual([text("b", "saved")]);
-    expect(canvasNodes(view(undefined, "not json"))).toEqual([]);
+    const edges = [arrow("e", "a", "a")];
+    expect(canvasData(view({ data: { nodes, edges } }, '{"nodes":[]}'))).toEqual({ nodes, edges });
+    const saved = { nodes: [text("b", "saved")], edges: [] };
+    expect(canvasData(view(undefined, JSON.stringify(saved)))).toEqual(saved);
+    expect(canvasData(view(undefined, "not json"))).toEqual({ nodes: [], edges: [] });
   });
 
   it("finds the editor of the card being edited, not of one merely selected", () => {

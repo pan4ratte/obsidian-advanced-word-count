@@ -1,6 +1,7 @@
 import { App, EventRef, Workspace } from "obsidian";
 import { t } from "./locales";
 import type { ExtensionRegistry } from "./extensions";
+import type { CanvasScope } from "./canvas";
 
 export const VIEW_TYPE_METRICS = "advanced-word-count-view";
 
@@ -553,8 +554,16 @@ function countText(raw: string, preset: Preset, registry?: ExtensionRegistry): {
  * text at a time and the counts summed, so each text is counted exactly as it
  * would be on its own. The derived metrics — pages, reading time and ratio
  * extensions — are then worked out from the sums rather than summed themselves.
+ *
+ * `canvas` is the cards and arrows the texts come from when counting a canvas;
+ * canvas metric extensions count those once, and are 0 without it.
  */
-export function computeFull(raw: string | CountedText[], preset: Preset, registry?: ExtensionRegistry): FullMetrics {
+export function computeFull(
+  raw: string | CountedText[],
+  preset: Preset,
+  registry?: ExtensionRegistry,
+  canvas?: CanvasScope,
+): FullMetrics {
   const texts: CountedText[] = typeof raw === "string" ? [{ text: raw }] : raw;
   const [first, ...rest] = (texts.length > 0 ? texts : [{ text: "" }]).map(({ text, hiddenEmbeds = 0 }) => {
     const one = countText(text, preset, registry);
@@ -573,6 +582,8 @@ export function computeFull(raw: string | CountedText[], preset: Preset, registr
     pages: (c.wordsWithSpaces / preset.wordsPerPage).toFixed(1),
     readingTime: computeReadingTime(c.wordsWithSpaces, preset.readingWpm),
   };
+
+  if (registry) Object.assign(ext, registry.computeCanvas(preset, canvas));
 
   // Second pass: ratio metrics derive from other metrics, so they run once the
   // built-in values and the text-based extension values are known.

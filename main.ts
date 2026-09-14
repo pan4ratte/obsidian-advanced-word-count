@@ -20,12 +20,14 @@ import { ExtensionManager } from "./extension-manager";
 import { EmbeddedNotes, CountSource } from "./embeds";
 import {
   VIEW_TYPE_CANVAS,
+  CanvasScope,
   CanvasViewInternal,
   isCanvasView,
-  canvasCards,
   canvasCardEditor,
-  canvasNodes,
+  canvasData,
+  canvasScope,
   canvasSelection,
+  canvasTextSources,
 } from "./canvas";
 import { MetricsView, WordCountSettingTab } from "./gui";
 
@@ -302,12 +304,13 @@ export default class WordCountPlugin extends Plugin {
     const canvas = isCanvasView(view) ? view : null;
 
     let sources: CountSource[] | null = null;
+    let scope: CanvasScope | undefined;
     if (view instanceof MarkdownView) {
       const selection = view.editor.getSelection();
       // Embeds inside a selection are summed in too, like the rest of the note.
       sources = [{ text: selection.length > 0 ? selection : view.getViewData(), path: view.file?.path ?? "" }];
-    } else if (canvas) {
-      sources = this.canvasSources(canvas);
+    } else if (canvas && preset) {
+      ({ sources, scope } = this.canvasCount(canvas, preset));
     }
 
     if (preset && sources) {
@@ -317,7 +320,7 @@ export default class WordCountPlugin extends Plugin {
       const texts = followEmbeds || canvas
         ? this.embeddedNotes.count(sources, followEmbeds)
         : sources.map((source) => ({ text: "text" in source ? source.text : "" }));
-      const full = computeFull(texts, preset, this.extensions);
+      const full = computeFull(texts, preset, this.extensions, scope);
       this.lastMetrics = full.values;
       this.lastExtMetrics = full.ext;
     } else if (
@@ -336,27 +339,30 @@ export default class WordCountPlugin extends Plugin {
 
   /**
    * What to count in a canvas: the card being edited, or the text selected in it;
-   * otherwise the selected cards; otherwise every card.
+   * otherwise the selected cards; otherwise every card. Returns the texts to count
+   * and the cards and arrows they come from, for the canvas metric extensions.
    */
-  private canvasSources(view: CanvasViewInternal): CountSource[] {
+  private canvasCount(view: CanvasViewInternal, preset: Preset): { sources: CountSource[]; scope: CanvasScope } {
     const canvasPath = view.file?.path ?? "";
-    const nodes = canvasNodes(view);
+    const { nodes, edges } = canvasData(view);
     const selected = new Set(canvasSelection(view));
+    const scope = canvasScope(nodes, edges, selected.size > 0 ? selected : undefined);
 
     const edited = canvasCardEditor(this.app.workspace.activeEditor, view);
     if (edited) {
       // A note card's links resolve from its note, a text card's from the canvas.
       const path = edited.info.file?.path ?? canvasPath;
       const selection = edited.editor.getSelection();
-      if (selection.length > 0) return [{ text: selection, path }];
+      if (selection.length > 0) return { sources: [{ text: selection, path }], scope };
       // A heading or block card edits the note but shows only that section, so it
       // is counted like a selected card: the section, as last saved.
-      const [card] = canvasCards(nodes, selected);
-      if (!(card?.type === "file" && card.subpath)) return [{ text: edited.editor.getValue(), path }];
+      const [card] = scope.cards;
+      if (!(card?.type === "note" && card.subpath)) return { sources: [{ text: edited.editor.getValue(), path }], scope };
+      // The card being edited is counted whatever the canvas settings leave out.
+      return { sources: canvasTextSources(scope, canvasPath), scope };
     }
 
-    return canvasCards(nodes, selected.size > 0 ? selected : undefined).map((card) =>
-      card.type === "text" ? { text: card.text, path: canvasPath } : card);
+    return { sources: canvasTextSources(scope, canvasPath, this.extensions.canvasOptions(preset)), scope };
   }
 
   /**

@@ -16,7 +16,7 @@ import {
   PresetExportMeta,
   SettingExtension,
 } from "../extensions";
-import { defaultPreset, Preset } from "../metrics";
+import { computeFull, defaultPreset, Preset } from "../metrics";
 
 // ── Fixtures ────────────────────────────────────────────────────────────────────
 
@@ -613,5 +613,95 @@ describe("localization", () => {
 
     reg.setLocale(["en"]);
     expect(reg.metricRows(preset, { headings: 3 })[0].label).toBe("Headings");
+  });
+});
+
+describe("canvas extensions", () => {
+  const cardsMetric = (count: MetricExtension["count"], id = "canvas-cards"): MetricExtension =>
+    metricExt({ id, toggleLabel: "Cards", count });
+  const canvasSetting = (canvas: SettingExtension["canvas"], id = "canvas-setting"): SettingExtension =>
+    ({ id, storeName: "Canvas setting", description: "d", author: "tester", type: "setting", toggleLabel: "Setting", canvas });
+  const scope = {
+    cards: [
+      { id: "a", type: "text" as const, text: "one", target: "", subpath: "", connected: true },
+      { id: "b", type: "text" as const, text: "two", target: "", subpath: "", connected: true },
+      { id: "n", type: "note" as const, text: "", target: "A.md", subpath: "", connected: false },
+      { id: "g", type: "group" as const, text: "Group", target: "", subpath: "", connected: false },
+    ],
+    arrows: [{ from: "a", to: "b", label: "" }],
+  };
+  const enable = (ids: string[], kind: "extMetrics" | "extSettings" = "extMetrics"): Preset => {
+    const p = defaultPreset();
+    p[kind] = Object.fromEntries(ids.map((id) => [id, true]));
+    return p;
+  };
+
+  it("validates the canvas count modes and their options", () => {
+    expect(validateExtension(cardsMetric({ mode: "canvasCards" })).ok).toBe(true);
+    expect(validateExtension(cardsMetric({ mode: "canvasConnections" })).ok).toBe(true);
+    expect(validateExtension(cardsMetric({ mode: "canvasCards", cardTypes: ["note", "group"], connected: false, distinct: true })).ok).toBe(true);
+    const bad = (count: unknown) => {
+      const r = validateExtension({ ...cardsMetric({ mode: "canvasCards" }), count });
+      return r.ok ? "" : r.error;
+    };
+    expect(bad({ mode: "canvasCards", cardTypes: ["shape"] })).toMatch(/count.cardTypes/);
+    expect(bad({ mode: "canvasCards", cardTypes: "note" })).toMatch(/count.cardTypes must be an array/);
+    expect(bad({ mode: "canvasCards", connected: "no" })).toMatch(/count.connected/);
+    expect(bad({ mode: "canvasCards", distinct: 1 })).toMatch(/count.distinct/);
+  });
+
+  it("validates canvas settings, with or without a transform", () => {
+    expect(validateExtension(canvasSetting({ skipCards: ["note"] })).ok).toBe(true);
+    expect(validateExtension(canvasSetting({ countLabels: ["group", "arrow"] })).ok).toBe(true);
+    expect(validateExtension({ ...canvasSetting({ skipCards: ["note"] }), transform: { pattern: "x", replacement: "" } }).ok).toBe(true);
+    const bad = (canvas: unknown) => {
+      const r = validateExtension({ ...canvasSetting(undefined), canvas });
+      return r.ok ? "" : r.error;
+    };
+    expect(bad(undefined)).toMatch(/needs a "transform" or a "canvas"/);
+    expect(bad([])).toMatch(/"canvas" must be an object/);
+    expect(bad({})).toMatch(/non-empty/);
+    expect(bad({ skipCards: [] })).toMatch(/non-empty/);
+    expect(bad({ skipCards: ["shape"] })).toMatch(/canvas.skipCards/);
+    expect(bad({ countLabels: ["card"] })).toMatch(/canvas.countLabels/);
+  });
+
+  it("counts canvas metrics over the scope, and 0 outside a canvas", () => {
+    const reg = new ExtensionRegistry();
+    reg.set([
+      cardsMetric({ mode: "canvasCards" }),
+      cardsMetric({ mode: "canvasCards", connected: false }, "unconnected"),
+      cardsMetric({ mode: "canvasConnections" }, "connections"),
+    ]);
+    const preset = enable(["canvas-cards", "unconnected", "connections"]);
+    expect(reg.computeCanvas(preset, scope)).toEqual({ "canvas-cards": 3, unconnected: 1, connections: 1 });
+    expect(reg.computeCanvas(preset)).toEqual({ "canvas-cards": 0, unconnected: 0, connections: 0 });
+    // Disabled metrics aren't counted, and text counting leaves canvas modes alone.
+    expect(reg.computeCanvas(enable(["connections"]), scope)).toEqual({ connections: 1 });
+    expect(reg.computeMetrics(preset, "text", "text")).toEqual({});
+  });
+
+  it("feeds canvas metrics into ratios, connected or merely installed", () => {
+    const reg = new ExtensionRegistry();
+    reg.set([
+      cardsMetric({ mode: "canvasCards" }),
+      metricExt({ id: "words-per-card", toggleLabel: "Words per card", count: { mode: "ratio", numerator: "wordsWithSpaces", denominator: "canvas-cards" } }),
+    ]);
+    const full = computeFull("one two three four five six", enable(["words-per-card"]), reg, scope);
+    expect(full.ext).toEqual({ "canvas-cards": 3, "words-per-card": 2 });
+  });
+
+  it("merges the enabled canvas settings, ignoring them in text transforms", () => {
+    const reg = new ExtensionRegistry();
+    reg.set([
+      canvasSetting({ skipCards: ["note"] }, "skip-notes"),
+      canvasSetting({ skipCards: ["text"], countLabels: ["arrow"] }, "labels"),
+    ]);
+    const both = reg.canvasOptions(enable(["skip-notes", "labels"], "extSettings"));
+    expect([...both.skipCards]).toEqual(["note", "text"]);
+    expect([...both.labels]).toEqual(["arrow"]);
+    const none = reg.canvasOptions(defaultPreset());
+    expect([...none.skipCards, ...none.labels]).toEqual([]);
+    expect(reg.applySettings("text", enable(["skip-notes"], "extSettings"), "pre")).toBe("text");
   });
 });

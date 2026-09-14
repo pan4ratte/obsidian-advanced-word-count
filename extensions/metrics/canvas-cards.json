@@ -1,0 +1,24 @@
+{
+  "id": "canvas-cards",
+  "storeName": "Canvas cards",
+  "description": "Counts the cards in a canvas: all of them, the selected ones, or the card being edited.",
+  "author": "pan4ratte",
+  "updated": "2026-09-14",
+  "type": "metric",
+  "toggleLabel": "Cards",
+  "hint": "Text, note, file and web page cards. Groups aren't counted as cards; a selected group counts the cards inside it",
+  "statusBarLabel": "Cards",
+  "defaultEnabled": false,
+  "i18n": {
+    "ru": {
+      "storeName": "Карточки холста",
+      "description": "Считает карточки в холсте: все, выделенные или редактируемую.",
+      "toggleLabel": "Карточки",
+      "hint": "Текстовые карточки, карточки заметок, файлов и веб-страниц. Группы не считаются карточками; выделенная группа учитывает карточки внутри неё",
+      "statusBarLabel": "Карточек"
+    }
+  },
+  "count": {
+    "mode": "canvasCards"
+  }
+}

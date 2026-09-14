@@ -1,0 +1,28 @@
+{
+  "id": "canvas-notes",
+  "storeName": "Canvas notes",
+  "description": "Counts the distinct vault notes placed on a canvas as note cards. A note shown on several cards counts once.",
+  "author": "pan4ratte",
+  "updated": "2026-09-14",
+  "type": "metric",
+  "toggleLabel": "Canvas notes",
+  "hint": "Different notes on the canvas's note cards; a note shown on several cards counts once",
+  "statusBarLabel": "Notes",
+  "defaultEnabled": false,
+  "i18n": {
+    "ru": {
+      "storeName": "Заметки на холсте",
+      "description": "Считает разные заметки хранилища, добавленные на холст как карточки. Заметка на нескольких карточках считается один раз.",
+      "toggleLabel": "Заметки на холсте",
+      "hint": "Разные заметки на карточках холста; заметка на нескольких карточках считается один раз",
+      "statusBarLabel": "Заметок"
+    }
+  },
+  "count": {
+    "mode": "canvasCards",
+    "cardTypes": [
+      "note"
+    ],
+    "distinct": true
+  }
+}

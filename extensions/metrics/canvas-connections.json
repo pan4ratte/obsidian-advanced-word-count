@@ -1,0 +1,24 @@
+{
+  "id": "canvas-connections",
+  "storeName": "Canvas connections",
+  "description": "Counts the arrows in a canvas. For selected cards, counts the arrows leading into, out of and between them.",
+  "author": "pan4ratte",
+  "updated": "2026-09-14",
+  "type": "metric",
+  "toggleLabel": "Connections",
+  "hint": "Arrows between cards. For selected cards or the card being edited, the arrows touching them",
+  "statusBarLabel": "Connections",
+  "defaultEnabled": false,
+  "i18n": {
+    "ru": {
+      "storeName": "Связи холста",
+      "description": "Считает стрелки в холсте. Для выделенных карточек — стрелки, ведущие к ним, от них и между ними.",
+      "toggleLabel": "Связи",
+      "hint": "Стрелки между карточками. Для выделенных или редактируемой карточки — стрелки, которые их касаются",
+      "statusBarLabel": "Связей"
+    }
+  },
+  "count": {
+    "mode": "canvasConnections"
+  }
+}

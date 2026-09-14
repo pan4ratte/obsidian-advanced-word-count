@@ -18,9 +18,11 @@ folder, then fetches and validates each extension file on demand.
 ## What you can build
 
 - **A metric** (`type: "metric"`) — a counted number shown in the status bar / right
-  pane (e.g. sentences, headings, distinct citekeys, a ratio of two other metrics).
+  pane (e.g. sentences, headings, distinct citekeys, a ratio of two other metrics,
+  the cards or arrows in a canvas).
 - **A setting** (`type: "setting"`) — an advanced toggle that transforms the text
-  before word/character counting (e.g. "ignore highlights", "ignore math").
+  before word/character counting (e.g. "ignore highlights", "ignore math"), or
+  changes what a canvas count takes in (e.g. "ignore canvas note cards").
 - **A preset** (`type: "preset"`) — a ready-made preset bundling toggle states,
   advanced settings, warning/goal rules and the metric/setting extensions it uses.
   Installing it adds the preset and downloads those extensions automatically. The
@@ -167,6 +169,8 @@ Each `mode` maps to an operation the plugin's own counters use:
 | `split`         | number of non-empty segments after splitting       | `separator`, `separatorFlags?`                 |
 | `intersect`     | keys (group 1) present in **both** patterns, plus any `extra` plain matches | `primary`, `secondary`, `extra?` (each `{ pattern, flags? }`) |
 | `ratio`         | `numerator ÷ denominator`, derived from **other metrics** | `numerator`, `denominator`, `decimals?` |
+| `canvasCards`   | cards in the canvas being counted ([canvas metrics](#canvas-metrics)) | `cardTypes?`, `connected?`, `distinct?` |
+| `canvasConnections` | arrows touching the cards being counted ([canvas metrics](#canvas-metrics)) | — |
 
 - `pattern` is compiled with the global flag forced on.
 - `flags` is the subset `g i m s u`.
@@ -237,6 +241,38 @@ result `0`. `decimals` (0–6, default 1) controls rounding.
 > [`dependencies`](#dependencies) so it's installed automatically. Built-in operands
 > are always available. A `ratio` can't reference another `ratio`.
 
+#### Canvas metrics
+
+The two canvas modes count a canvas's structure instead of text, so they ignore
+`source` and `strip`, and are always `0` in a regular note. They count within the
+same scope as the other counters: the whole canvas, the selected cards (a selected
+group stands for the cards inside it), or the card being edited.
+
+`canvasCards` counts cards. Its optional fields:
+
+| Field       | Notes |
+| ----------- | ----- |
+| `cardTypes` | Kinds of card to count, any of `"text"`, `"note"` (a file card showing a Markdown note), `"file"` (any other file card — an image, a PDF, another canvas), `"link"` (a web page) and `"group"`. Default: every kind but `"group"` |
+| `connected` | `true` counts only cards with at least one arrow, `false` only cards with none. An arrow to a card outside the selection still makes a card connected |
+| `distinct`  | `true` counts the cards showing the same note, file or web page once |
+
+`canvasConnections` counts the arrows touching the cards in scope: every arrow of the
+whole canvas, or the ones leading into, out of and between the selected cards.
+
+A canvas metric works as a `ratio` operand like any other metric.
+
+Example — `canvas-notes.json` (distinct notes placed on a canvas):
+
+```json
+{
+  "id": "canvas-notes",
+  "storeName": "Canvas notes",
+  "type": "metric",
+  "toggleLabel": "Canvas notes",
+  "count": { "mode": "canvasCards", "cardTypes": ["note"], "distinct": true }
+}
+```
+
 ### Setting extensions (`type: "setting"`)
 
 Adds an advanced word-count toggle that transforms the text before counting (just
@@ -267,6 +303,32 @@ Example — `ignore-highlights.json`:
   "type": "setting",
   "toggleLabel": "Ignore highlights",
   "transform": { "pattern": "==[^=]+==", "flags": "g", "replacement": "" }
+}
+```
+
+#### Canvas settings
+
+Instead of (or as well as) a `transform`, a setting can carry a `canvas` object that
+changes what a canvas count takes in. It applies to the whole canvas and to selected
+cards, never to the card being edited, and it affects every text-based metric (words,
+characters, links, …) — the canvas metrics above still count every card.
+
+| Field         | Notes |
+| ------------- | ----- |
+| `skipCards`   | Kinds of card left out of the counts: any of `"text"`, `"note"`, `"file"`, `"link"`, `"group"` |
+| `countLabels` | Labels counted as text on top of the cards: `"group"` (group names) and/or `"arrow"` (arrow labels) |
+
+At least one of the two must be a non-empty array.
+
+Example — `canvas-ignore-note-cards.json`:
+
+```json
+{
+  "id": "canvas-ignore-note-cards",
+  "storeName": "Ignore canvas note cards",
+  "type": "setting",
+  "toggleLabel": "Ignore canvas note cards",
+  "canvas": { "skipCards": ["note"] }
 }
 ```
 
@@ -410,7 +472,7 @@ catastrophic backtracking — they run against whole notes on every keystroke.
 validation gate the PR must pass. It checks that:
 
 - every file in the type subfolders validates (well-formed JSON + a sound
-  `count`/`transform` + safe regexes),
+  `count`/`transform`/`canvas` + safe regexes),
 - each `index.json` entry has a matching file (at its `path`) with the same `id`
   and `type`,
 - every file is listed in `index.json`, and

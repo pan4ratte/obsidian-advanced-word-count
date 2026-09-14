@@ -6,6 +6,15 @@
 
 * **Canvas support.** The counters now work in Obsidian Canvas too. By default they show the total for the whole canvas: the text of every text card plus every note card (a heading or block card counts just that section). Select some cards to count only those — a selected group counts the cards inside it — and start editing a card to count just that card, or the text selected in it. Images, web pages, group names and arrow labels aren't counted. With "Count embedded notes" on, notes embedded in cards are counted as well.
 
+### New community extensions
+
+* **New metric: Canvas cards.** Counts the cards in a canvas — all of them, the selected ones, or the card being edited. Groups aren't counted as cards.
+* **New metric: Canvas connections.** Counts the arrows in a canvas. For selected cards, counts the arrows leading into, out of and between them.
+* **New metric: Unconnected canvas cards.** Counts the cards that have no arrows at all — handy for spotting ideas in a mind map you haven't linked to the rest yet.
+* **New metric: Canvas notes.** Counts the distinct vault notes placed on a canvas as note cards; a note shown on several cards counts once.
+* **New setting: Ignore canvas note cards.** Leaves note cards out of a canvas's counts, so they cover only the text written on the canvas itself. A card you're editing is still counted.
+* **New setting: Count canvas group and arrow labels.** Counts the text of group names and arrow labels too, for argument maps and diagrams where that text is part of what you wrote.
+
 ## 4.5.0
 
 ### New features

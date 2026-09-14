@@ -1,0 +1,25 @@
+{
+  "id": "canvas-unconnected-cards",
+  "storeName": "Unconnected canvas cards",
+  "description": "Counts the cards in a canvas that have no arrows leading into or out of them — ideas not yet linked to the rest.",
+  "author": "pan4ratte",
+  "updated": "2026-09-14",
+  "type": "metric",
+  "toggleLabel": "Unconnected cards",
+  "hint": "Cards without any arrow. A card with an arrow to an unselected card still counts as connected",
+  "statusBarLabel": "Unconnected",
+  "defaultEnabled": false,
+  "i18n": {
+    "ru": {
+      "storeName": "Несвязанные карточки холста",
+      "description": "Считает карточки холста без входящих и исходящих стрелок — идеи, ещё не связанные с остальными.",
+      "toggleLabel": "Несвязанные карточки",
+      "hint": "Карточки без единой стрелки. Карточка со стрелкой к невыделенной карточке всё равно считается связанной",
+      "statusBarLabel": "Несвязанных"
+    }
+  },
+  "count": {
+    "mode": "canvasCards",
+    "connected": false
+  }
+}

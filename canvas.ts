@@ -1,4 +1,5 @@
 import type { Editor, MarkdownFileInfo, TextFileView } from "obsidian";
+import type { CountSource } from "./embeds";
 
 // ── Canvas ──────────────────────────────────────────────────────────────────────
 //
@@ -6,76 +7,174 @@ import type { Editor, MarkdownFileInfo, TextFileView } from "obsidian";
 // the card being edited (or the text selected in it), the selected cards, or the
 // whole canvas. Text cards count their text; note cards count the note, or just
 // the heading or block the card shows. Other cards — images, PDFs, web pages,
-// nested canvases — hold no text to count, and neither do group or arrow labels.
+// nested canvases — hold no text to count, and group and arrow labels are only
+// counted when a setting extension asks for them (see CanvasOptions).
+//
+// The cards and arrows being counted make up the count's scope, which canvas
+// metric extensions (cards, connections, …) count in place of text.
 
 export const VIEW_TYPE_CANVAS = "canvas";
 
-/** A card with something to count: a text card's text, or a note card's note. */
-export type CanvasCard =
-  | { type: "text"; text: string }
-  | { type: "file"; file: string; subpath: string };
+/**
+ * The kinds of card in a canvas. A file card is a "note" when it shows a Markdown
+ * note and a "file" for anything else (an image, a PDF, another canvas).
+ */
+export type CanvasCardType = "text" | "note" | "file" | "link" | "group";
+export const CANVAS_CARD_TYPES: CanvasCardType[] = ["text", "note", "file", "link", "group"];
 
-interface CanvasNodeLike {
+/** The labels a canvas can carry besides its cards' content. */
+export type CanvasLabelType = "group" | "arrow";
+export const CANVAS_LABEL_TYPES: CanvasLabelType[] = ["group", "arrow"];
+
+export interface CanvasCard {
   id: string;
-  type?: unknown;
-  text?: unknown;
-  file?: unknown;
-  subpath?: unknown;
-  x?: unknown;
-  y?: unknown;
-  width?: unknown;
-  height?: unknown;
+  type: CanvasCardType;
+  // A text card's text, or a group's label; "" for other cards.
+  text: string;
+  // The path a note or file card shows, or a link card's URL; "" for other cards.
+  target: string;
+  // The "#Heading" / "#^block" a note card shows; "" for the whole note.
+  subpath: string;
+  // Whether an arrow starts or ends at the card anywhere in the canvas — not just
+  // within the scope, so a selected card linked to an unselected one is connected.
+  connected: boolean;
 }
 
+export interface CanvasArrow {
+  from: string;
+  to: string;
+  label: string;
+}
+
+/** The cards and arrows a canvas count is taken from. */
+export interface CanvasScope {
+  cards: CanvasCard[];
+  // The arrows touching at least one card in the scope: every arrow of the whole
+  // canvas, or the ones leading into, out of or between the selected cards.
+  arrows: CanvasArrow[];
+}
+
+/** What setting extensions change about a canvas count; see canvasTextSources. */
+export interface CanvasOptions {
+  skipCards: ReadonlySet<CanvasCardType>;
+  labels: ReadonlySet<CanvasLabelType>;
+}
+
+export const NO_CANVAS_OPTIONS: CanvasOptions = { skipCards: new Set(), labels: new Set() };
+
 // The canvas internals the counters read. None of this is public API, so every
-// member is optional and checked before use; see canvasState in main.ts.
+// member is optional and checked before use; see canvasCount in main.ts.
 export interface CanvasViewInternal extends TextFileView {
   canvas?: {
-    // The canvas as last saved into the view — refreshed whenever a card is added,
-    // removed or finishes editing, so it is a new object after every change.
-    data?: { nodes?: unknown };
+    // The canvas as last saved into the view — refreshed whenever a card or arrow
+    // is added, removed or finishes editing, so it is a new object after every change.
+    data?: { nodes?: unknown; edges?: unknown };
     selection?: Set<{ id?: unknown }>;
   };
 }
 
-function box(node: CanvasNodeLike): { x: number; y: number; right: number; bottom: number } | null {
+type Box = { x: number; y: number; right: number; bottom: number };
+
+const str = (v: unknown): string => (typeof v === "string" ? v : "");
+
+function box(node: Record<string, unknown>): Box | null {
   const { x, y, width, height } = node;
   if (typeof x !== "number" || typeof y !== "number" || typeof width !== "number" || typeof height !== "number") return null;
   return { x, y, right: x + width, bottom: y + height };
 }
 
 /**
- * The cards to count in a canvas's `nodes`, in canvas order. With `selected`, only
- * the cards with those ids — a selected group standing for every card that sits
- * wholly inside it, as it does when the group is moved. A card is taken once
- * however many selected groups hold it. Note cards are returned whatever file
- * they show; the caller drops what isn't a Markdown note.
+ * The scope of a canvas count from the canvas's `nodes` and `edges`, cards in
+ * canvas order. With `selected`, only the cards with those ids — a selected group
+ * standing for every card that sits wholly inside it, as it does when the group is
+ * moved. A card is taken once however many selected groups hold it. Malformed
+ * cards and arrows, and cards of a kind Obsidian doesn't have, are left out.
  */
-export function canvasCards(nodes: unknown, selected?: ReadonlySet<string>): CanvasCard[] {
-  if (!Array.isArray(nodes)) return [];
-  const all = nodes.filter((n): n is CanvasNodeLike =>
-    !!n && typeof n === "object" && typeof (n as CanvasNodeLike).id === "string");
+export function canvasScope(nodes: unknown, edges: unknown, selected?: ReadonlySet<string>): CanvasScope {
+  const allArrows: CanvasArrow[] = [];
+  for (const e of Array.isArray(edges) ? (edges as unknown[]) : []) {
+    const edge = e as Record<string, unknown> | null;
+    if (!edge || typeof edge.fromNode !== "string" || typeof edge.toNode !== "string") continue;
+    allArrows.push({ from: edge.fromNode, to: edge.toNode, label: str(edge.label) });
+  }
+  const connected = new Set(allArrows.flatMap((a) => [a.from, a.to]));
 
-  let taken = all;
-  if (selected) {
-    const groups = all.filter((n) => n.type === "group" && selected.has(n.id)).map(box)
-      .filter((b) => b !== null);
-    taken = all.filter((n) => {
-      if (selected.has(n.id)) return true;
-      const b = box(n);
-      return !!b && groups.some((g) => b.x >= g.x && b.y >= g.y && b.right <= g.right && b.bottom <= g.bottom);
-    });
+  const all: { card: CanvasCard; box: Box | null }[] = [];
+  for (const n of Array.isArray(nodes) ? (nodes as unknown[]) : []) {
+    const node = n as Record<string, unknown> | null;
+    if (!node || typeof node.id !== "string") continue;
+    const card: CanvasCard = { id: node.id, type: "text", text: "", target: "", subpath: "", connected: connected.has(node.id) };
+    if (node.type === "text") {
+      card.text = str(node.text);
+    } else if (node.type === "file") {
+      card.target = str(node.file);
+      if (!card.target) continue;
+      card.type = /\.md$/i.test(card.target) ? "note" : "file";
+      card.subpath = card.type === "note" ? str(node.subpath) : "";
+    } else if (node.type === "link") {
+      card.type = "link";
+      card.target = str(node.url);
+    } else if (node.type === "group") {
+      card.type = "group";
+      card.text = str(node.label);
+    } else {
+      continue;
+    }
+    all.push({ card, box: box(node) });
   }
 
-  const cards: CanvasCard[] = [];
-  for (const node of taken) {
-    if (node.type === "text" && typeof node.text === "string") {
-      cards.push({ type: "text", text: node.text });
-    } else if (node.type === "file" && typeof node.file === "string" && node.file) {
-      cards.push({ type: "file", file: node.file, subpath: typeof node.subpath === "string" ? node.subpath : "" });
+  if (!selected) return { cards: all.map((c) => c.card), arrows: allArrows };
+
+  const groups = all.filter((c) => c.card.type === "group" && selected.has(c.card.id)).map((c) => c.box)
+    .filter((b) => b !== null);
+  const cards = all.filter(({ card, box: b }) =>
+    selected.has(card.id)
+    || (!!b && groups.some((g) => b.x >= g.x && b.y >= g.y && b.right <= g.right && b.bottom <= g.bottom)))
+    .map((c) => c.card);
+  const ids = new Set(cards.map((c) => c.id));
+  return { cards, arrows: allArrows.filter((a) => ids.has(a.from) || ids.has(a.to)) };
+}
+
+/**
+ * What to count as text in a scope, in canvas order: text cards and note cards,
+ * then — when `options` asks for them — group labels and arrow labels. Card kinds
+ * in `options.skipCards` are left out. A note card is passed on as the note to
+ * read; the caller drops what isn't a Markdown note.
+ */
+export function canvasTextSources(scope: CanvasScope, canvasPath: string, options: CanvasOptions = NO_CANVAS_OPTIONS): CountSource[] {
+  const sources: CountSource[] = [];
+  for (const card of scope.cards) {
+    if (options.skipCards.has(card.type)) continue;
+    if (card.type === "text" || (card.type === "group" && options.labels.has("group"))) {
+      if (card.text) sources.push({ text: card.text, path: canvasPath });
+    } else if (card.type === "note") {
+      sources.push({ file: card.target, subpath: card.subpath });
     }
   }
-  return cards;
+  if (options.labels.has("arrow")) {
+    for (const arrow of scope.arrows) if (arrow.label) sources.push({ text: arrow.label, path: canvasPath });
+  }
+  return sources;
+}
+
+// The cards counted when a metric names no kinds: everything but groups, which
+// arrange the cards rather than being cards of their own.
+const COUNTED_CARD_TYPES: CanvasCardType[] = ["text", "note", "file", "link"];
+
+/**
+ * How many cards of the given kinds the scope holds. `connected` narrows them to
+ * the cards with (true) or without (false) an arrow; `distinct` counts the cards
+ * showing the same note, file or web page once.
+ */
+export function countCanvasCards(
+  scope: CanvasScope,
+  spec: { cardTypes?: CanvasCardType[]; connected?: boolean; distinct?: boolean } = {},
+): number {
+  const types = spec.cardTypes && spec.cardTypes.length > 0 ? spec.cardTypes : COUNTED_CARD_TYPES;
+  const cards = scope.cards.filter((c) =>
+    types.includes(c.type) && (spec.connected === undefined || c.connected === spec.connected));
+  if (!spec.distinct) return cards.length;
+  return new Set(cards.map((c) => (c.target ? `${c.type}:${c.target}` : `#${c.id}`))).size;
 }
 
 /** Whether `view` is a canvas. */
@@ -93,15 +192,16 @@ export function canvasSelection(view: CanvasViewInternal): string[] {
   return ids;
 }
 
-/** The canvas's cards as last saved into the view. */
-export function canvasNodes(view: CanvasViewInternal): unknown {
+/** The canvas's cards and arrows as last saved into the view. */
+export function canvasData(view: CanvasViewInternal): { nodes: unknown; edges: unknown } {
   const data = view.canvas?.data;
-  if (data && Array.isArray(data.nodes)) return data.nodes;
+  if (data && Array.isArray(data.nodes)) return { nodes: data.nodes, edges: data.edges };
   // Internals not as expected: read the same data through the public API.
   try {
-    return (JSON.parse(view.getViewData()) as { nodes?: unknown }).nodes;
+    const parsed = JSON.parse(view.getViewData()) as { nodes?: unknown; edges?: unknown };
+    return { nodes: parsed.nodes, edges: parsed.edges };
   } catch {
-    return [];
+    return { nodes: [], edges: [] };
   }
 }
 

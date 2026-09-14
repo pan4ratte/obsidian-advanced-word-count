@@ -1,0 +1,24 @@
+{
+  "id": "canvas-ignore-note-cards",
+  "storeName": "Ignore canvas note cards",
+  "description": "When counting a canvas, leaves out note cards, so the counts cover only the text written on the canvas itself.",
+  "author": "pan4ratte",
+  "updated": "2026-09-14",
+  "type": "setting",
+  "toggleLabel": "Ignore canvas note cards",
+  "hint": "Off: the text of notes placed on a canvas is counted\nOn: note cards are ignored (a card being edited is still counted)",
+  "defaultEnabled": false,
+  "i18n": {
+    "ru": {
+      "storeName": "Игнорировать карточки заметок в холсте",
+      "description": "При подсчёте в холсте не учитывает карточки заметок, чтобы счётчики охватывали только текст, написанный в самом холсте.",
+      "toggleLabel": "Игнорировать карточки заметок в холсте",
+      "hint": "Выкл.: текст заметок, добавленных на холст, подсчитывается\nВкл.: карточки заметок игнорируются (редактируемая карточка всё равно подсчитывается)"
+    }
+  },
+  "canvas": {
+    "skipCards": [
+      "note"
+    ]
+  }
+}

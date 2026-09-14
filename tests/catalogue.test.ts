@@ -4,6 +4,7 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { ExtensionRegistry, resolveInstallOrder, validateExtension, Extension, ExtensionIndex } from "../extensions";
 import { computeFull, defaultPreset, Preset } from "../metrics";
+import { canvasScope, canvasTextSources } from "../canvas";
 
 // The shipped catalogue lives in ../extensions: index.json plus one JSON per
 // extension, grouped into metrics/, settings/ and presets/ subfolders.
@@ -223,5 +224,41 @@ describe("shipped extensions behave", () => {
   it("ignore-code strips fenced and inline code (former built-in setting)", () => {
     expect(wordsOf("hello ```js\ncode here``` world")).toBe(2); // hello, world
     expect(wordsOf("alpha `beta` gamma")).toBe(2);              // alpha, gamma
+  });
+
+  // A small board: two connected text cards, a lone note card, the same note again
+  // with a heading, an image, and a group with an arrow label.
+  const board = canvasScope(
+    [
+      { id: "a", type: "text", text: "one two" },
+      { id: "b", type: "text", text: "three" },
+      { id: "n1", type: "file", file: "Chapter.md" },
+      { id: "n2", type: "file", file: "Chapter.md", subpath: "#Scene" },
+      { id: "img", type: "file", file: "map.png" },
+      { id: "g", type: "group", label: "Act one" },
+    ],
+    [{ id: "e", fromNode: "a", toNode: "b", label: "leads to" }],
+  );
+  const canvasMetricsOf = () => computeFull("", enableAll(), reg, board).ext;
+
+  it("counts canvas cards, connections, unconnected cards and distinct notes", () => {
+    const m = canvasMetricsOf();
+    expect(m["canvas-cards"]).toBe(5);
+    expect(m["canvas-connections"]).toBe(1);
+    expect(m["canvas-unconnected-cards"]).toBe(3);
+    expect(m["canvas-notes"]).toBe(1);
+    expect(metricsOf("# Not a canvas")["canvas-cards"]).toBe(0);
+  });
+
+  it("canvas settings skip note cards and count group and arrow labels", () => {
+    const only = (id: string): Preset => {
+      const p = defaultPreset();
+      p.extSettings = { [id]: true };
+      return p;
+    };
+    const texts = (id: string) => canvasTextSources(board, "Board.canvas", reg.canvasOptions(only(id)))
+      .map((s) => ("text" in s ? s.text : s.file + s.subpath));
+    expect(texts("canvas-ignore-note-cards")).toEqual(["one two", "three"]);
+    expect(texts("canvas-count-labels")).toEqual(["one two", "three", "Chapter.md", "Chapter.md#Scene", "Act one", "leads to"]);
   });
 });

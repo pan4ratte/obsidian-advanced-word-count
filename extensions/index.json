@@ -463,6 +463,96 @@
         "citations-per-page"
       ],
       "path": "presets/scientific-article.json"
+    },
+    {
+      "id": "canvas-cards",
+      "storeName": "Canvas cards",
+      "description": "Counts the cards in a canvas: all of them, the selected ones, or the card being edited.",
+      "author": "pan4ratte",
+      "updated": "2026-09-14",
+      "i18n": {
+        "ru": {
+          "storeName": "Карточки холста",
+          "description": "Считает карточки в холсте: все, выделенные или редактируемую."
+        }
+      },
+      "type": "metric",
+      "path": "metrics/canvas-cards.json"
+    },
+    {
+      "id": "canvas-connections",
+      "storeName": "Canvas connections",
+      "description": "Counts the arrows in a canvas. For selected cards, counts the arrows leading into, out of and between them.",
+      "author": "pan4ratte",
+      "updated": "2026-09-14",
+      "i18n": {
+        "ru": {
+          "storeName": "Связи холста",
+          "description": "Считает стрелки в холсте. Для выделенных карточек — стрелки, ведущие к ним, от них и между ними."
+        }
+      },
+      "type": "metric",
+      "path": "metrics/canvas-connections.json"
+    },
+    {
+      "id": "canvas-unconnected-cards",
+      "storeName": "Unconnected canvas cards",
+      "description": "Counts the cards in a canvas that have no arrows leading into or out of them — ideas not yet linked to the rest.",
+      "author": "pan4ratte",
+      "updated": "2026-09-14",
+      "i18n": {
+        "ru": {
+          "storeName": "Несвязанные карточки холста",
+          "description": "Считает карточки холста без входящих и исходящих стрелок — идеи, ещё не связанные с остальными."
+        }
+      },
+      "type": "metric",
+      "path": "metrics/canvas-unconnected-cards.json"
+    },
+    {
+      "id": "canvas-notes",
+      "storeName": "Canvas notes",
+      "description": "Counts the distinct vault notes placed on a canvas as note cards. A note shown on several cards counts once.",
+      "author": "pan4ratte",
+      "updated": "2026-09-14",
+      "i18n": {
+        "ru": {
+          "storeName": "Заметки на холсте",
+          "description": "Считает разные заметки хранилища, добавленные на холст как карточки. Заметка на нескольких карточках считается один раз."
+        }
+      },
+      "type": "metric",
+      "path": "metrics/canvas-notes.json"
+    },
+    {
+      "id": "canvas-ignore-note-cards",
+      "storeName": "Ignore canvas note cards",
+      "description": "When counting a canvas, leaves out note cards, so the counts cover only the text written on the canvas itself.",
+      "author": "pan4ratte",
+      "updated": "2026-09-14",
+      "i18n": {
+        "ru": {
+          "storeName": "Игнорировать карточки заметок в холсте",
+          "description": "При подсчёте в холсте не учитывает карточки заметок, чтобы счётчики охватывали только текст, написанный в самом холсте."
+        }
+      },
+      "type": "setting",
+      "path": "settings/canvas-ignore-note-cards.json"
+    },
+    {
+      "id": "canvas-count-labels",
+      "storeName": "Count canvas group and arrow labels",
+      "description": "When counting a canvas, also counts the text of group names and arrow labels.",
+      "author": "pan4ratte",
+      "updated": "2026-09-14",
+      "i18n": {
+        "ru": {
+          "storeName": "Считать названия групп и подписи стрелок в холсте",
+          "description": "При подсчёте в холсте также учитывает текст названий групп и подписей стрелок."
+        }
+      },
+      "type": "setting",
+      "path": "settings/canvas-count-labels.json"
     }
   ]
 }
