@@ -157,9 +157,18 @@ export function expandEmbeds(
 }
 
 /**
- * Resolves embeds against the vault and keeps the embedded notes' text in memory.
- * Only notes embedded by the last count are kept, so the cache never outgrows the
- * note on screen.
+ * Something to count: text already in hand — a note, or a canvas text card — with
+ * the path its links resolve from, or a note in the vault by its path, optionally
+ * just a "#Heading" / "#^block" section of it (a canvas note card).
+ */
+export type CountSource =
+  | { text: string; path: string }
+  | { file: string; subpath: string };
+
+/**
+ * Resolves embeds against the vault and keeps the text of the notes being counted
+ * in memory: embedded notes and canvas note cards. Only notes used by the last
+ * count are kept, so the cache never outgrows what is on screen.
  */
 export class EmbeddedNotes {
   private contents = new Map<string, string>();
@@ -168,27 +177,52 @@ export class EmbeddedNotes {
   /** @param onLoad Called once background reads settle, to redraw the count. */
   constructor(private readonly app: App, private readonly onLoad: () => void) {}
 
-  /** The texts to count for `text`, a note at `sourcePath` (see expandEmbeds). */
-  expand(text: string, sourcePath: string): CountedText[] {
+  /**
+   * The texts to count for `sources`, in order. With `followEmbeds`, each is
+   * followed by the notes embedded in it (see expandEmbeds); otherwise each is
+   * counted as it is. A note source that isn't a Markdown note, or isn't read
+   * yet, adds nothing.
+   */
+  count(sources: CountSource[], followEmbeds: boolean): CountedText[] {
     const used = new Set<string>();
-    const texts = expandEmbeds(text, sourcePath, (link, from) => {
-      // "![[#Heading]]" embeds part of the embedding note itself — already counted.
-      if (!link.path) return { path: from, text: null };
-      const file = this.app.metadataCache.getFirstLinkpathDest(link.path, from);
-      if (!file || file.extension !== "md") return null;
+    const noteText = (file: TFile, subpath: string): string | null => {
       used.add(file.path);
       const content = this.contents.get(file.path);
       if (content === undefined) {
         this.load(file);
-        return { path: file.path, text: null };
+        return null;
       }
-      if (!link.subpath) return { path: file.path, text: content };
+      if (!subpath) return content;
       // A heading or block embed shows just that section of the note.
       const cache = this.app.metadataCache.getFileCache(file);
-      const section = cache ? resolveSubpath(cache, link.subpath) : null;
-      const text = section ? content.slice(section.start.offset, section.end?.offset) : null;
-      return { path: file.path, text };
-    });
+      const section = cache ? resolveSubpath(cache, subpath) : null;
+      return section ? content.slice(section.start.offset, section.end?.offset) : null;
+    };
+
+    const texts: CountedText[] = [];
+    for (const source of sources) {
+      let text: string | null, path: string;
+      if ("text" in source) {
+        ({ text, path } = source);
+      } else {
+        const file = this.app.vault.getFileByPath(source.file);
+        if (!file || file.extension !== "md") continue;
+        text = noteText(file, source.subpath);
+        path = file.path;
+      }
+      if (text === null) continue;
+      if (!followEmbeds) {
+        texts.push({ text });
+        continue;
+      }
+      texts.push(...expandEmbeds(text, path, (link, from) => {
+        // "![[#Heading]]" embeds part of the embedding note itself — already counted.
+        if (!link.path) return { path: from, text: null };
+        const file = this.app.metadataCache.getFirstLinkpathDest(link.path, from);
+        if (!file || file.extension !== "md") return null;
+        return { path: file.path, text: noteText(file, link.subpath) };
+      }));
+    }
     for (const path of this.contents.keys()) if (!used.has(path)) this.contents.delete(path);
     return texts;
   }

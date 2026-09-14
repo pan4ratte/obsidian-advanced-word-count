@@ -1,4 +1,4 @@
-import { Plugin, MarkdownView, Notice, setTooltip } from "obsidian";
+import { Plugin, MarkdownView, Notice, TextFileView, setTooltip } from "obsidian";
 import { t, refreshLocale, localeTags } from "./locales";
 import {
   VIEW_TYPE_METRICS,
@@ -17,7 +17,16 @@ import {
 } from "./metrics";
 import { ExtensionRegistry } from "./extensions";
 import { ExtensionManager } from "./extension-manager";
-import { EmbeddedNotes } from "./embeds";
+import { EmbeddedNotes, CountSource } from "./embeds";
+import {
+  VIEW_TYPE_CANVAS,
+  CanvasViewInternal,
+  isCanvasView,
+  canvasCards,
+  canvasCardEditor,
+  canvasNodes,
+  canvasSelection,
+} from "./canvas";
 import { MetricsView, WordCountSettingTab } from "./gui";
 
 // ── Plugin ────────────────────────────────────────────────────────────────────
@@ -33,11 +42,16 @@ export default class WordCountPlugin extends Plugin {
   readonly extensions: ExtensionRegistry = new ExtensionRegistry();
   readonly extensionManager: ExtensionManager = new ExtensionManager(this, this.extensions);
   // Text of the notes embedded in the current one, summed in when
-  // settings.countEmbeddedNotes is on. Redraws the count once a read lands.
+  // settings.countEmbeddedNotes is on, and of the note cards in the current
+  // canvas. Redraws the count once a read lands.
   readonly embeddedNotes: EmbeddedNotes = new EmbeddedNotes(this.app, () => this.updateCount());
   private settingTab: WordCountSettingTab;
   private registeredCommandIds: Set<string> = new Set();
   private activatingRightPane = false;
+  // While a canvas is the active view, a timer checking it for changes (see
+  // watchCanvas), and what the last canvas count was taken from.
+  private canvasTimer: number | null = null;
+  private lastCanvasState: unknown[] = [];
 
   async onload() {
     await this.loadSettings();
@@ -70,9 +84,13 @@ export default class WordCountPlugin extends Plugin {
       callback: () => this.activateRightPane(true),
     });
 
-    this.registerEvent(this.app.workspace.on("active-leaf-change", () => this.updateCount()));
+    this.registerEvent(this.app.workspace.on("active-leaf-change", () => {
+      this.syncCanvasWatch();
+      this.updateCount();
+    }));
     this.registerEvent(this.app.workspace.on("editor-change", () => this.updateCount()));
     this.registerEvent((this.app.workspace as WorkspaceInternal).on("editor-selection-change", () => this.updateCount()));
+    this.register(() => this.stopCanvasWatch());
 
     // Keep embedded notes' text current. The cache only holds notes embedded in
     // the one being counted, so these do nothing for any other note.
@@ -97,6 +115,9 @@ export default class WordCountPlugin extends Plugin {
     // Defer view/leaf work until the workspace layout is ready
     this.app.workspace.onLayoutReady(() => {
       if (this.settings.hideDefaultWordCount) void this.setDefaultWordCountHidden(true);
+      // A canvas restored as the active tab on startup gets no leaf change to start
+      // its watch.
+      this.syncCanvasWatch();
       void this.applyDisplayMethod();
       // Check the catalogue for extension updates in the background (opt-in).
       if (this.settings.autoUpdateExtensions) void this.autoUpdateInstalledExtensions();
@@ -277,27 +298,99 @@ export default class WordCountPlugin extends Plugin {
 
   updateCount() {
     const preset = this.getActivePreset();
-    const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+    const view = this.app.workspace.getActiveViewOfType(TextFileView);
+    const canvas = isCanvasView(view) ? view : null;
 
-    if (preset && view) {
+    let sources: CountSource[] | null = null;
+    if (view instanceof MarkdownView) {
       const selection = view.editor.getSelection();
-      const raw = selection.length > 0 ? selection : view.getViewData();
       // Embeds inside a selection are summed in too, like the rest of the note.
-      const texts = this.settings.countEmbeddedNotes && view.file
-        ? this.embeddedNotes.expand(raw, view.file.path)
-        : raw;
+      sources = [{ text: selection.length > 0 ? selection : view.getViewData(), path: view.file?.path ?? "" }];
+    } else if (canvas) {
+      sources = this.canvasSources(canvas);
+    }
+
+    if (preset && sources) {
+      const followEmbeds = this.settings.countEmbeddedNotes;
+      // A note reads nothing from the cache unless its embeds are followed; a
+      // canvas always does, for its note cards.
+      const texts = followEmbeds || canvas
+        ? this.embeddedNotes.count(sources, followEmbeds)
+        : sources.map((source) => ({ text: "text" in source ? source.text : "" }));
       const full = computeFull(texts, preset, this.extensions);
       this.lastMetrics = full.values;
       this.lastExtMetrics = full.ext;
-    } else if (this.app.workspace.getLeavesOfType("markdown").length === 0) {
-      // No notes open at all — clear. If a note is still open but focus moved to
-      // another pane (e.g. our own right pane), keep the last computed metrics.
+    } else if (
+      this.app.workspace.getLeavesOfType("markdown").length === 0
+      && this.app.workspace.getLeavesOfType(VIEW_TYPE_CANVAS).length === 0
+    ) {
+      // No notes or canvases open at all — clear. If one is still open but focus
+      // moved to another pane (e.g. our own right pane), keep the last metrics.
       this.lastMetrics = null;
       this.lastExtMetrics = {};
     }
 
     this.renderStatusBar(preset, this.lastMetrics);
     this.renderRightPane();
+  }
+
+  /**
+   * What to count in a canvas: the card being edited, or the text selected in it;
+   * otherwise the selected cards; otherwise every card.
+   */
+  private canvasSources(view: CanvasViewInternal): CountSource[] {
+    const canvasPath = view.file?.path ?? "";
+    const nodes = canvasNodes(view);
+    const selected = new Set(canvasSelection(view));
+
+    const edited = canvasCardEditor(this.app.workspace.activeEditor, view);
+    if (edited) {
+      // A note card's links resolve from its note, a text card's from the canvas.
+      const path = edited.info.file?.path ?? canvasPath;
+      const selection = edited.editor.getSelection();
+      if (selection.length > 0) return [{ text: selection, path }];
+      // A heading or block card edits the note but shows only that section, so it
+      // is counted like a selected card: the section, as last saved.
+      const [card] = canvasCards(nodes, selected);
+      if (!(card?.type === "file" && card.subpath)) return [{ text: edited.editor.getValue(), path }];
+    }
+
+    return canvasCards(nodes, selected.size > 0 ? selected : undefined).map((card) =>
+      card.type === "text" ? { text: card.text, path: canvasPath } : card);
+  }
+
+  /**
+   * A canvas raises no event when cards are selected, added or removed, or when a
+   * card finishes editing, so while one is the active view it is checked for
+   * changes a few times a second. The timer runs only then, costing nothing to
+   * anyone not working in a canvas.
+   */
+  private syncCanvasWatch() {
+    if (!isCanvasView(this.app.workspace.getActiveViewOfType(TextFileView))) {
+      this.stopCanvasWatch();
+    } else if (this.canvasTimer === null) {
+      this.canvasTimer = window.setInterval(() => this.watchCanvas(), 250);
+    }
+  }
+
+  private stopCanvasWatch() {
+    if (this.canvasTimer !== null) window.clearInterval(this.canvasTimer);
+    this.canvasTimer = null;
+    this.lastCanvasState = [];
+  }
+
+  /** Recount when what the active canvas's count is taken from has changed. */
+  private watchCanvas() {
+    const view = this.app.workspace.getActiveViewOfType(TextFileView);
+    if (!isCanvasView(view)) {
+      this.stopCanvasWatch();
+      return;
+    }
+    const edited = canvasCardEditor(this.app.workspace.activeEditor, view);
+    const state = [view, view.canvas?.data, canvasSelection(view).join(","), edited?.editor];
+    if (state.length === this.lastCanvasState.length && state.every((v, i) => v === this.lastCanvasState[i])) return;
+    this.lastCanvasState = state;
+    this.updateCount();
   }
 
   private renderStatusBar(preset: Preset | undefined, metrics: Metrics | null) {

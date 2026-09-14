@@ -73,7 +73,12 @@ You can specify, how formatting elements will be counted:
 | **Ignore comments**			         | comments `%% … %%` and &lt;!-- … --&gt; text will be counted		  | comments will be ignored 	   		  |
 | **Ignore HTML tags**		         | HTML tags like `<b> … </b>` etc. will be counted		          | HTML tags will be ignored 	   		|
 
-### 5. Install community extensions: presets, metrics and advanced settings
+### 5. Count canvases and embedded notes
+
+* **Obsidian Canvas is supported.** In a canvas, the counters show metrics for the whole document, for the selected cards, and for the card being edited.
+* **Counting text in embedded notes.** An option in the settings lets you include the notes embedded in the current one in the counts. Whole-note `![[Note]]`, heading `![[Note#Heading]]` and block `![[Note#^block]]` embeds are supported, nested embeds are counted too, as are embeds inside canvas cards. Handy for a book or a thesis assembled from embedded chapters.
+
+### 6. Install community extensions: presets, metrics and advanced settings
 
 <div align="center">
   <img src="media/3-community-store.png"width="100%" />  

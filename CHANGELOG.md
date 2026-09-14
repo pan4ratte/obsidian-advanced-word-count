@@ -1,5 +1,11 @@
 # Changelog
 
+## 4.6.0
+
+### New features
+
+* **Canvas support.** The counters now work in Obsidian Canvas too. By default they show the total for the whole canvas: the text of every text card plus every note card (a heading or block card counts just that section). Select some cards to count only those — a selected group counts the cards inside it — and start editing a card to count just that card, or the text selected in it. Images, web pages, group names and arrow labels aren't counted. With "Count embedded notes" on, notes embedded in cards are counted as well.
+
 ## 4.5.0
 
 ### New features

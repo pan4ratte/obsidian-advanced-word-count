@@ -733,7 +733,7 @@ export class WordCountSettingTab extends PluginSettingTab {
         return;
       case "countEmbeddedNotes":
         settings.countEmbeddedNotes = value === true;
-        // Nothing reads the embedded notes' text while this is off.
+        // Only canvas note cards are read while this is off; they reload on demand.
         if (!settings.countEmbeddedNotes) this.plugin.embeddedNotes.clear();
         await this.plugin.saveSettings();
         this.plugin.updateCount();
