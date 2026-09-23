@@ -7,15 +7,14 @@
 <div align="center">
 <a href="https://pay.cloudtips.ru/p/c0e8eac4"><img alt="badge" src="https://shieldcn.dev/badge/Поддержать%20разработку-(RU%20карты).svg?size=lg&amp;logo=ri%3AFaHeart&amp;logoColor=ef4444&amp;color=09090b&amp;labelTextColor=ef4444"></a>
 </div>
-
+<div align="center">
+Create complex word count presets that will be displayed in the status bar or in the right pane tab. Install tens of community presets, custom metrics, and settings from the extension store to extend the plugin's capabilities.
+</div>
+<br>
 <div align="center">
 
 English | [Русский](https://github.com/pan4ratte/obsidian-advanced-word-count/blob/main/README_RU.md)
 
-</div>
-
-<div align="center">
-Create complex word count presets that will be displayed in the status bar or in the right pane tab. Install tens of community presets, custom metrics, and settings from the extension store to extend the plugin's capabilities.
 </div>
 
 
