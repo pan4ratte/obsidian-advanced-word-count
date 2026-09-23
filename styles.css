@@ -68,6 +68,7 @@
   padding: 16px;
   margin: 16px 0;
   background-color: var(--setting-items-background);
+
   /* Leaves a gap above the card when it is scrolled to (see scrollToPreset). */
   scroll-margin-top: 16px;
 }
@@ -155,12 +156,12 @@
   gap: 6px;
 }
 
-.wcp-presets-actions .wcp-btn-icon {
+.wcp-btn-icon {
   display: inline-flex;
   align-items: center;
 }
 
-.wcp-presets-actions .wcp-btn-icon svg {
+.wcp-btn-icon svg {
   width: 16px;
   height: 16px;
 }
@@ -202,7 +203,6 @@
 }
 
 .wcp-btn-delete:hover {
-  background-color: var(--text-error);
   border-color: var(--text-error);
   background: var(--text-error);
 }
@@ -426,14 +426,17 @@
   gap: 4px;
   padding: 12px;
   border-radius: 8px;
+
   /* The progress meters are laid over the block; see .wcp-limit-ring. */
   position: relative;
+
   /* A stacking context of the block's own, so the wash can sit at z-index -1 and
      land between the block's background and its text rather than behind the
      block entirely. `position: relative` alone would not make one. */
   isolation: isolate;
   background-color: var(--background-secondary);
   border: 1px solid var(--background-modifier-border);
+
   /* Equal width comes from the 1fr columns; this keeps every block equal height
      regardless of how many lines its label wraps to. */
   min-width: 0;
@@ -467,6 +470,7 @@
   font-weight: var(--font-semibold);
   font-size: var(--font-ui-smaller);
   color: var(--text-muted);
+
   /* Reserve exactly two lines (2 × line-height) so single- and double-line labels
      yield equal-height blocks — and a label that wraps or unwraps mid-way through
      the layout animation doesn't make its block jump. */
@@ -481,9 +485,10 @@
 
 .wcp-draggable {
   cursor: grab;
+
   /* Stop touch long-press from selecting text or raising the OS callout menu */
   user-select: none;
-  -webkit-user-select: none;
+  -webkit-user-select: none; /* iOS WebKit still needs the prefix */
   -webkit-touch-callout: none;
 }
 
@@ -497,6 +502,20 @@
 .wcp-metric-block.wcp-drop-bottom { box-shadow: inset 0 -3px 0 0 var(--interactive-accent); }
 
 /* ── Limit warnings ──────────────────────────────────────────────────────────── */
+
+/* Each level's colour for the progress meters (see the note on the meter styles
+   below). Only a variable, so it can come first. */
+.wcp-metric-block.wcp-limit-orange {
+  --wcp-meter-color: var(--color-orange);
+}
+
+.wcp-metric-block.wcp-limit-red {
+  --wcp-meter-color: var(--color-red);
+}
+
+.wcp-metric-block.wcp-limit-green {
+  --wcp-meter-color: var(--text-success);
+}
 
 /*
  * Right pane blocks, in the "color" style: the whole outline and the text take
@@ -554,18 +573,6 @@
   --wcp-meter-color: var(--text-muted);
 }
 
-.wcp-metric-block.wcp-limit-orange {
-  --wcp-meter-color: var(--color-orange);
-}
-
-.wcp-metric-block.wcp-limit-red {
-  --wcp-meter-color: var(--color-red);
-}
-
-.wcp-metric-block.wcp-limit-green {
-  --wcp-meter-color: var(--text-success);
-}
-
 /*
  * Only a completed meter colours the text, so reaching the threshold reads as an
  * event rather than one more shade along the way. The class is set alongside the
@@ -586,11 +593,14 @@
    dash array or offset, which are measured from the block in pixels. */
 .wcp-limit-ring {
   position: absolute;
+
   /* Out to the block's border box: an absolutely positioned child is laid out
      against the padding box, and the block's border is 1px. */
   inset: -1px;
+
   /* Half of the stroke falls outside the rectangle it traces. */
   overflow: visible;
+
   /* Purely decorative, and it covers the whole block — it must not swallow the
      clicks and drags the block itself handles. */
   pointer-events: none;
@@ -620,6 +630,7 @@
  */
 .wcp-limit-fill {
   position: absolute;
+
   /* Out to the block's border box: the child is laid out against the padding
      box, and the block's border is 1px. */
   inset: -1px;
@@ -634,11 +645,6 @@
   bottom: 0;
   width: 0;
   background-color: var(--wcp-meter-color);
-}
-
-/* Added a frame after the fill is drawn, for the same reason the outline waits. */
-.wcp-limit-fill.is-live .wcp-limit-fill-inner {
-  transition: width 0.4s ease, background-color 0.4s ease;
 }
 
 /* The bar: a strip over the bottom border, leaving the rest of it as the
@@ -666,6 +672,11 @@
   opacity: 0.18;
 }
 
+/* Added a frame after the fill is drawn, for the same reason the outline waits. */
+.wcp-limit-fill.is-live .wcp-limit-fill-inner {
+  transition: width 0.4s ease, background-color 0.4s ease;
+}
+
 /*
  * The dial, at the end of the value line. Rotated a quarter turn because an
  * SVG circle's outline begins at three o'clock, and a dial that starts anywhere
@@ -687,17 +698,26 @@
      number. (A relative offset, not a negative margin: flex baseline alignment
      uses the border box's bottom edge, so a margin wouldn't move it.) */
   --wcp-dial-overshoot: 0.06cap;
+
   flex: none;
   margin-left: auto;
   font-size: 1.6em; /* .wcp-metric-value's, so 1cap is the digits' height */
-  width: 0.78em; /* fallback where the cap unit isn't supported */
-  height: 0.78em;
   width: calc(1cap + 2 * var(--wcp-dial-overshoot));
   height: calc(1cap + 2 * var(--wcp-dial-overshoot));
   position: relative;
   top: var(--wcp-dial-overshoot);
   transform: rotate(-90deg);
   pointer-events: none;
+}
+
+/* Where the cap unit isn't supported: roughly the same size in em. */
+@supports not (height: 1cap) {
+  .wcp-limit-circle {
+    --wcp-dial-overshoot: 0.04em;
+
+    width: 0.78em;
+    height: 0.78em;
+  }
 }
 
 .wcp-limit-circle circle {
@@ -768,7 +788,7 @@
 /* Narrow screens: stack the add-warning / add-goal buttons onto their own rows. The
    row layout gives them flex:1 (basis 0), which in a column would collapse their
    height — reset to natural height; they still stretch full width (align stretch). */
-@media (max-width: 600px) {
+@media (width <= 600px) {
   .wcp-limit-buttons {
     flex-direction: column;
   }
@@ -809,7 +829,7 @@
 
 /* Narrow screens: split the rule onto two rows — the metric dropdown on the first,
    the threshold input (filling the width) and the delete button on the second. */
-@media (max-width: 600px) {
+@media (width <= 600px) {
   .wcp-preset-card .wcp-limit-item {
     flex-wrap: wrap;
   }
@@ -874,6 +894,124 @@
   box-shadow: 0 0 0 1px var(--color-red);
 }
 
+/* ── Changelog notice and modal ───────────────────────────────────────────────
+   Borrowed from the sibling Citation Suite plugin, so the changelogs of the
+   plugins read alike. */
+
+/* What this release brought, as a card under the plugin description, until it is
+   dismissed. `overflow` is for the closing: the card is animated down to no
+   height, and what stands in it is cut rather than spilling over what's below. */
+.wcp-changelog-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--size-4-2);
+  margin-bottom: 16px;
+  padding: var(--size-4-2) var(--size-4-4);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--setting-items-radius);
+  background: var(--setting-items-background);
+  overflow: hidden;
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+}
+
+/* Grows to fill the row, but wants at least ~16em: when there isn't that much room
+   beside the buttons, the buttons wrap under it instead of squeezing it. */
+.wcp-changelog-notice-text {
+  flex: 1 1 16em;
+  min-width: 0;
+  color: var(--text-accent);
+}
+
+/* Marks the card as an announcement rather than another settings note. */
+.wcp-changelog-icon {
+  display: flex;
+  flex: none;
+  color: var(--text-accent);
+}
+
+.wcp-changelog-icon svg {
+  width: var(--icon-s);
+  height: var(--icon-s);
+}
+
+/* Right-aligned whether beside the text or wrapped under it. */
+.wcp-changelog-actions {
+  display: flex;
+  gap: var(--size-4-2);
+  margin-left: auto;
+}
+
+/* The two buttons, both plain at rest. */
+.wcp-changelog-open,
+.wcp-changelog-dismiss {
+  flex: none;
+  font-size: var(--font-ui-smaller);
+}
+
+/* "See what's new" takes the accent only under the pointer (or keyboard focus).
+   Scoped under the card to out-rank Obsidian's own button:hover. */
+.wcp-changelog-notice .wcp-changelog-open:hover,
+.wcp-changelog-notice .wcp-changelog-open:focus-visible {
+  background-color: var(--interactive-accent-hover);
+  color: var(--text-on-accent);
+}
+
+/* The changelog window. Carries no `markdown-rendered` class — that one sizes
+   markdown for reading a note, far larger than the settings this window is
+   opened from, and it would override every size below. */
+.wcp-markdown-modal {
+  max-width: 680px;
+
+  /* Obsidian turns selection off inside a modal; a page meant to be read and
+     quoted from has no use for that. */
+  user-select: text;
+  cursor: auto;
+}
+
+.wcp-markdown-modal * {
+  user-select: text;
+}
+
+.wcp-markdown-modal h1 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: calc(var(--font-ui-large) * 1.2);
+  line-height: var(--line-height-tight);
+}
+
+.wcp-markdown-modal h2 {
+  margin-top: var(--size-4-6);
+  margin-bottom: 12px;
+  font-size: var(--font-ui-large);
+}
+
+.wcp-markdown-modal h3 {
+  margin-top: 20px;
+  margin-bottom: 8px;
+  font-size: var(--font-ui-medium);
+  color: var(--text-normal);
+}
+
+.wcp-markdown-modal p,
+.wcp-markdown-modal li {
+  font-size: var(--font-ui-small);
+  color: var(--text-muted);
+  line-height: var(--line-height-normal);
+}
+
+.wcp-markdown-modal ul,
+.wcp-markdown-modal ol {
+  padding-left: 20px;
+  margin-bottom: 12px;
+}
+
+.wcp-markdown-modal hr {
+  margin: 20px 0;
+  border-color: var(--background-modifier-border);
+}
+
 /* ── Extension browser modal ─────────────────────────────────────────────────── */
 
 /* The modal scrolls vertically once the list is long. Reserve an equal gutter on
@@ -907,6 +1045,7 @@
 }
 
 /* Install-state filter pills */
+
 /* The row and its desktop "more" chevron share a relative wrapper so the chevron
    can pin to the row's right (cut-off) edge. The row's bottom gap lives here now. */
 .wcp-ext-filters-wrap {
@@ -941,15 +1080,16 @@
   align-items: center;
   width: 36px;
   padding: 0 2px;
+
   /* Strip all native + theme button chrome so only our rules paint the button. */
   appearance: none;
-  -webkit-appearance: none;
   border: none;
   border-radius: 0;
   box-shadow: none;
   outline: none;
   cursor: pointer;
   color: var(--text-muted);
+
   /* Reveal by fading opacity. background-color is pinned transparent in every state
      (wrapper rule below), so the theme's solid button background never bleeds through
      the gradient — which was the real "solid flash" cause, not opacity. pointer-events
@@ -1068,10 +1208,12 @@
   border: 1px solid var(--background-modifier-border);
   border-radius: var(--radius-m);
   background-color: var(--background-secondary);
+
   /* The card is as wide as the list and no wider; its text wraps rather than
      pushing the actions off the right-hand edge. */
   max-width: 100%;
   min-width: 0;
+
   /* The footer runs out to the card's edges, and the corners crop it. */
   overflow: hidden;
 }
@@ -1126,11 +1268,6 @@
   border-color: var(--background-modifier-border-hover);
 }
 
-.wcp-ext-local-intro > .wcp-ext-actions {
-  border-top-style: dashed;
-  border-top-color: var(--background-modifier-border-hover);
-}
-
 /* Hidden picker the folder-open button drives. */
 .wcp-ext-file-input {
   display: none;
@@ -1178,6 +1315,12 @@
 .wcp-ext-actions button:disabled {
   cursor: default;
   opacity: 0.6;
+}
+
+/* The local-extensions intro card's action row (see .wcp-ext-local-intro). */
+.wcp-ext-local-intro > .wcp-ext-actions {
+  border-top-style: dashed;
+  border-top-color: var(--background-modifier-border-hover);
 }
 
 /*
@@ -1279,7 +1422,7 @@
 
 /* On narrow widths the description and dropdown can't sit side by side without
    squishing both — stack them, each spanning the full width. */
-@media (max-width: 600px) {
+@media (width <= 600px) {
   .wcp-section-head-body {
     flex-direction: column;
     align-items: stretch;
@@ -1321,13 +1464,13 @@
 /* Match the inputs' height so the row reads as one line of controls. It sits in
    the fields row rather than the card's footer bar, so it keeps the filled look
    of an ordinary button instead of the bar's flat segments. */
-.wcp-labels-actions button {
+button.wcp-labels-reset {
   height: var(--input-height, 30px);
   background: var(--interactive-normal);
   color: var(--text-normal);
 }
 
-.wcp-labels-actions button:hover:not(:disabled) {
+button.wcp-labels-reset:hover:not(:disabled) {
   background: var(--interactive-accent);
   color: var(--text-on-accent);
 }
@@ -1390,121 +1533,4 @@
 .wcp-sbvis-row input[type="checkbox"] {
   margin: 0;
   flex-shrink: 0;
-}
-
-/* ── Changelog notice and modal ───────────────────────────────────────────────
-   Borrowed from the sibling Citation Suite plugin, so the changelogs of the
-   plugins read alike. */
-
-/* What this release brought, as a card under the plugin description, until it is
-   dismissed. `overflow` is for the closing: the card is animated down to no
-   height, and what stands in it is cut rather than spilling over what's below. */
-.wcp-changelog-notice {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--size-4-2);
-  margin-bottom: 16px;
-  padding: var(--size-4-2) var(--size-4-4);
-  border: 1px solid var(--background-modifier-border);
-  border-radius: var(--setting-items-radius);
-  background: var(--setting-items-background);
-  overflow: hidden;
-  font-size: var(--font-ui-smaller);
-  color: var(--text-muted);
-}
-
-/* Grows to fill the row, but wants at least ~16em: when there isn't that much room
-   beside the buttons, the buttons wrap under it instead of squeezing it. */
-.wcp-changelog-notice-text {
-  flex: 1 1 16em;
-  min-width: 0;
-  color: var(--text-accent);
-}
-
-/* Marks the card as an announcement rather than another settings note. */
-.wcp-changelog-icon {
-  display: flex;
-  flex: none;
-  color: var(--text-accent);
-}
-
-.wcp-changelog-icon svg {
-  width: var(--icon-s);
-  height: var(--icon-s);
-}
-
-/* Right-aligned whether beside the text or wrapped under it. */
-.wcp-changelog-actions {
-  display: flex;
-  gap: var(--size-4-2);
-  margin-left: auto;
-}
-
-/* The two buttons, both plain at rest. */
-.wcp-changelog-open,
-.wcp-changelog-dismiss {
-  flex: none;
-  font-size: var(--font-ui-smaller);
-}
-
-/* "See what's new" takes the accent only under the pointer (or keyboard focus).
-   Scoped under the card to out-rank Obsidian's own button:hover. */
-.wcp-changelog-notice .wcp-changelog-open:hover,
-.wcp-changelog-notice .wcp-changelog-open:focus-visible {
-  background-color: var(--interactive-accent-hover);
-  color: var(--text-on-accent);
-}
-
-/* The changelog window. Carries no `markdown-rendered` class — that one sizes
-   markdown for reading a note, far larger than the settings this window is
-   opened from, and it would override every size below. */
-.wcp-markdown-modal {
-  max-width: 680px;
-  /* Obsidian turns selection off inside a modal; a page meant to be read and
-     quoted from has no use for that. */
-  user-select: text;
-  cursor: auto;
-}
-
-.wcp-markdown-modal * {
-  user-select: text;
-}
-
-.wcp-markdown-modal h1 {
-  margin-top: 0;
-  margin-bottom: 12px;
-  font-size: calc(var(--font-ui-large) * 1.2);
-  line-height: var(--line-height-tight);
-}
-
-.wcp-markdown-modal h2 {
-  margin-top: var(--size-4-6);
-  margin-bottom: 12px;
-  font-size: var(--font-ui-large);
-}
-
-.wcp-markdown-modal h3 {
-  margin-top: 20px;
-  margin-bottom: 8px;
-  font-size: var(--font-ui-medium);
-  color: var(--text-normal);
-}
-
-.wcp-markdown-modal p,
-.wcp-markdown-modal li {
-  font-size: var(--font-ui-small);
-  color: var(--text-muted);
-  line-height: var(--line-height-normal);
-}
-
-.wcp-markdown-modal ul,
-.wcp-markdown-modal ol {
-  padding-left: 20px;
-  margin-bottom: 12px;
-}
-
-.wcp-markdown-modal hr {
-  margin: 20px 0;
-  border-color: var(--background-modifier-border);
 }

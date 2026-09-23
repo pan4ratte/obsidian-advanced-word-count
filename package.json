@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "node esbuild.config.mjs",
     "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
-    "lint": "eslint .",
+    "lint": "npm run lint:ts && npm run lint:css",
+    "lint:ts": "eslint .",
+    "lint:css": "stylelint \"**/*.css\" --ignore-disables",
     "docs:catalogue": "node scripts/gen-catalogue.js",
     "test": "vitest run",
     "test:watch": "vitest"
@@ -23,6 +25,8 @@
     "eslint-plugin-obsidianmd": "^0.4.1",
     "moment": "^2.29.4",
     "obsidian": "latest",
+    "stylelint": "^17.15.0",
+    "stylelint-config-obsidianmd": "^0.1.0",
     "tslib": "2.4.0",
     "typescript": "^5.9.3",
     "vitest": "^4.1.11"

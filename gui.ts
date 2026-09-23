@@ -2215,7 +2215,7 @@ export class CustomLabelsModal extends Modal {
     // Reset is the last item of the fields row, so it sits on the inputs' line
     // rather than beside the card as a whole.
     const actions = fields.createDiv({ cls: "wcp-ext-actions wcp-labels-actions" });
-    const reset = actions.createEl("button", { cls: "wcp-ext-install" });
+    const reset = actions.createEl("button", { cls: "wcp-ext-install wcp-labels-reset" });
     setIcon(reset, "rotate-ccw");
     setTooltip(reset, t.labelsReset, { placement: "top" });
     const refreshReset = () => { reset.disabled = !this.hasOverride(target.key); };
