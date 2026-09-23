@@ -1,0 +1,56 @@
+name: CI
+
+# Lint, tests and type-check on every push and pull request. The release
+# workflow (main.yml) only fires when manifest.json's version changes, so
+# without this nothing checks a normal commit. Same setup as the sibling
+# Citation Suite plugin.
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      # `npm ci` refuses a lockfile that is out of sync with this platform — the
+      # failure a Windows-written package-lock.json causes on Linux, which would
+      # otherwise only surface on the plugin review site.
+      - name: Install dependencies
+        run: npm ci
+
+      # `obsidian` is the dependency every file imports from. If it didn't
+      # resolve, the review site would report a wall of type errors against
+      # source that is fine.
+      - name: Verify the obsidian types resolved
+        run: npm ls obsidian
+
+      # Two steps rather than `npm run lint`, which runs both: arguments after
+      # `--` would reach only the last command in that script.
+      - name: Lint TypeScript
+        run: npm run lint:ts -- --max-warnings 0
+
+      - name: Lint CSS
+        run: npm run lint:css -- --max-warnings 0
+
+      - name: Test
+        run: npm test
+
+      # Type-checks with tsc and then bundles, which is what the release does
+      # too — so a release never bundles something CI has not built first.
+      - name: Build
+        run: npm run build
