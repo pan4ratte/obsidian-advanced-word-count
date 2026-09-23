@@ -43,10 +43,12 @@ const handle = (fn: () => Promise<void>) => (): void => { void fn(); };
 const RING_STROKE = 2;
 const RING_RADIUS = 8;
 
-// The corner dial, in the units of its own viewBox — which .wcp-limit-circle then
-// scales to whatever size it likes, dash length and all.
+// The dial beside the value, in the units of its own viewBox — which
+// .wcp-limit-circle then scales to the digits' height, dash length and all. The
+// radius leaves just room for half the stroke (2.75, set in styles.css), so the
+// drawn ring fills the box and is exactly as tall as the digits.
 const CIRCLE_BOX = 16;
-const CIRCLE_RADIUS = 6;
+const CIRCLE_RADIUS = 6.6;
 
 /**
  * A block's progress meter, in whichever shape the limit style asks for.
@@ -135,7 +137,7 @@ export class MetricsView extends ItemView {
   }
 
   /**
-   * A dial in the block's top-right corner: a stroked circle over a faint one.
+   * A dial beside the value: a stroked circle over a faint one.
    *
    * Unlike the outline, it is drawn complete here — its length comes from its own
    * viewBox, not from the block, so there is nothing to wait for and no observer
@@ -143,11 +145,12 @@ export class MetricsView extends ItemView {
    * no border of its own to stand in for the unfilled part.
    */
   private addCircle(block: HTMLElement) {
-    // Tells the block to keep its value clear of the corner. See styles.css.
-    block.addClass("wcp-has-circle");
+    // The dial sits at the end of the value line, sized and aligned to the digits
+    // (see .wcp-limit-circle in styles.css).
+    const host = block.querySelector<HTMLElement>(".wcp-metric-value-line") ?? block;
     const c = CIRCLE_BOX / 2;
     const geometry = { cx: c, cy: c, r: CIRCLE_RADIUS };
-    const svg = block.createSvg("svg", {
+    const svg = host.createSvg("svg", {
       cls: "wcp-limit-circle",
       attr: { viewBox: `0 0 ${CIRCLE_BOX} ${CIRCLE_BOX}` },
     });
@@ -349,9 +352,6 @@ export class MetricsView extends ItemView {
     for (const row of rows) {
       const block = grid.createDiv({ cls: "wcp-metric-block" });
       this.setLevel(block, surfaceWarnLevel(limitMethod, "rightPane", row.level));
-      // A meter only for metrics a rule actually bounds; the rest have nothing to
-      // fill toward.
-      if (metered && row.progress !== undefined) this.addMeter(block, style, row.progress);
       // Value and its optional unit (e.g. "MIN.") share a baseline-aligned line;
       // the unit is a sibling so in-place value updates don't wipe it.
       const valueLine = block.createDiv({ cls: "wcp-metric-value-line" });
@@ -359,6 +359,9 @@ export class MetricsView extends ItemView {
       this.renderValue(value, row.value, "", false);
       if (row.unit) valueLine.createSpan({ text: row.unit, cls: "wcp-metric-unit" });
       block.createDiv({ text: row.blockLabel, cls: "wcp-metric-label" });
+      // A meter only for metrics a rule actually bounds; the rest have nothing to
+      // fill toward. Added after the value line, which the dial sits in.
+      if (metered && row.progress !== undefined) this.addMeter(block, style, row.progress);
       this.blockRefs.set(row.key, { block, value, text: row.value });
       // Drag-and-drop reordering: native HTML5 DnD on desktop, touch (long-press)
       // on mobile/tablet, where drag events don't fire.

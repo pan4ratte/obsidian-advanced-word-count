@@ -540,7 +540,7 @@
  *
  * Each draws a meter that fills as the value climbs toward its threshold — the
  * whole outline clockwise from the top-left corner, the bottom edge alone, a
- * dial in the top-right corner, or a wash across the block. None of them touch
+ * dial beside the value, or a wash across the block. None of them touch
  * the block's own border. That is deliberate for the two that run along it: the
  * plain border is the empty part of the track, and a fill reads as progress only
  * against something unfilled. The dial, having no border under it, draws its own
@@ -667,7 +667,7 @@
 }
 
 /*
- * The dial, in the block's top-right corner. Rotated a quarter turn because an
+ * The dial, at the end of the value line. Rotated a quarter turn because an
  * SVG circle's outline begins at three o'clock, and a dial that starts anywhere
  * but the top does not read as one. The whole element is turned rather than the
  * arc alone: the track is a full circle, so the rotation costs it nothing, and
@@ -675,27 +675,34 @@
  * resolved against.
  */
 .wcp-limit-circle {
-  position: absolute;
-  /* The block's own padding, so the dial lines up with the text rather than
-     sitting nearer the edge — an absolutely positioned child is laid out against
-     the padding box, so this puts it flush with the content box's corner. */
-  top: 12px;
-  right: 12px;
-  width: 16px;
-  height: 16px;
+  /* The last item of the value line, pushed to its right end. The line aligns its
+     items on the baseline, and a box with no text sits its bottom edge there — so
+     a dial 1cap tall (at the value's font size) spans baseline to cap height.
+
+     Optical compensation: a circle exactly as tall as flat-topped figures looks
+     smaller than they do — round glyphs overshoot the cap height and baseline for
+     the same reason — and a thin ring with a faint track reads smaller still. So
+     the dial is 12% taller than the cap height, and is nudged down by half the
+     excess, overshooting equally above and below and staying centred on the
+     number. (A relative offset, not a negative margin: flex baseline alignment
+     uses the border box's bottom edge, so a margin wouldn't move it.) */
+  --wcp-dial-overshoot: 0.06cap;
+  flex: none;
+  margin-left: auto;
+  font-size: 1.6em; /* .wcp-metric-value's, so 1cap is the digits' height */
+  width: 0.78em; /* fallback where the cap unit isn't supported */
+  height: 0.78em;
+  width: calc(1cap + 2 * var(--wcp-dial-overshoot));
+  height: calc(1cap + 2 * var(--wcp-dial-overshoot));
+  position: relative;
+  top: var(--wcp-dial-overshoot);
   transform: rotate(-90deg);
   pointer-events: none;
 }
 
-/* Keep the value clear of the dial. Only the value line is inset: the label sits
-   below the dial and can have the block's full width. */
-.wcp-has-circle .wcp-metric-value-line {
-  padding-right: 18px;
-}
-
 .wcp-limit-circle circle {
   fill: none;
-  stroke-width: 2;
+  stroke-width: 2.75;
 }
 
 .wcp-limit-circle-track {

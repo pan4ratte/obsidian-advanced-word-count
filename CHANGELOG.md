@@ -12,6 +12,7 @@
 ### Improvements and bug fixes
 
 * The global "Right pane metrics layout" setting has been removed: the layout is now chosen with the button in the right pane's header. After the update, all presets are shown in two columns — switch the ones you want back to one column.
+* The "Progress circle" indicators in the right pane now sit in line with the metric number, match its height, and are slightly thicker.
 
 ## 4.6.0
 
