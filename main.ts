@@ -31,6 +31,7 @@ import {
   canvasTextSources,
 } from "./canvas";
 import { MetricsView, WordCountSettingTab } from "./gui";
+import { ChangelogModal } from "./changelog";
 
 // ── Plugin ────────────────────────────────────────────────────────────────────
 
@@ -85,6 +86,11 @@ export default class WordCountPlugin extends Plugin {
       id: "open-metrics-view",
       name: t.commandOpenView,
       callback: () => this.activateRightPane(true),
+    });
+    this.addCommand({
+      id: "show-changelog",
+      name: t.commandShowChangelog,
+      callback: () => new ChangelogModal(this.app).open(),
     });
 
     this.registerEvent(this.app.workspace.on("active-leaf-change", () => {

@@ -25,6 +25,7 @@ import {
   enabledMetricKeys,
   reorderMetrics,
 } from "./metrics";
+import { renderChangelogNotice } from "./changelog";
 import { ExtensionIndexEntry, I18n, MetricExtension, PresetExportMeta, SettingExtension, presetDependencyIds, presetExtensionFrom, presetIndexEntryFrom } from "./extensions";
 
 // Extensions that live in the registry and can be connected to a preset — i.e.
@@ -578,6 +579,27 @@ export class WordCountSettingTab extends PluginSettingTab {
               const root = this.anchorRoot(setting, "wcp-intro-root");
               root.empty();
               root.createEl("p", { text: t.settingsDescription, cls: "wcp-plugin-note" });
+            },
+          },
+          // What the running release brought, until dismissed. Not searchable: once
+          // dismissed the row is empty, and a search would land on nothing.
+          {
+            name: t.commandShowChangelog,
+            searchable: false,
+            render: (setting) => {
+              setting.settingEl.addClass("wcp-settings-anchor", "wcp-settings-anchor-bare");
+              const root = this.anchorRoot(setting, "wcp-changelog-root");
+              root.empty();
+              const version = this.plugin.manifest.version;
+              renderChangelogNotice(root, {
+                app: this.app,
+                version,
+                dismissedVersion: this.plugin.settings.dismissedChangelogVersion,
+                onDismiss: () => {
+                  this.plugin.settings.dismissedChangelogVersion = version;
+                  void this.plugin.saveSettings();
+                },
+              });
             },
           },
         ],

@@ -7,6 +7,7 @@ const en = {
   // ── Commands ───────────────────────────────────────────────────────────────
   commandActivatePreset: (name: string) => `Switch to ${name} preset`,
   commandOpenView: "Open metrics panel",
+  commandShowChangelog: "View changelog",
 
   // ── Status bar ─────────────────────────────────────────────────────────────
   statusNoMetrics: "No metrics enabled",
@@ -33,9 +34,14 @@ const en = {
   // Follows the reading-time value in the status bar ("Reading time: 3.4 min").
   statusReadingTimeUnit: "min",
 
+  // ── Changelog ──────────────────────────────────────────────────────────────
+  changelogBannerPrefix: "What's new in version ",
+  changelogBannerDismiss: "Dismiss until the next update",
+
   // ── Settings page ──────────────────────────────────────────────────────────
   settingsHeading: "Advanced Word Count settings",
   settingsDescription: "This plugin lets you create complex word-count presets for the status bar or the right pane, switch between them with one click, set goals and limit warnings, and much more. Thanks to community extensions — presets, metrics and advanced settings — the plugin flexibly adapts to writing, academic and other purposes.",
+
   settingsSectionGeneral: "General",
   settingsSectionPresets: "Presets & extensions",
   settingsPresetsStoreName: "Manage presets and extensions",

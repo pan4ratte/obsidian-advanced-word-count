@@ -1373,3 +1373,110 @@
   margin: 0;
   flex-shrink: 0;
 }
+
+/* ── Changelog notice and modal ───────────────────────────────────────────────
+   Borrowed from the sibling Citation Suite plugin, so the changelogs of the
+   plugins read alike. */
+
+/* What this release brought, as a card under the plugin description, until it is
+   dismissed. `overflow` is for the closing: the card is animated down to no
+   height, and what stands in it is cut rather than spilling over what's below. */
+.wcp-changelog-notice {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-2);
+  margin-bottom: 16px;
+  padding: var(--size-4-2) var(--size-4-4);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--setting-items-radius);
+  background: var(--setting-items-background);
+  overflow: hidden;
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+}
+
+.wcp-changelog-notice-text {
+  flex: 1;
+  min-width: 0;
+}
+
+/* The version opens the changelog — a link in the line of text rather than a
+   button standing beside it. */
+.wcp-changelog-notice .wcp-changelog-version {
+  height: auto;
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  box-shadow: none;
+  color: var(--text-accent);
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: var(--font-semibold);
+  text-decoration: underline;
+  cursor: var(--cursor);
+}
+
+.wcp-changelog-notice .wcp-changelog-version:hover {
+  color: var(--text-accent-hover);
+  background: none;
+  box-shadow: none;
+}
+
+.wcp-changelog-dismiss {
+  flex: none;
+  color: var(--text-muted);
+}
+
+/* The changelog window. Carries no `markdown-rendered` class — that one sizes
+   markdown for reading a note, far larger than the settings this window is
+   opened from, and it would override every size below. */
+.wcp-markdown-modal {
+  max-width: 680px;
+  /* Obsidian turns selection off inside a modal; a page meant to be read and
+     quoted from has no use for that. */
+  user-select: text;
+  cursor: auto;
+}
+
+.wcp-markdown-modal * {
+  user-select: text;
+}
+
+.wcp-markdown-modal h1 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: calc(var(--font-ui-large) * 1.2);
+  line-height: var(--line-height-tight);
+}
+
+.wcp-markdown-modal h2 {
+  margin-top: var(--size-4-6);
+  margin-bottom: 12px;
+  font-size: var(--font-ui-large);
+}
+
+.wcp-markdown-modal h3 {
+  margin-top: 20px;
+  margin-bottom: 8px;
+  font-size: var(--font-ui-medium);
+  color: var(--text-normal);
+}
+
+.wcp-markdown-modal p,
+.wcp-markdown-modal li {
+  font-size: var(--font-ui-small);
+  color: var(--text-muted);
+  line-height: var(--line-height-normal);
+}
+
+.wcp-markdown-modal ul,
+.wcp-markdown-modal ol {
+  padding-left: 20px;
+  margin-bottom: 12px;
+}
+
+.wcp-markdown-modal hr {
+  margin: 20px 0;
+  border-color: var(--background-modifier-border);
+}

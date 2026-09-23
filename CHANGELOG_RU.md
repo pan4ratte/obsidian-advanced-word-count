@@ -1,11 +1,11 @@
-# Changelog
+# Список изменений
 
 ## 4.7.0
 
-### New features
+### Новые функции
 
-* **Choose which metrics show in the status bar.** A new button in each preset's header opens a list of the metrics turned on in that preset and lets you choose which of them appear in the status bar.
-* **Changelog in the plugin.** The plugin settings now show a notification that lets you see what's changed in the new version of the plugin. Dismissing the notification hides it until the next update. The changelog can also be opened at any time with the new "View changelog" command.
+* **Выбор метрик для отображения в строке состояния.** В заголовке каждого пресета появилась новая кнопка, которая открывает список включённых в пресете метрик и позволяет указать, какие из них будут отображаться в строке состояния.
+* **Список изменений в плагине.** Теперь в настройках плагина появляется уведомление, которое позволяет посмотреть изменения в новой версии плагина. Скрытие уведомления убирает его до следующего обновления. Список изменений также можно открыть в любой момент новой командой «Посмотреть список изменений».
 
 ## 4.6.0
 

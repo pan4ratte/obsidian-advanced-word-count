@@ -124,6 +124,9 @@ export interface WordCountSettings {
   // (![[Note]], ![[Note#Heading]], ![[Note#^block]]), nested embeds included,
   // and the embed links themselves aren't counted as text.
   countEmbeddedNotes: boolean;
+  // The release whose "what's new" notice was dismissed in the settings. Never
+  // drawn as a setting.
+  dismissedChangelogVersion: string;
 
   // ── Extensions ──────────────────────────────────────────────────────────────
   // Validated definitions of every installed community extension. They live in
@@ -288,6 +291,7 @@ export const DEFAULT_SETTINGS: WordCountSettings = {
   limitWarningsDisplayMethod: "both",
   limitWarningsStyle: "color",
   countEmbeddedNotes: false,
+  dismissedChangelogVersion: "",
   installedExtensions: [],
   extensionRepoUrl: DEFAULT_EXTENSION_REPO_URL,
   autoUpdateExtensions: false,

@@ -35,6 +35,9 @@ const context = await esbuild.context({
   logLevel: "info",
   sourcemap: prod ? false : "inline",
   treeShaking: true,
+  // The changelog is imported as text and shipped inside main.js (see changelog.ts).
+  loader: { ".md": "text" },
+  charset: "utf8",
   outfile: "main.js",
   minify: prod,
 });
