@@ -1,5 +1,11 @@
 # Changelog
 
+## 4.7.0
+
+### New features
+
+* **Status bar visibility.** A new eye button in each preset's header opens a list of the metrics turned on in that preset, each with a checkbox. Untick a metric to keep it out of the status bar — it's still counted and still shown in the right pane, so you can keep the status bar short while the pane shows everything.
+
 ## 4.6.0
 
 ### New features

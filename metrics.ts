@@ -104,6 +104,11 @@ export interface Preset {
   // `defaultEnabled`. See extensions.ts.
   extMetrics?: Record<string, boolean>;
   extSettings?: Record<string, boolean>;
+
+  // Metrics (built-in MetricKeys or extension metric ids) kept out of the status
+  // bar while still counted and shown in the right pane. Ids of metrics that are
+  // currently disabled are kept, so re-enabling one restores its choice.
+  statusBarHidden?: string[];
 }
 
 export interface WordCountSettings {
@@ -259,6 +264,7 @@ export function defaultPreset(overrides: Partial<Preset> = {}): Preset {
     metricOrder: [...METRIC_ORDER],
     extMetrics: {},
     extSettings: {},
+    statusBarHidden: [],
     ...overrides,
   };
 }
@@ -631,6 +637,25 @@ export function effectiveMetricOrder(preset: Preset, registry?: ExtensionRegistr
   for (const k of METRIC_ORDER) if (!seen.has(k)) { order.push(k); seen.add(k); }
   for (const id of extIds) if (!seen.has(id)) { order.push(id); seen.add(id); }
   return order;
+}
+
+/**
+ * The metrics a preset currently shows, in display order: built-ins whose "show"
+ * flag is on (pages only with a usable words-per-page, as in metricRows) and the
+ * enabled extension metrics.
+ */
+export function enabledMetricKeys(preset: Preset, registry?: ExtensionRegistry): string[] {
+  return effectiveMetricOrder(preset, registry).filter((k) => {
+    if (!(k in METRIC_SHOW_KEY)) return true; // effectiveMetricOrder lists enabled extensions only
+    if (k === "pages" && preset.wordsPerPage <= 0) return false;
+    return preset[METRIC_SHOW_KEY[k as MetricKey]] === true;
+  });
+}
+
+/** The rows the status bar draws: `rows` minus the metrics the preset hides there. */
+export function statusBarRows(preset: Preset, rows: MetricRow[]): MetricRow[] {
+  const hidden = new Set(preset.statusBarHidden ?? []);
+  return hidden.size === 0 ? rows : rows.filter((r) => !hidden.has(r.key));
 }
 
 /** Move `dragged` to just before/after `target`, returning a new ordering. */

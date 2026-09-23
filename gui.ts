@@ -22,6 +22,7 @@ import {
   surfaceWarnLevel,
   surfaceShowsLimits,
   effectiveMetricOrder,
+  enabledMetricKeys,
   reorderMetrics,
 } from "./metrics";
 import { ExtensionIndexEntry, I18n, MetricExtension, PresetExportMeta, SettingExtension, presetDependencyIds, presetExtensionFrom, presetIndexEntryFrom } from "./extensions";
@@ -921,6 +922,12 @@ export class WordCountSettingTab extends PluginSettingTab {
       await this.save();
     }));
 
+    const visBtn = header.createEl("button");
+    setIcon(visBtn, "eye");
+    setTooltip(visBtn, t.btnStatusBarVisibilityTooltip, { placement: "top" });
+    visBtn.addClass("wcp-btn", "wcp-btn-visibility");
+    visBtn.addEventListener("click", () => new StatusBarVisibilityModal(this.plugin, preset).open());
+
     // Export relies on a Blob/<a download> file save, which only works on the
     // Electron desktop app — Obsidian mobile (Capacitor/WebView) can't honour it,
     // so the Share button is hidden there rather than offering a dead action.
@@ -1237,6 +1244,67 @@ export class WordCountSettingTab extends PluginSettingTab {
     }));
 
     return row;
+  }
+}
+
+// ── Status bar visibility modal ───────────────────────────────────────────────
+
+/**
+ * Lists the metrics a preset currently shows, each with a checkbox that keeps it
+ * in or out of the status bar. Only the status bar is affected: a hidden metric
+ * is still counted and still appears in the right pane.
+ */
+export class StatusBarVisibilityModal extends Modal {
+  private plugin: WordCountPlugin;
+  private preset: Preset;
+
+  constructor(plugin: WordCountPlugin, preset: Preset) {
+    super(plugin.app);
+    this.plugin = plugin;
+    this.preset = preset;
+  }
+
+  onOpen() {
+    const { contentEl } = this;
+    contentEl.createEl("h3", { text: t.statusBarVisModalTitle, cls: "wcp-sbvis-title" });
+    contentEl.createEl("h4", { text: this.preset.name, cls: "wcp-sbvis-preset" });
+    contentEl.createEl("p", { text: t.statusBarVisModalNote, cls: "wcp-labels-note" });
+
+    const keys = enabledMetricKeys(this.preset, this.plugin.extensions);
+    if (keys.length === 0) {
+      contentEl.createEl("p", { text: t.statusBarVisEmpty, cls: "wcp-ext-status" });
+      return;
+    }
+
+    const list = contentEl.createDiv({ cls: "wcp-sbvis-list" });
+    for (const key of keys) {
+      const row = list.createEl("label", { cls: "wcp-sbvis-row" });
+      const box = row.createEl("input", { type: "checkbox" });
+      box.checked = !(this.preset.statusBarHidden ?? []).includes(key);
+      row.createSpan({ text: this.labelFor(key) });
+      box.addEventListener("change", handle(async () => {
+        const hidden = new Set(this.preset.statusBarHidden ?? []);
+        if (box.checked) hidden.delete(key);
+        else hidden.add(key);
+        this.preset.statusBarHidden = Array.from(hidden);
+        await this.plugin.saveSettings();
+        this.plugin.updateCount();
+      }));
+    }
+  }
+
+  /** The metric's settings name — its toggle label — for a built-in or an extension. */
+  private labelFor(key: string): string {
+    if (key in METRIC_SHOW_KEY) {
+      return t.toggles[METRIC_SHOW_KEY[key as keyof typeof METRIC_SHOW_KEY] as keyof typeof t.toggles].label;
+    }
+    const registry = this.plugin.extensions;
+    const def = registry.getMetric(key);
+    return def ? registry.loc(def, "toggleLabel") ?? def.toggleLabel : key;
+  }
+
+  onClose() {
+    this.contentEl.empty();
   }
 }
 

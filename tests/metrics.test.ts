@@ -8,6 +8,8 @@ import {
   ruleProgress,
   defaultPreset,
   effectiveMetricOrder,
+  enabledMetricKeys,
+  statusBarRows,
   reorderMetrics,
   METRIC_ORDER,
   Preset,
@@ -682,5 +684,30 @@ describe("surfaceWarnLevel", () => {
 
   it("never upgrades a 'none' level", () => {
     expect(surfaceWarnLevel("both", "statusBar", "none")).toBe("none");
+  });
+});
+
+describe("status bar visibility", () => {
+  it("lists the preset's enabled metrics in display order", () => {
+    const preset = defaultPreset({ showLines: true, metricOrder: ["lines", "pages", "wordsWithSpaces"] });
+    expect(enabledMetricKeys(preset)).toEqual(["lines", "pages", "wordsWithSpaces"]);
+  });
+
+  it("leaves out pages while words-per-page is 0", () => {
+    expect(enabledMetricKeys(defaultPreset({ wordsPerPage: 0 }))).toEqual(["wordsWithSpaces"]);
+  });
+
+  it("drops hidden metrics from the status bar rows only", () => {
+    const preset = defaultPreset({ showLines: true, statusBarHidden: ["pages"] });
+    const rows = metricRows(preset, computeMetrics("one two three", preset));
+    expect(rows.map((r) => r.key)).toEqual(["wordsWithSpaces", "pages", "lines"]);
+    expect(statusBarRows(preset, rows).map((r) => r.key)).toEqual(["wordsWithSpaces", "lines"]);
+  });
+
+  it("keeps every row when nothing is hidden (or the field is missing)", () => {
+    const preset = defaultPreset();
+    const rows = metricRows(preset, computeMetrics("a b", preset));
+    expect(statusBarRows(preset, rows)).toEqual(rows);
+    expect(statusBarRows({ ...preset, statusBarHidden: undefined }, rows)).toEqual(rows);
   });
 });

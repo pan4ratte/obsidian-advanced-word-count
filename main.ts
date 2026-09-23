@@ -13,6 +13,7 @@ import {
   METRIC_ORDER,
   computeFull,
   metricRows,
+  statusBarRows,
   surfaceWarnLevel,
 } from "./metrics";
 import { ExtensionRegistry } from "./extensions";
@@ -407,8 +408,12 @@ export default class WordCountPlugin extends Plugin {
     this.statusBarItem.empty();
     if (!preset || !metrics) return;
 
-    const rows = metricRows(preset, metrics, this.extensions, this.lastExtMetrics, this.settings.customLabels);
-    if (rows.length === 0) {
+    const allRows = metricRows(preset, metrics, this.extensions, this.lastExtMetrics, this.settings.customLabels);
+    // Metrics hidden from the status bar (see StatusBarVisibilityModal) are left
+    // out here only; the right pane still shows them. When every enabled metric is
+    // hidden the item is simply left empty — "No metrics enabled" would be untrue.
+    const rows = statusBarRows(preset, allRows);
+    if (allRows.length === 0) {
       this.statusBarItem.setText(t.statusNoMetrics);
     } else {
       rows.forEach((row, i) => {
@@ -448,6 +453,8 @@ export default class WordCountPlugin extends Plugin {
       // registry can write into them.
       if (!p.extMetrics || typeof p.extMetrics !== "object") p.extMetrics = {};
       if (!p.extSettings || typeof p.extSettings !== "object") p.extSettings = {};
+      // Per-metric status-bar visibility was added later; everything starts visible.
+      if (!Array.isArray(p.statusBarHidden)) p.statusBarHidden = [];
 
       // The Tables/Tags metrics and the "Ignore code" setting were extracted into
       // community extensions (ids "tables", "tags", "ignore-code"). Carry each

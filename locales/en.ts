@@ -75,10 +75,16 @@ const en = {
   badgeActive: "Active",
   badgeInactive: "Inactive",
   btnShareTooltip: "Share preset (export files to suggest for the catalogue)",
+  btnStatusBarVisibilityTooltip: "Status bar visibility",
   btnDeleteTooltip: "Delete preset",
   inputNamePlaceholder: "Enter preset name",
   presetExportedNotice: (name: string) =>
     `Exported "${name}": preset file + index entry.`,
+
+  // Status bar visibility dialog
+  statusBarVisModalTitle: "Status bar metrics",
+  statusBarVisModalNote: "Choose which of this preset's metrics appear in the status bar. Unchecked metrics are still counted and shown in the right pane.",
+  statusBarVisEmpty: "This preset has no metrics enabled",
 
   // Preset export dialog
   exportModalTitle: "Share preset",

@@ -205,8 +205,9 @@
   background: var(--text-error);
 }
 
-/* Icon-only share button */
-.wcp-btn-share {
+/* Icon-only share and status-bar visibility buttons */
+.wcp-btn-share,
+.wcp-btn-visibility {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -218,13 +219,15 @@
   border-color: transparent;
 }
 
-.wcp-btn-share svg {
+.wcp-btn-share svg,
+.wcp-btn-visibility svg {
   width: 16px;
   height: 16px;
   pointer-events: none;
 }
 
-.wcp-btn-share:hover {
+.wcp-btn-share:hover,
+.wcp-btn-visibility:hover {
   background: var(--interactive-accent);
   border-color: var(--interactive-accent);
   color: var(--text-on-accent);
@@ -1328,4 +1331,45 @@
   width: 100%;
   min-width: 0;
   font-size: var(--font-ui-smaller);
+}
+
+/* ── Status bar visibility modal ─────────────────────────────────────────────── */
+
+.wcp-sbvis-title {
+  margin: 0 0 4px;
+}
+
+/* The preset's name, as a subheading under the modal title */
+.wcp-sbvis-preset {
+  margin: 0 0 8px;
+  font-size: var(--font-ui-medium);
+  font-weight: var(--font-semibold);
+  color: var(--text-muted);
+}
+
+.wcp-sbvis-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.wcp-sbvis-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: var(--radius-l);
+  background-color: var(--setting-items-background);
+  border: 1px solid var(--background-modifier-border);
+  cursor: pointer;
+  user-select: none;
+}
+
+.wcp-sbvis-row:hover {
+  background: var(--background-modifier-hover);
+}
+
+.wcp-sbvis-row input[type="checkbox"] {
+  margin: 0;
+  flex-shrink: 0;
 }

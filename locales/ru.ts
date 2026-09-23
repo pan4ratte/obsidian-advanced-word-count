@@ -72,10 +72,16 @@ const ru = {
   badgeActive: "Активный",
   badgeInactive: "Неактивный",
   btnShareTooltip: "Поделиться пресетом (экспорт файлов для предложения в каталог)",
+  btnStatusBarVisibilityTooltip: "Видимость в строке состояния",
   btnDeleteTooltip: "Удалить пресет",
   inputNamePlaceholder: "Введите имя пресета",
   presetExportedNotice: (name: string) =>
     `Пресет "${name}" экспортирован: файл пресета + запись для индекса.`,
+
+  // Status bar visibility dialog
+  statusBarVisModalTitle: "Метрики в строке состояния",
+  statusBarVisModalNote: "Выберите, какие метрики этого пресета показывать в строке состояния. Снятые метрики всё равно подсчитываются и видны на правой панели.",
+  statusBarVisEmpty: "В этом пресете нет включённых метрик",
 
   // Preset export dialog
   exportModalTitle: "Поделиться пресетом",
