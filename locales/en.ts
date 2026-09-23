@@ -60,8 +60,6 @@ const en = {
   displayMethodStatusBar: "Status bar",
   displayMethodRightPane: "Right pane",
   displayMethodBoth: "Status bar + Right pane",
-  settingsRightPaneLayoutName: "Right pane metrics layout",
-  settingsRightPaneLayoutDesc: "Choose how metric blocks are arranged in the right pane",
   rightPaneLayoutOne: "One column",
   rightPaneLayoutTwo: "Two columns",
   settingsLimitWarningsDisplayName: "Limit warnings display method",
@@ -77,6 +75,7 @@ const en = {
   // ── Right pane view ────────────────────────────────────────────────────────
   viewTitle: "Advanced Word Count",
   viewNoFile: "Open a note to see metrics",
+  viewLayoutTooltip: (layout: string) => `Layout: ${layout.toLowerCase()} (click to switch for this preset)`,
 
   // Preset card header
   badgeActive: "Active",

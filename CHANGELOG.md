@@ -6,6 +6,12 @@
 
 * **Choose which metrics show in the status bar.** A new button in each preset's header opens a list of the metrics turned on in that preset and lets you choose which of them appear in the status bar.
 * **Changelog in the plugin.** The plugin settings now show a notification that lets you see what's changed in the new version of the plugin. Dismissing the notification hides it until the next update. The changelog can also be opened at any time with the new "View changelog" command.
+* **Duplicate presets.** A new button in each preset's header creates a copy of the preset with all of its settings, warnings and goals.
+* **Right pane layout per preset.** A new button in the right pane's header, next to the preset name, switches the metrics between one and two columns. The layout is remembered separately for each preset.
+
+### Improvements and bug fixes
+
+* The global "Right pane metrics layout" setting has been removed: the layout is now chosen with the button in the right pane's header. After the update, all presets are shown in two columns — switch the ones you want back to one column.
 
 ## 4.6.0
 

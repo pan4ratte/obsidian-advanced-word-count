@@ -354,8 +354,17 @@
   padding: 12px;
 }
 
+/* Preset name on the left, layout button on the right. */
 .wcp-view-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   margin-bottom: 12px;
+}
+
+.wcp-view-layout-btn {
+  flex: none;
 }
 
 .wcp-view-preset-name {
@@ -398,12 +407,16 @@
   gap: 8px;
 }
 
+/* minmax(0, 1fr) rather than 1fr (which is minmax(auto, 1fr)): a column must not
+   grow to fit a block's width. The layout-switch animation gives each block an
+   explicit width in flight, and with `auto` minimums that width would resize its
+   column and throw every other block off course. */
 .wcp-block-grid.wcp-cols-1 {
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .wcp-block-grid.wcp-cols-2 {
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .wcp-metric-block {
@@ -454,8 +467,11 @@
   font-weight: var(--font-semibold);
   font-size: var(--font-ui-smaller);
   color: var(--text-muted);
-  /* Reserve two lines so single- and double-line labels yield equal-height blocks */
-  min-height: 2.4em;
+  /* Reserve exactly two lines (2 × line-height) so single- and double-line labels
+     yield equal-height blocks — and a label that wraps or unwraps mid-way through
+     the layout animation doesn't make its block jump. */
+  line-height: 1.3;
+  min-height: 2.6em;
   display: flex;
   align-items: center;
   transition: color 0.4s ease;

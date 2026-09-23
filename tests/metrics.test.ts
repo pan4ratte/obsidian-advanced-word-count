@@ -10,6 +10,8 @@ import {
   effectiveMetricOrder,
   enabledMetricKeys,
   statusBarRows,
+  presetLayout,
+  nextLayout,
   reorderMetrics,
   METRIC_ORDER,
   Preset,
@@ -709,5 +711,21 @@ describe("status bar visibility", () => {
     const rows = metricRows(preset, computeMetrics("a b", preset));
     expect(statusBarRows(preset, rows)).toEqual(rows);
     expect(statusBarRows({ ...preset, statusBarHidden: undefined }, rows)).toEqual(rows);
+  });
+});
+
+describe("per-preset right pane layout", () => {
+  it("defaults to two columns until the preset has its own layout", () => {
+    expect(presetLayout(defaultPreset())).toBe("two");
+    expect(presetLayout(defaultPreset({ rightPaneLayout: "one" }))).toBe("one");
+  });
+
+  it("treats an invalid stored value as the default", () => {
+    expect(presetLayout({ ...defaultPreset(), rightPaneLayout: "three" as never })).toBe("two");
+  });
+
+  it("cycles between one and two columns", () => {
+    expect(nextLayout("two")).toBe("one");
+    expect(nextLayout("one")).toBe("two");
   });
 });

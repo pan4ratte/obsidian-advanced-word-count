@@ -7,7 +7,6 @@ import type WordCountPlugin from "./main";
 import {
   VIEW_TYPE_METRICS,
   DisplayMethod,
-  RightPaneLayout,
   Preset,
   WarnLevel,
   LimitWarningStyle,
@@ -23,6 +22,8 @@ import {
   surfaceShowsLimits,
   effectiveMetricOrder,
   enabledMetricKeys,
+  presetLayout,
+  nextLayout,
   reorderMetrics,
 } from "./metrics";
 import { renderChangelogNotice } from "./changelog";
@@ -78,6 +79,9 @@ export class MetricsView extends ItemView {
   private ringResize: ResizeObserver | null = null;
   // Metric currently being dragged for reorder (desktop only), or null.
   private dragKey: string | null = null;
+  // Where each block stood just before the layout button was pressed, so the
+  // rebuild that follows can animate the blocks from there. See playLayoutFlip.
+  private flipFrom: Map<string, DOMRect> | null = null;
 
   constructor(leaf: WorkspaceLeaf, plugin: WordCountPlugin) {
     super(leaf);
@@ -252,12 +256,16 @@ export class MetricsView extends ItemView {
   }
 
   render() {
+    // Taken by whichever render comes next, so a stale snapshot can't animate a
+    // later, unrelated rebuild.
+    const flipFrom = this.flipFrom;
+    this.flipFrom = null;
     const preset = this.plugin.getActivePreset();
     const metrics = preset ? this.plugin.lastMetrics : null;
     const rows = preset && metrics
       ? metricRows(preset, metrics, this.plugin.extensions, this.plugin.lastExtMetrics, this.plugin.settings.customLabels)
       : [];
-    const layout = this.plugin.settings.rightPaneLayout;
+    const layout = preset ? presetLayout(preset) : "two";
     const multiPreset = this.plugin.settings.presets.length > 1;
     const limitMethod = this.plugin.settings.limitWarningsDisplayMethod;
     // Whether limits are drawn here at all, and if so in which style. Both are
@@ -314,6 +322,17 @@ export class MetricsView extends ItemView {
       nameEl.addEventListener("click", () => this.plugin.cyclePreset());
     }
 
+    // Layout button: switches this preset between one and two columns. The icon
+    // shows the current layout; the pane rebuilds because layout is in the signature.
+    const layoutBtn = header.createDiv({ cls: "clickable-icon wcp-view-layout-btn" });
+    setIcon(layoutBtn, layout === "one" ? "rows-3" : "layout-grid");
+    setTooltip(layoutBtn, t.viewLayoutTooltip(layout === "one" ? t.rightPaneLayoutOne : t.rightPaneLayoutTwo), { placement: "bottom" });
+    layoutBtn.addEventListener("click", () => {
+      this.flipFrom = new Map([...this.blockRefs].map(([key, ref]) => [key, ref.block.getBoundingClientRect()]));
+      preset.rightPaneLayout = nextLayout(layout);
+      void this.plugin.saveSettings().then(() => this.plugin.updateCount());
+    });
+
     if (!metrics) {
       container.createEl("p", { text: t.viewNoFile, cls: "wcp-view-empty" });
       return;
@@ -345,6 +364,36 @@ export class MetricsView extends ItemView {
       // on mobile/tablet, where drag events don't fire.
       if (Platform.isDesktop) this.enableDragReorder(block, row.key, preset);
       else this.enableTouchReorder(block, row.key, preset);
+    }
+
+    if (flipFrom) this.playLayoutFlip(flipFrom);
+  }
+
+  /**
+   * Animate a layout switch (FLIP): each rebuilt block starts where, and as wide
+   * as, its old self stood, then glides into its new place. Only position and
+   * width are animated — scaling would stretch the text, and animating height
+   * would resize grid rows mid-flight and throw off the other blocks' offsets.
+   */
+  private playLayoutFlip(from: Map<string, DOMRect>) {
+    if (this.contentEl.win.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    // Measure every block's final place before animating any: starting one block's
+    // animation changes the layout the next block would otherwise be measured in.
+    const targets = [...this.blockRefs].map(([key, ref]) => ({
+      block: ref.block, old: from.get(key), now: ref.block.getBoundingClientRect(),
+    }));
+    for (const { block, old, now } of targets) {
+      if (!old) continue;
+      const dx = old.left - now.left;
+      const dy = old.top - now.top;
+      if (dx === 0 && dy === 0 && old.width === now.width) continue;
+      block.animate(
+        [
+          { transform: `translate(${dx}px, ${dy}px)`, width: `${old.width}px` },
+          { transform: "none", width: `${now.width}px` },
+        ],
+        { duration: 250, easing: "ease-in-out" }
+      );
     }
   }
 
@@ -613,15 +662,6 @@ export class WordCountSettingTab extends PluginSettingTab {
             control: { type: "dropdown", key: "displayMethod", options: displayMethods },
           },
           {
-            name: t.settingsRightPaneLayoutName,
-            desc: t.settingsRightPaneLayoutDesc,
-            control: {
-              type: "dropdown",
-              key: "rightPaneLayout",
-              options: { two: t.rightPaneLayoutTwo, one: t.rightPaneLayoutOne },
-            },
-          },
-          {
             name: t.settingsLimitWarningsDisplayName,
             desc: t.settingsLimitWarningsDisplayDesc,
             control: { type: "dropdown", key: "limitWarningsDisplayMethod", options: displayMethods },
@@ -753,11 +793,6 @@ export class WordCountSettingTab extends PluginSettingTab {
         settings.displayMethod = value as DisplayMethod;
         await this.plugin.saveSettings();
         await this.plugin.applyDisplayMethod(true);
-        return;
-      case "rightPaneLayout":
-        settings.rightPaneLayout = value as RightPaneLayout;
-        await this.plugin.saveSettings();
-        this.plugin.updateCount();
         return;
       case "limitWarningsDisplayMethod":
         settings.limitWarningsDisplayMethod = value as DisplayMethod;

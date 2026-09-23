@@ -449,6 +449,10 @@ export default class WordCountPlugin extends Plugin {
   async loadSettings() {
     const data = (await this.loadData()) as Partial<WordCountSettings> | null;
     this.settings = Object.assign({}, DEFAULT_SETTINGS, data);
+    // The global right-pane layout was replaced by a per-preset one (set from the
+    // pane's header) in 4.7.0. Its value is deliberately not carried over: every
+    // preset starts from the two-column default.
+    delete (this.settings as unknown as { rightPaneLayout?: unknown }).rightPaneLayout;
     // A fresh install has no update to announce: mark the running release's
     // changelog notice as seen, and save it so the next update still shows one.
     if (data === null) {

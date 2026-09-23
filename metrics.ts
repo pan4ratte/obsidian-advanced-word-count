@@ -109,6 +109,10 @@ export interface Preset {
   // bar while still counted and shown in the right pane. Ids of metrics that are
   // currently disabled are kept, so re-enabling one restores its choice.
   statusBarHidden?: string[];
+
+  // This preset's own right-pane layout, set by the layout button in the pane's
+  // header. Absent means the default, two columns (see presetLayout).
+  rightPaneLayout?: RightPaneLayout;
 }
 
 export interface WordCountSettings {
@@ -117,7 +121,6 @@ export interface WordCountSettings {
   separator: string;
   hideDefaultWordCount: boolean;
   displayMethod: DisplayMethod;
-  rightPaneLayout: RightPaneLayout;
   limitWarningsDisplayMethod: DisplayMethod;
   limitWarningsStyle: LimitWarningStyle;
   // When true, every metric sums the note with the notes embedded in it
@@ -287,7 +290,6 @@ export const DEFAULT_SETTINGS: WordCountSettings = {
   separator: "  |  ",
   hideDefaultWordCount: false,
   displayMethod: "statusBar",
-  rightPaneLayout: "two",
   limitWarningsDisplayMethod: "both",
   limitWarningsStyle: "color",
   countEmbeddedNotes: false,
@@ -654,6 +656,16 @@ export function enabledMetricKeys(preset: Preset, registry?: ExtensionRegistry):
     if (k === "pages" && preset.wordsPerPage <= 0) return false;
     return preset[METRIC_SHOW_KEY[k as MetricKey]] === true;
   });
+}
+
+/** The right-pane layout a preset uses: its own, or else two columns. */
+export function presetLayout(preset: Preset): RightPaneLayout {
+  return preset.rightPaneLayout === "one" ? "one" : "two";
+}
+
+/** The layout the right pane's header button switches to next. */
+export function nextLayout(layout: RightPaneLayout): RightPaneLayout {
+  return layout === "two" ? "one" : "two";
 }
 
 /** The rows the status bar draws: `rows` minus the metrics the preset hides there. */

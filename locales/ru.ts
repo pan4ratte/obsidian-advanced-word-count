@@ -57,8 +57,6 @@ const ru = {
   displayMethodStatusBar: "Строка состояния",
   displayMethodRightPane: "Правая панель",
   displayMethodBoth: "Строка состояния + Правая панель",
-  settingsRightPaneLayoutName: "Макет счётчиков в правой панели",
-  settingsRightPaneLayoutDesc: "Выберите, каким образом метрики будут отображаться в правой панели",
   rightPaneLayoutOne: "Один столбец",
   rightPaneLayoutTwo: "Два столбца",
   settingsLimitWarningsDisplayName: "Способ отображения предупреждений о лимитах",
@@ -74,6 +72,7 @@ const ru = {
   // ── Right pane view ────────────────────────────────────────────────────────
   viewTitle: "Advanced Word Count",
   viewNoFile: "Откройте заметку, чтобы увидеть метрики",
+  viewLayoutTooltip: (layout: string) => `Расположение: ${layout.toLowerCase()} (нажмите, чтобы переключить для этого пресета)`,
 
   // Preset card header
   badgeActive: "Активный",
