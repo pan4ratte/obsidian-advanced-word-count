@@ -68,14 +68,17 @@ export function renderChangelogNotice(parent: HTMLElement, options: ChangelogNot
   if (options.dismissedVersion === options.version) return;
 
   const card = parent.createDiv({ cls: "wcp-changelog-notice" });
-  const text = card.createSpan({ cls: "wcp-changelog-notice-text" });
-  text.appendText(t.changelogBannerPrefix);
-  // A button rather than a link: it opens a modal, it does not go anywhere.
-  const versionBtn = text.createEl("button", { cls: "wcp-changelog-version", text: options.version });
-  versionBtn.addEventListener("click", () => new ChangelogModal(options.app).open());
+  setIcon(card.createSpan({ cls: "wcp-changelog-icon" }), "sparkles");
+  card.createSpan({ cls: "wcp-changelog-notice-text", text: t.changelogUpdated(options.version) });
+  // A labelled button, so what opens the changelog says so — the version itself
+  // is plain text.
+  // The buttons share a wrapper so that, on a narrow pane, they drop together onto
+  // a line of their own under the text rather than squeezing it.
+  const actions = card.createDiv({ cls: "wcp-changelog-actions" });
+  const openBtn = actions.createEl("button", { cls: "wcp-changelog-open", text: t.changelogSeeWhatsNew });
+  openBtn.addEventListener("click", () => new ChangelogModal(options.app).open());
 
-  const dismiss = card.createEl("button", { cls: "clickable-icon wcp-changelog-dismiss" });
-  setIcon(dismiss, "x");
+  const dismiss = actions.createEl("button", { cls: "wcp-changelog-dismiss", text: t.changelogDismiss });
   setTooltip(dismiss, t.changelogBannerDismiss);
   dismiss.addEventListener("click", () => {
     options.onDismiss();

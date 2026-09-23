@@ -449,6 +449,12 @@ export default class WordCountPlugin extends Plugin {
   async loadSettings() {
     const data = (await this.loadData()) as Partial<WordCountSettings> | null;
     this.settings = Object.assign({}, DEFAULT_SETTINGS, data);
+    // A fresh install has no update to announce: mark the running release's
+    // changelog notice as seen, and save it so the next update still shows one.
+    if (data === null) {
+      this.settings.dismissedChangelogVersion = this.manifest.version;
+      await this.saveSettings();
+    }
     for (const p of this.settings.presets) {
       // Reading-time speed was added later; default existing presets to the
       // average reader so the metric and its dropdown have a valid value.

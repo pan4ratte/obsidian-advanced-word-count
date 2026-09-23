@@ -563,24 +563,12 @@ export class WordCountSettingTab extends PluginSettingTab {
       both: t.displayMethodBoth,
     };
     return [
-      // Plugin blurb. Drawn by hand so it keeps the full-width note styling it had
-      // before the migration, instead of the two-column name/description row.
+      // The changelog notice, first in the tab. Its own group with the card blanked
+      // (see .wcp-settings-group), since the notice draws its own.
       {
         type: "group",
         cls: "wcp-settings-group",
-        heading: t.settingsHeading,
         items: [
-          {
-            name: t.settingsHeading,
-            desc: t.settingsDescription,
-            searchable: false, // the group heading above already carries this text
-            render: (setting) => {
-              setting.settingEl.addClass("wcp-settings-anchor", "wcp-settings-anchor-bare");
-              const root = this.anchorRoot(setting, "wcp-intro-root");
-              root.empty();
-              root.createEl("p", { text: t.settingsDescription, cls: "wcp-plugin-note" });
-            },
-          },
           // What the running release brought, until dismissed. Not searchable: once
           // dismissed the row is empty, and a search would land on nothing.
           {

@@ -33,12 +33,12 @@ const ru = {
   statusReadingTimeUnit: "мин",
 
   // ── Changelog ──────────────────────────────────────────────────────────────
-  changelogBannerPrefix: "Что нового в версии ",
+  changelogUpdated: (version: string) => `Advanced Word Count обновлён до версии ${version}`,
+  changelogSeeWhatsNew: "Что нового",
+  changelogDismiss: "Скрыть",
   changelogBannerDismiss: "Скрыть до следующего обновления",
 
   // ── Settings page ──────────────────────────────────────────────────────────
-  settingsHeading: "Настройки Advanced Word Count",
-  settingsDescription: "Данный плагин позволяет создавать сложные пресеты счётчиков слов для строки состояния или правой боковой панели, переключаться между ними одним нажатием, ставить цели и предупреждения о достижении лимитов и многое другое. Благодаря расширениям сообщества — пресетам, метрикам и расширенным настройкам — плагин гибко настраивается под писательские, научные и другие цели.",
 
   settingsSectionGeneral: "Основные",
   settingsSectionPresets: "Пресеты и расширения",

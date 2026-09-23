@@ -299,16 +299,6 @@
   padding-right: 16px;
 }
 
-/* Plugin description at the top of the settings page */
-.wcp-plugin-note {
-  font-size: var(--font-smallest);
-  color: var(--text-muted);
-  margin-bottom: 16px;
-  margin-top: 0;
-  padding-left: 16px;
-  padding-right: 16px;
-}
-
 /* ── Toggle grids ────────────────────────────────────────────────────────────── */
 
 .wcp-toggle-grid {
@@ -1388,6 +1378,7 @@
    height, and what stands in it is cut rather than spilling over what's below. */
 .wcp-changelog-notice {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--size-4-2);
   margin-bottom: 16px;
@@ -1400,37 +1391,46 @@
   color: var(--text-muted);
 }
 
+/* Grows to fill the row, but wants at least ~16em: when there isn't that much room
+   beside the buttons, the buttons wrap under it instead of squeezing it. */
 .wcp-changelog-notice-text {
-  flex: 1;
+  flex: 1 1 16em;
   min-width: 0;
-}
-
-/* The version opens the changelog — a link in the line of text rather than a
-   button standing beside it. */
-.wcp-changelog-notice .wcp-changelog-version {
-  height: auto;
-  margin: 0;
-  padding: 0;
-  background: none;
-  border: none;
-  box-shadow: none;
   color: var(--text-accent);
-  font-family: inherit;
-  font-size: inherit;
-  font-weight: var(--font-semibold);
-  text-decoration: underline;
-  cursor: var(--cursor);
 }
 
-.wcp-changelog-notice .wcp-changelog-version:hover {
-  color: var(--text-accent-hover);
-  background: none;
-  box-shadow: none;
+/* Marks the card as an announcement rather than another settings note. */
+.wcp-changelog-icon {
+  display: flex;
+  flex: none;
+  color: var(--text-accent);
 }
 
+.wcp-changelog-icon svg {
+  width: var(--icon-s);
+  height: var(--icon-s);
+}
+
+/* Right-aligned whether beside the text or wrapped under it. */
+.wcp-changelog-actions {
+  display: flex;
+  gap: var(--size-4-2);
+  margin-left: auto;
+}
+
+/* The two buttons, both plain at rest. */
+.wcp-changelog-open,
 .wcp-changelog-dismiss {
   flex: none;
-  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+}
+
+/* "See what's new" takes the accent only under the pointer (or keyboard focus).
+   Scoped under the card to out-rank Obsidian's own button:hover. */
+.wcp-changelog-notice .wcp-changelog-open:hover,
+.wcp-changelog-notice .wcp-changelog-open:focus-visible {
+  background-color: var(--interactive-accent-hover);
+  color: var(--text-on-accent);
 }
 
 /* The changelog window. Carries no `markdown-rendered` class — that one sizes
