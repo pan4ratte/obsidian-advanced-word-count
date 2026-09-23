@@ -23,7 +23,9 @@ Create complex word count presets that will be displayed in the status bar or in
 
 ### 1. Create multiple word count presets
 
-Each separate preset can have its own list of metrics and methods of counting formatting elements, which makes working on multiple projects easier. You can quickly cycle between presets by clicking on the status bar, the right pane tab header of or from the command palette.
+Each separate preset can have its own list of metrics and methods of counting formatting elements, which makes working on multiple projects easier. You can quickly cycle between presets by clicking on the status bar, the right pane tab header or from the command palette.
+
+The buttons in a preset's header let you duplicate it — handy for making a variant of a preset you've already set up — and choose which of its metrics appear in the status bar, so the status bar can stay short while the right pane shows everything.
 
 ### 2. View word counters in the right pane tab
 
@@ -32,6 +34,7 @@ Each separate preset can have its own list of metrics and methods of counting fo
 </div>
 
 * Counters can be viewed not only in the status bar, but also in the right pane tab. You can define whether counters are visible in both places or only one.
+* Metric blocks can be arranged in one or two columns: the button in the right pane's header switches the layout for the current preset, and each preset remembers its own.
 * Moreover, for any chosen metric you can set up a limit warning and/or a goal: a warning colors the metric orange at ≥90% of the limit and red at ≥100%, while a goal colors it green at ≥100% (a metric can have both at once, and a goal can't be set higher than its warning).
 * The progress indication style for goals and limits in the right pane can be configured; five options are currently available: "Border and text", described above, as well as "Border progress", "Progress bar", "Progress circle" and "Progress background".
 * You can also reorder the metrics in the right pane by dragging them — the new order is applied to the status bar as well (drag-and-drop on mobile devices is experimental for now).
