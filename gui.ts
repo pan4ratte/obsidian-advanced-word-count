@@ -874,6 +874,31 @@ export class WordCountSettingTab extends PluginSettingTab {
     if (scroller && scroller.scrollTop !== top) scroller.scrollTop = top;
   }
 
+  /**
+   * Copy a preset — every setting, rule and extension flag — into a new preset
+   * placed right after it, then bring the copy's card into view. The copy is not
+   * made active: duplicating is usually the first step to editing a variant.
+   */
+  private async duplicatePreset(preset: Preset): Promise<void> {
+    const copy: Preset = { ...structuredClone(preset), id: crypto.randomUUID(), name: t.duplicatePresetName(preset.name) };
+    const presets = this.plugin.settings.presets;
+    presets.splice(presets.indexOf(preset) + 1, 0, copy);
+    await this.save();
+    this.rerenderPresets();
+    this.scrollToPreset(copy.id);
+  }
+
+  /**
+   * Smoothly scroll a preset's card to the top of the view (instantly if motion is
+   * reduced) — the top, not the centre, since a long card would open mid-way down.
+   */
+  private scrollToPreset(id: string): void {
+    const card = this.presetsRoot?.querySelector<HTMLElement>(`.wcp-preset-card[data-preset-id="${id}"]`);
+    if (!card) return;
+    const reduced = card.win.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    card.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
+  }
+
   /** Open the export dialog, which collects catalogue metadata then downloads the files. */
   private exportPreset(preset: Preset) {
     new PresetExportModal(this.plugin.app, preset, (meta) => this.downloadPresetFiles(preset, meta)).open();
@@ -916,6 +941,7 @@ export class WordCountSettingTab extends PluginSettingTab {
   renderPreset(parent: HTMLElement, preset: Preset) {
     const isActive = preset.id === this.plugin.settings.activePresetId;
     const card = parent.createDiv({ cls: `wcp-preset-card${isActive ? " is-active" : ""}` });
+    card.dataset.presetId = preset.id;
 
     // ── Header ──────────────────────────────────────────────────────────────
     const header = card.createDiv({ cls: "wcp-preset-header" });
@@ -949,6 +975,12 @@ export class WordCountSettingTab extends PluginSettingTab {
     setTooltip(visBtn, t.btnStatusBarVisibilityTooltip, { placement: "top" });
     visBtn.addClass("wcp-btn", "wcp-btn-visibility");
     visBtn.addEventListener("click", () => new StatusBarVisibilityModal(this.plugin, preset).open());
+
+    const dupBtn = header.createEl("button");
+    setIcon(dupBtn, "copy");
+    setTooltip(dupBtn, t.btnDuplicateTooltip, { placement: "top" });
+    dupBtn.addClass("wcp-btn", "wcp-btn-duplicate");
+    dupBtn.addEventListener("click", handle(() => this.duplicatePreset(preset)));
 
     // Export relies on a Blob/<a download> file save, which only works on the
     // Electron desktop app — Obsidian mobile (Capacitor/WebView) can't honour it,

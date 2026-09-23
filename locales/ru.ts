@@ -3,6 +3,7 @@ const ru = {
   defaultPresetName: "Новый пресет",
   unnamedPreset: "Без названия",
   newPresetName: (n: number) => `Пресет ${n}`,
+  duplicatePresetName: (name: string) => `${name} (копия)`,
 
   // ── Commands ───────────────────────────────────────────────────────────────
   commandActivatePreset: (name: string) => `Переключиться на пресет ${name}`,
@@ -78,6 +79,7 @@ const ru = {
   badgeActive: "Активный",
   badgeInactive: "Неактивный",
   btnShareTooltip: "Поделиться пресетом (экспорт файлов для предложения в каталог)",
+  btnDuplicateTooltip: "Дублировать пресет",
   btnStatusBarVisibilityTooltip: "Видимость в строке состояния",
   btnDeleteTooltip: "Удалить пресет",
   inputNamePlaceholder: "Введите имя пресета",

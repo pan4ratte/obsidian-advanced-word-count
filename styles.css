@@ -68,6 +68,8 @@
   padding: 16px;
   margin: 16px 0;
   background-color: var(--setting-items-background);
+  /* Leaves a gap above the card when it is scrolled to (see scrollToPreset). */
+  scroll-margin-top: 16px;
 }
 
 .wcp-preset-card.is-active {
@@ -205,9 +207,10 @@
   background: var(--text-error);
 }
 
-/* Icon-only share and status-bar visibility buttons */
+/* Icon-only share, status-bar visibility and duplicate buttons */
 .wcp-btn-share,
-.wcp-btn-visibility {
+.wcp-btn-visibility,
+.wcp-btn-duplicate {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -220,14 +223,16 @@
 }
 
 .wcp-btn-share svg,
-.wcp-btn-visibility svg {
+.wcp-btn-visibility svg,
+.wcp-btn-duplicate svg {
   width: 16px;
   height: 16px;
   pointer-events: none;
 }
 
 .wcp-btn-share:hover,
-.wcp-btn-visibility:hover {
+.wcp-btn-visibility:hover,
+.wcp-btn-duplicate:hover {
   background: var(--interactive-accent);
   border-color: var(--interactive-accent);
   color: var(--text-on-accent);

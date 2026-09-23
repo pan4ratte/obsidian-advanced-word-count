@@ -3,6 +3,7 @@ const en = {
   defaultPresetName: "New preset",
   unnamedPreset: "Unnamed",
   newPresetName: (n: number) => `Preset ${n}`,
+  duplicatePresetName: (name: string) => `${name} (copy)`,
 
   // ── Commands ───────────────────────────────────────────────────────────────
   commandActivatePreset: (name: string) => `Switch to ${name} preset`,
@@ -81,6 +82,7 @@ const en = {
   badgeActive: "Active",
   badgeInactive: "Inactive",
   btnShareTooltip: "Share preset (export files to suggest for the catalogue)",
+  btnDuplicateTooltip: "Duplicate preset",
   btnStatusBarVisibilityTooltip: "Status bar visibility",
   btnDeleteTooltip: "Delete preset",
   inputNamePlaceholder: "Enter preset name",
